@@ -27,7 +27,7 @@ class Qwen(LLM_Base):
       top_p=0.8,
       seed=random.randint(1,10000),
       result_format='message',
-      max_tokens=8192
+      max_tokens=2000
     )
     print(response)
     answer=response.output.choices[0].message.content

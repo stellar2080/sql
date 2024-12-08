@@ -13,11 +13,9 @@ class Decomposer(Agent_Base):
 
     def create_decomposer_prompt(
         self,
-        schema_str: str,
-        evidence_str: str,
-        question: str,
+        message: dict
     ) -> str:
-        prompt = decompose_template.format(schema_str,question,evidence_str)
+        prompt = decompose_template.format(message["schema"],message["evidence"],message["question"])
         print(prompt)
         return prompt
 
@@ -43,7 +41,7 @@ class Decomposer(Agent_Base):
             raise AgentTypeException("The message should not be processed by " + DECOMPOSER + ". It is sent to " + message["message_to"])
         else:
             info("The message is being processed by " + DECOMPOSER + "...")
-            prompt = self.create_decomposer_prompt(message["schema"],message["evidence"],message["question"])
+            prompt = self.create_decomposer_prompt(message)
             sql = self.get_decomposer_sql(prompt, llm)
             message["sql"] = sql
             message["message_to"] = REVISER

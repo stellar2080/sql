@@ -45,3 +45,5 @@ m = Manager(
 #               "\n\n",
 #               file=txt_file
 #             )
+
+m.chat("list the working capital of all companies")

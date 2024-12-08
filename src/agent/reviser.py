@@ -28,13 +28,18 @@ class Reviser(Agent_Base):
 
     def create_reviser_prompt(
         self,
-        schema_str: str,
-        question: str,
-        sql: str,
+        message: dict,
         sqlite_error,
         error_class
     ) -> str:
-        prompt = reviser_template.format(question, schema_str, sql, sqlite_error, error_class)
+        prompt = reviser_template.format(
+            message["schema"],
+            message["evidence"],
+            message["question"],
+            message["sql"],
+            sqlite_error,
+            error_class
+        )
         print(prompt)
         return prompt
 
@@ -115,11 +120,10 @@ class Reviser(Agent_Base):
                 return message
             else:
                 prompt = self.create_reviser_prompt(
-                    message["schema"],
-                    message["question"],
-                    message["sql"],
+                    message,
                     sqlite_error,
-                    error_class)
+                    error_class
+                )
                 new_sql = self.revise(prompt, llm)
                 message["sql"] = new_sql
                 return message
