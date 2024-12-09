@@ -6,7 +6,7 @@ class Qwen(LLM_Base):
     super().__init__()
     self.model = ChatTongyi(
       model = config['model'],
-      temperature = 0.8,
+      temperature = 0.2,
       max_tokens = 1500
     )
 
