@@ -83,7 +83,9 @@ class Manager:
         self
     ):
         self.vectordb.clear()
+        info("Clearing vectordb...")
         self.mapdb.clear()
+        info("Clearing mapdb...")
 
     def chat_nl2sql(
         self,

@@ -146,17 +146,17 @@ class VectorDB(VectorDB_Base):
             self.chroma_client.delete_collection(name="schema")
             self.chroma_client.delete_collection(name="sql")
 
-            self.document_collection = self.chroma_client.create_collection(
+            self.chroma_client.create_collection(
                 name="document",
                 embedding_function=self.embedding_function,
                 metadata={"hnsw:space": "ip"},
             )
-            self.schema_collection = self.chroma_client.create_collection(
+            self.chroma_client.create_collection(
                 name="schema",
                 embedding_function=self.embedding_function,
                 metadata={"hnsw:space": "ip"},
             )
-            self.sql_collection = self.chroma_client.create_collection(
+            self.chroma_client.create_collection(
                 name="sql",
                 embedding_function=self.embedding_function,
                 metadata={"hnsw:space": "ip"},
