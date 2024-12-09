@@ -44,3 +44,5 @@ m = Manager(
 #               "\n\n",
 #               file=txt_file
 #             )
+
+m.chat_nl2sql("list current ratios of all companies!")

@@ -26,7 +26,7 @@ class Decomposer(Agent_Base):
         llm: LLM_Base
     ) -> str:
         message = [user_message(prompt)]
-        ans = llm.submit_message(message=message)
+        ans = llm.submit_message(messages=message)
         print(ans)
         sql = parse_sql(ans)
         return sql

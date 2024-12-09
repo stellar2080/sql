@@ -50,7 +50,7 @@ class Filter(Agent_Base):
         llm: LLM_Base
     ) -> (dict, str):
         llm_message = [user_message(prompt)]
-        ans = llm.submit_message(message=llm_message)
+        ans = llm.submit_message(messages=llm_message)
         print(ans)
         json_ans = parse_json(ans)
         return json_ans

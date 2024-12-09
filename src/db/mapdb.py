@@ -20,8 +20,8 @@ class MapDB(object):
         if self.conn is None:
             info("MapDB connection failed.")
         cursor = self.conn.cursor()
-        cursor.execute("INSERT INTO id_table (embedding_id) VALUES (?)", (embedding_id,))
-        cursor.execute("INSERT INTO doc_table (document) VALUES (?)", (document,))
+        cursor.execute("INSERT INTO doc_table (embedding_id, document) VALUES (?, ?)", (embedding_id, document,))
+        print(embedding_id,document)
         cursor.close()
         self.conn.commit()
 
@@ -32,7 +32,7 @@ class MapDB(object):
         if self.conn is None:
             info("MapDB connection failed.")
         cursor = self.conn.cursor()
-        cursor.execute("SELECT document FROM id_table it, doc_table dt WHERE it.document_id = dt.document_id AND embedding_id=?", (embedding_id,))
+        cursor.execute("SELECT document FROM doc_table WHERE embedding_id=?", (embedding_id,))
         content = str(cursor.fetchall()[0][0])
         cursor.close()
         return content
@@ -41,8 +41,6 @@ class MapDB(object):
         if self.conn is None:
             info("MapDB connection failed.")
         cursor = self.conn.cursor()
-        cursor.execute("DROP TABLE IF EXISTS id_table")
-        cursor.execute("CREATE TABLE IF NOT EXISTS id_table (document_id INTEGER PRIMARY KEY AUTOINCREMENT, embedding_id TEXT)")
         cursor.execute("DROP TABLE IF EXISTS doc_table")
-        cursor.execute("CREATE TABLE IF NOT EXISTS doc_table (document_id INTEGER PRIMARY KEY AUTOINCREMENT, document TEXT)")
+        cursor.execute("CREATE TABLE IF NOT EXISTS doc_table (embedding_id TEXT, document TEXT)")
         cursor.close()
