@@ -4,7 +4,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
 from src.utils.template import filter_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_json, info
+from src.utils.utils import parse_json, info, user_message
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
 
@@ -49,7 +49,7 @@ class Filter(Agent_Base):
         prompt: str,
         llm: LLM_Base
     ) -> (dict, str):
-        llm_message = [llm.user_message(prompt)]
+        llm_message = [user_message(prompt)]
         ans = llm.submit_message(message=llm_message)
         print(ans)
         json_ans = parse_json(ans)

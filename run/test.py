@@ -45,4 +45,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
-m.chat("hello")
+m.chat_nl2sql("list the current ratios of all companies")

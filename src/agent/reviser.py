@@ -11,7 +11,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER
 from src.utils.template import reviser_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_sql, info
+from src.utils.utils import parse_sql, info, user_message
 from src.agent.agent_base import Agent_Base
 
 
@@ -49,7 +49,7 @@ class Reviser(Agent_Base):
         prompt: str,
         llm: LLM_Base,
     ):
-        message = [llm.user_message(prompt)]
+        message = [user_message(prompt)]
         ans = llm.submit_message(message)
         print(ans)
         new_sql = parse_sql(ans)
