@@ -15,22 +15,27 @@ class Manager:
     def __init__(self,config=None):
         if config is None:
             config = {}
-        if config['platform'] is None or config['platform'] == 'Qwen':
-            self.llm = Qwen(config)
+        self.mode = config.get('mode',None)
+        if self.mode is None or self.mode == 'run':
+            info("running mode")
+            self.platform = config.get('platform',None)
+            if self.platform is None or self.platform == 'Qwen':
+                self.llm = Qwen(config)
+            self.filter = Filter()
+            self.decomposer = Decomposer()
+            self.reviser = Reviser(config)
+            self.message = {
+                "question": None,
+                "sql": None,
+                "schema": None,
+                "evidence": None,
+                "message_to": None,
+                "result": None
+            }
+        elif self.mode == 'train':
+            info("training mode")
         self.vectordb = VectorDB(config)
         self.mapdb = MapDB(config)
-        self.filter = Filter()
-        self.decomposer = Decomposer()
-        self.reviser = Reviser(config)
-
-        self.message = {
-            "question": None,
-            "sql": None,
-            "schema": None,
-            "evidence": None,
-            "message_to": None,
-            "result": None
-        }
 
     def train(
         self,
