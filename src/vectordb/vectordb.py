@@ -19,7 +19,7 @@ class VectorDB(VectorDB_Base):
         default_ef = embedding_functions.DefaultEmbeddingFunction()
         self.embedding_function = config.get("embedding_function", default_ef)
         self.n_results_sql = config.get("n_results_sql", config.get("n_results", 10))
-        self.n_results_doc = config.get("n_results_doc", config.get("n_results", 4))
+        self.n_results_doc = config.get("n_results_doc", config.get("n_results", 6))
         self.n_results_schema = config.get("n_results_schema", config.get("n_results", 10))
 
         self.chroma_client = None
