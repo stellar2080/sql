@@ -5,7 +5,9 @@ from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 
-from src.utils.utils import deterministic_uuid, info, extract_documents, extract_embedding_ids
+from src.utils.utils import deterministic_uuid, extract_documents, extract_embedding_ids
+from ..utils.const import N_RESULTS_DOC
+
 
 class VectorDB(VectorDB_Base):
     def __init__(self, config):
@@ -19,7 +21,7 @@ class VectorDB(VectorDB_Base):
         default_ef = embedding_functions.DefaultEmbeddingFunction()
         self.embedding_function = config.get("embedding_function", default_ef)
         self.n_results_sql = config.get("n_results_sql", config.get("n_results", 10))
-        self.n_results_doc = config.get("n_results_doc", config.get("n_results", 6))
+        self.n_results_doc = config.get("n_results_doc", config.get("n_results", N_RESULTS_DOC))
         self.n_results_schema = config.get("n_results_schema", config.get("n_results", 10))
 
         self.chroma_client = None
