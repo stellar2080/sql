@@ -1,14 +1,12 @@
-from torch.nn.functional import embedding
-
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
-from src.exceptions import AgentTypeException, ArgsException, LLMTypeException
+from src.exceptions import ArgsException
 from src.llm.qwen import Qwen
 from src.utils.utils import info, deterministic_uuid, user_message
 from src.vectordb.vectordb import VectorDB
 from src.db.mapdb import MapDB
-from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, AGENT_LIST
+from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER
 
 
 class Manager:
@@ -89,7 +87,7 @@ class Manager:
 
     def chat_nl2sql(
         self,
-        question: str = None
+        question=None
     ):
         if question is not None:
             self.message["question"] = question
@@ -117,7 +115,7 @@ class Manager:
 
     def chat(
         self,
-        question: str = None
+        question=None
     ):
         if question is not None:
             self.message["question"] = question

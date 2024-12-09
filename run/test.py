@@ -45,3 +45,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
+m.chat("hello")
