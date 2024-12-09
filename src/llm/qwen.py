@@ -13,15 +13,6 @@ class Qwen(LLM_Base):
       max_tokens = MAX_TOKENS
     )
 
-  def system_message(self, message: str):
-    return 'system', message
-
-  def user_message(self, message: str):
-    return 'user', message
-
-  def assistant_message(self, message: str):
-    return 'assistant', message
-
   def submit_message(self, message: list, **kwargs):
     response = self.model.invoke(message)
     print(response)

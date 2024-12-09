@@ -101,3 +101,12 @@ def extract_embedding_ids(query_results) -> list:
 
 def info(message: str):
     print("[INFO]:",message)
+
+def system_message(message: str):
+    return 'system', message
+
+def user_message(message: str):
+    return 'user', message
+
+def assistant_message(message: str):
+    return 'assistant', message

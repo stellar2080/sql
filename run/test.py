@@ -45,4 +45,3 @@ m = Manager(
 #               file=txt_file
 #             )
 
-m.chat("list the company name and Current Ratios of all companies")

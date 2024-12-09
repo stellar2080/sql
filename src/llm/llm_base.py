@@ -5,18 +5,6 @@ class LLM_Base(ABC):
         pass
 
     @abstractmethod
-    def system_message(self, message: str) -> any:
-        pass
-
-    @abstractmethod
-    def user_message(self, message: str) -> any:
-        pass
-
-    @abstractmethod
-    def assistant_message(self, message: str) -> any:
-        pass
-
-    @abstractmethod
     def submit_message(self, message, **kwargs) -> str:
         pass
 
