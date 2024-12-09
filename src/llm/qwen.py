@@ -1,5 +1,8 @@
+import os
+import random
+
 from .llm_base import LLM_Base
-from langchain_community.chat_models.tongyi import ChatTongyi
+from dashscope import Generation
 
 from ..utils.const import TEMPERATURE, MAX_TOKENS
 
@@ -7,14 +10,19 @@ from ..utils.const import TEMPERATURE, MAX_TOKENS
 class Qwen(LLM_Base):
   def __init__(self, config):
     super().__init__()
-    self.model = ChatTongyi(
-      model = config['model'],
-      temperature = TEMPERATURE,
-      max_tokens = MAX_TOKENS
-    )
+    self.model = config['model']
+    self.api_key = os.environ.get('DASHSCOPE_API_KEY')
 
-  def submit_message(self, message: list, **kwargs):
-    response = self.model.invoke(message)
+  def submit_message(self, message, **kwargs):
+    response = Generation.call(
+      model=self.model,
+      api_key=self.api_key,
+      messages=message,
+      temperature=TEMPERATURE,
+      seed=random.randint(1,10000),
+      result_format='message',
+      max_tokens=MAX_TOKENS
+    )
     print(response)
-    answer=response.content
+    answer=response.output.choices[0].message.content
     return answer

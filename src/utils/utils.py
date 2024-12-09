@@ -103,10 +103,10 @@ def info(message: str):
     print("[INFO]:",message)
 
 def system_message(message: str):
-    return 'system', message
+    return {'role': 'system', 'content': message}
 
 def user_message(message: str):
-    return 'user', message
+    return {'role': 'user', 'content': message}
 
 def assistant_message(message: str):
-    return 'assistant', message
+    return {'role': 'assistant', 'content': message}
