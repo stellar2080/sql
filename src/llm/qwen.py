@@ -1,14 +1,14 @@
-import random
-
-from langchain_core.prompts import ChatPromptTemplate
-
 from .llm_base import LLM_Base
 from langchain_community.chat_models.tongyi import ChatTongyi
 
 class Qwen(LLM_Base):
   def __init__(self, config):
     super().__init__()
-    self.model = ChatTongyi(model = config['model'])
+    self.model = ChatTongyi(
+      model = config['model'],
+      temperature = 0.8,
+      max_tokens = 1500
+    )
 
   def system_message(self, message: str):
     return 'system', message
