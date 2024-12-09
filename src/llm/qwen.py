@@ -1,34 +1,26 @@
 import random
 
+from langchain_core.prompts import ChatPromptTemplate
+
 from .llm_base import LLM_Base
-from dashscope import Generation
+from langchain_community.chat_models.tongyi import ChatTongyi
 
 class Qwen(LLM_Base):
   def __init__(self, config):
-    super().__init__(config)
-    self.model=config['model']
-    self.api_key=config['api_key']
+    super().__init__()
+    self.model = ChatTongyi(model = config['model'])
 
   def system_message(self, message: str):
-    return {'role':'system','content':message}
+    return 'system', message
 
   def user_message(self, message: str):
-    return {'role':'user','content':message}
+    return 'user', message
 
   def assistant_message(self, message: str):
-    return {'role':'assistant','content':message}
+    return 'assistant', message
 
-  def submit_message(self, message, **kwargs):
-    response = Generation.call(
-      model=self.model,
-      api_key=self.api_key,
-      messages=message,
-      temperature=0.7,
-      top_p=0.8,
-      seed=random.randint(1,10000),
-      result_format='message',
-      max_tokens=2000
-    )
+  def submit_message(self, message: list, **kwargs):
+    response = self.model.invoke(message)
     print(response)
-    answer=response.output.choices[0].message.content
+    answer=response.content
     return answer

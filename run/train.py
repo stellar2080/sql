@@ -1,15 +1,14 @@
 import os
 
 from src.manager.manager import Manager
-from src.utils.const import GLM_API_KEY, QWEN_API_KEY
 from src.utils.data_rag import SCHEMA,DOCUMENT
 
 ROOT_PATH = os.path.abspath("../")
+os.environ["DASHSCOPE_API_KEY"] = "sk-6189784a69b24e53b99310316a1de2fc"
 
 m = Manager(
     config={
-        'api_key': QWEN_API_KEY,
-        'llm': 'Qwen',
+        'platform': 'Qwen',
         'model': 'qwen-plus',
         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
         'mapdb_path': os.path.join(ROOT_PATH,"db","map.sqlite3"),

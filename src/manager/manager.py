@@ -4,7 +4,6 @@ from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
 from src.exceptions import AgentTypeException, ArgsException, LLMTypeException
-from src.llm.glm import Glm
 from src.llm.qwen import Qwen
 from src.utils.utils import info, deterministic_uuid
 from src.vectordb.vectordb import VectorDB
@@ -16,9 +15,7 @@ class Manager:
     def __init__(self,config=None):
         if config is None:
             config = {}
-        if config['llm'] is None or config['llm'] == 'Glm':
-            self.llm = Glm(config)
-        elif config['llm'] == 'Qwen':
+        if config['platform'] is None or config['platform'] == 'Qwen':
             self.llm = Qwen(config)
         self.vectordb = VectorDB(config)
         self.mapdb = MapDB(config)

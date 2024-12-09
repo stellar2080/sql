@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 class LLM_Base(ABC):
-    def __init__(self, config):
-        self.config = config
+    def __init__(self):
+        pass
 
     @abstractmethod
     def system_message(self, message: str) -> any:
