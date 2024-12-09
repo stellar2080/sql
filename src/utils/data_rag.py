@@ -173,8 +173,10 @@ Column: [
 DOCUMENT = [
     ["net assets",
      "net assets and total owner's equity are the same"],
+
     ["total stockholder's equity",
      "total stockholder's equity and total owner's equity are the same"],
+
     ["shareholders' equity",
      "shareholders' equity and total owner's equity are the same"],
 
