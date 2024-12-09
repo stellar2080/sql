@@ -13,11 +13,11 @@ class Qwen(LLM_Base):
     self.model = config['model']
     self.api_key = os.environ.get('DASHSCOPE_API_KEY')
 
-  def submit_message(self, message, **kwargs):
+  def submit_message(self, messages, **kwargs):
     response = Generation.call(
       model=self.model,
       api_key=self.api_key,
-      messages=message,
+      messages=messages,
       temperature=TEMPERATURE,
       seed=random.randint(1,10000),
       result_format='message',
