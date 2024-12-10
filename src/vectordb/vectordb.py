@@ -5,8 +5,8 @@ from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 
-from src.utils.utils import deterministic_uuid, extract_documents, extract_embedding_ids
-from ..utils.const import N_RESULTS_DOC
+from src.utils.utils import deterministic_uuid, extract_documents, extract_embedding_ids, info
+from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY
 
 
 class VectorDB(VectorDB_Base):
@@ -20,7 +20,7 @@ class VectorDB(VectorDB_Base):
 
         default_ef = embedding_functions.DefaultEmbeddingFunction()
         self.embedding_function = config.get("embedding_function", default_ef)
-        self.n_results_sql = config.get("n_results_sql", config.get("n_results", 10))
+        self.n_results_key = config.get("n_results_key", config.get("n_results", N_RESULTS_KEY))
         self.n_results_doc = config.get("n_results_doc", config.get("n_results", N_RESULTS_DOC))
         self.n_results_schema = config.get("n_results_schema", config.get("n_results", 10))
 
@@ -51,8 +51,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "ip"},
         )
-        self.sql_collection = self.chroma_client.get_or_create_collection(
-            name="sql",
+        self.key_collection = self.chroma_client.get_or_create_collection(
+            name="key",
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "ip"},
         )
@@ -62,22 +62,6 @@ class VectorDB(VectorDB_Base):
         if len(embedding) == 1:
             return embedding[0]
         return embedding
-
-    def add_question_sql(self, question: str, sql: str, **kwargs) -> str:
-        question_sql_json = json.dumps(
-            {
-                "question": question,
-                "sql": sql,
-            },
-            ensure_ascii=False,
-        )
-        embedding_id = deterministic_uuid(question_sql_json) + "-sql"
-        self.sql_collection.add(
-            documents=question_sql_json,
-            embeddings=self.generate_embedding(question_sql_json),
-            ids=embedding_id,
-        )
-        return embedding_id
 
     def add_schema(self, embedding_id: str, schema: str, **kwargs) -> str:
         self.schema_collection.add(
@@ -95,9 +79,17 @@ class VectorDB(VectorDB_Base):
         )
         return embedding_id
 
+    def add_key(self, embedding_id: str, key: str, **kwargs) -> str:
+        self.key_collection.add(
+            documents=key,
+            embeddings=self.generate_embedding(key),
+            ids=embedding_id,
+        )
+        return embedding_id
+
     def remove_training_data(self, embedding_id: str, **kwargs) -> bool:
-        if embedding_id.endswith("-sql"):
-            self.sql_collection.delete(ids=[embedding_id])
+        if embedding_id.endswith("-key"):
+            self.key_collection.delete(ids=[embedding_id])
             return True
         elif embedding_id.endswith("-sc"):
             self.schema_collection.delete(ids=[embedding_id])
@@ -107,14 +99,6 @@ class VectorDB(VectorDB_Base):
             return True
         else:
             return False
-
-    def get_related_sql(self, question: str, **kwargs) -> list:
-        return extract_documents(
-            self.sql_collection.query(
-                query_texts=[question],
-                n_results=self.n_results_sql,
-            )
-        )
 
     def get_related_schema(self, question: str, **kwargs) -> list:
         return extract_documents(
@@ -132,19 +116,38 @@ class VectorDB(VectorDB_Base):
             )
         )
 
-    def get_related_doc_ids(self, question: str, **kwargs) -> list:
-        return extract_embedding_ids(
-            self.document_collection.query(
+    def get_related_key(self, question: str, **kwargs) -> list:
+        return extract_documents(
+            self.key_collection.query(
                 query_texts=[question],
-                n_results=self.n_results_doc,
+                n_results=self.n_results_key,
             )
         )
+
+    def get_related_key_ids(self, question: str, **kwargs) -> list:
+        return extract_embedding_ids(
+            self.key_collection.query(
+                query_texts=[question],
+                n_results=self.n_results_key,
+            )
+        )
+
+    def get_doc_by_id(
+        self,
+        embedding_ids,
+    ):
+        if type(embedding_ids) == str:
+            result = self.document_collection.get(ids=[embedding_ids])
+            return result['documents'][0]
+        elif type(embedding_ids) == list:
+            result = self.document_collection.get(ids=embedding_ids)
+            return result['documents']
 
     def clear(self):
         try:
             self.chroma_client.delete_collection(name="document")
             self.chroma_client.delete_collection(name="schema")
-            self.chroma_client.delete_collection(name="sql")
+            self.chroma_client.delete_collection(name="key")
 
             self.chroma_client.create_collection(
                 name="document",
@@ -157,10 +160,10 @@ class VectorDB(VectorDB_Base):
                 metadata={"hnsw:space": "ip"},
             )
             self.chroma_client.create_collection(
-                name="sql",
+                name="key",
                 embedding_function=self.embedding_function,
                 metadata={"hnsw:space": "ip"},
             )
 
         except Exception as error:
-            print(error)
+            info(error)

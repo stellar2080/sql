@@ -40,7 +40,7 @@ class Reviser(Agent_Base):
             sqlite_error,
             error_class
         )
-        print(prompt)
+        info(prompt)
         return prompt
 
     @timeout(180)
@@ -51,7 +51,7 @@ class Reviser(Agent_Base):
     ):
         message = [user_message(prompt)]
         ans = llm.submit_message(message)
-        print(ans)
+        info(ans)
         new_sql = parse_sql(ans)
         return new_sql
 

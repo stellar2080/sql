@@ -67,13 +67,13 @@ def parse_sql(text: str) -> str:
             info(f"parse sql error!\n")
             return ""
     except Exception as error:
-        print(error)
+        info(error)
         pass
 
 def extract_documents(query_results) -> list:
     if query_results is None:
         return []
-    print(query_results)
+    info(query_results)
     if "documents" in query_results:
         documents = query_results["documents"]
 
@@ -88,6 +88,7 @@ def extract_documents(query_results) -> list:
 def extract_embedding_ids(query_results) -> list:
     if query_results is None:
         return []
+    info(query_results)
     if "ids" in query_results:
         ids = query_results["ids"]
 
@@ -99,8 +100,10 @@ def extract_embedding_ids(query_results) -> list:
 
         return ids
 
-def info(message: str):
-    print("[INFO]:",message)
+def info(message):
+    print("[INFO]:",end="")
+    print(message)
+
 
 def system_message(message: str):
     return {'role': 'system', 'content': message}

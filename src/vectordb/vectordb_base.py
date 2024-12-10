@@ -6,7 +6,7 @@ class VectorDB_Base(ABC):
         self.config = config
 
     @abstractmethod
-    def add_question_sql(self, question: str, sql: str, **kwargs) -> str:
+    def add_key(self, embedding_id: str, key: str, **kwargs) -> str:
         pass
 
     @abstractmethod
@@ -30,5 +30,5 @@ class VectorDB_Base(ABC):
         pass
 
     @abstractmethod
-    def get_related_sql(self, question: str, **kwargs) -> list:
+    def get_related_key(self, question: str, **kwargs) -> list:
         pass

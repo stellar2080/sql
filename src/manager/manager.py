@@ -5,7 +5,6 @@ from src.exceptions import ArgsException
 from src.llm.qwen import Qwen
 from src.utils.utils import info, deterministic_uuid, user_message
 from src.vectordb.vectordb import VectorDB
-from src.db.mapdb import MapDB
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER
 
 
@@ -33,7 +32,6 @@ class Manager:
         elif self.mode == 'train':
             info("training mode")
         self.vectordb = VectorDB(config)
-        self.mapdb = MapDB(config)
 
     def train(
         self,
@@ -76,16 +74,18 @@ class Manager:
     ):
         key_n_doc = doc[0] + ": " +  doc[1]
         embedding_id = deterministic_uuid(key_n_doc) + "-doc"
-        self.vectordb.add_doc(embedding_id=embedding_id,document=doc[0])
-        self.mapdb.add_doc(embedding_id=embedding_id,document=doc[1])
+        self.vectordb.add_key(embedding_id=embedding_id,key=doc[0])
+        self.vectordb.add_doc(embedding_id=embedding_id,document=doc[1])
 
     def clear(
         self
     ):
-        self.vectordb.clear()
-        info("Clearing vectordb...")
-        self.mapdb.clear()
-        info("Clearing mapdb...")
+        try:
+            info("Clearing vectordb...")
+            self.vectordb.clear()
+        except Exception as e:
+            info(e)
+
 
     def chat_nl2sql(
         self,
@@ -106,7 +106,7 @@ class Manager:
                 info("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == FILTER:
-                self.message = self.filter.chat(self.message, self.llm, self.vectordb, self.mapdb)
+                self.message = self.filter.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:

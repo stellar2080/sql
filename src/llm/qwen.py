@@ -5,6 +5,7 @@ from .llm_base import LLM_Base
 from dashscope import Generation
 
 from ..utils.const import TEMPERATURE, MAX_TOKENS
+from ..utils.utils import info
 
 
 class Qwen(LLM_Base):
@@ -23,6 +24,6 @@ class Qwen(LLM_Base):
       result_format='message',
       max_tokens=MAX_TOKENS
     )
-    print(response)
+    info(response)
     answer=response.output.choices[0].message.content
     return answer

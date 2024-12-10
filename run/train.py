@@ -8,7 +8,6 @@ ROOT_PATH = os.path.abspath("../")
 m = Manager(
     config={
         'mode': 'train',
-        'mapdb_path': os.path.join(ROOT_PATH,"db","map.sqlite3"),
         'vectordb_path': os.path.join(ROOT_PATH, 'vectordb'),
         'client': 'http',
         'host': 'localhost',

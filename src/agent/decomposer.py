@@ -16,7 +16,7 @@ class Decomposer(Agent_Base):
         message: dict
     ) -> str:
         prompt = decompose_template.format(message["schema"],message["evidence"],message["question"])
-        print(prompt)
+        info(prompt)
         return prompt
 
     @timeout(180)
@@ -27,7 +27,7 @@ class Decomposer(Agent_Base):
     ) -> str:
         message = [user_message(prompt)]
         ans = llm.submit_message(messages=message)
-        print(ans)
+        info(ans)
         sql = parse_sql(ans)
         return sql
 

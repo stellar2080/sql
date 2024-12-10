@@ -1,4 +1,3 @@
-from src.db.mapdb import MapDB
 from src.exceptions import AgentTypeException
 from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
@@ -17,13 +16,12 @@ class Filter(Agent_Base):
         self,
         question: str,
         vectordb: VectorDB,
-        mapdb: MapDB
     ):
-        evidence_ids = vectordb.get_related_doc_ids(question)
+        evidence_ids = vectordb.get_related_key_ids(question)
         evidence_set = set()
         evidence_str = ""
         for evidence_id in evidence_ids:
-            evidence_set.add(mapdb.get_doc(evidence_id))
+            evidence_set.add(vectordb.get_doc_by_id(evidence_id))
         for evidence in evidence_set:
             evidence_str += "=====\n" + evidence + "\n"
         return evidence_str
@@ -32,15 +30,14 @@ class Filter(Agent_Base):
         self,
         question: str,
         vectordb: VectorDB,
-        mapdb: MapDB
     ) -> (str,str):
         schema_list = vectordb.get_related_schema(question)
         schema_str = ""
         for schema in schema_list:
             schema_str += "=====" + schema
-        evidence_str = self.get_evidence_str(question, vectordb, mapdb)
+        evidence_str = self.get_evidence_str(question, vectordb)
         prompt = filter_template.format(schema_str, evidence_str, question)
-        print(prompt)
+        info(prompt)
         return prompt,schema_str,evidence_str
 
     @timeout(180)
@@ -51,7 +48,7 @@ class Filter(Agent_Base):
     ) -> (dict, str):
         llm_message = [user_message(prompt)]
         ans = llm.submit_message(messages=llm_message)
-        print(ans)
+        info(ans)
         json_ans = parse_json(ans)
         return json_ans
 
@@ -99,13 +96,12 @@ class Filter(Agent_Base):
         message: dict,
         llm: LLM_Base = None,
         vectordb: VectorDB= None,
-        mapdb: MapDB = None
     ):
         if message["message_to"] != FILTER:
             raise AgentTypeException("The message should not be processed by " + FILTER + ". It is sent to " + message["message_to"])
         else:
             info("The message is being processed by " + FILTER + "...")
-            prompt,schema_str,evidence_str = self.create_filter_prompt(message["question"], vectordb, mapdb)
+            prompt,schema_str,evidence_str = self.create_filter_prompt(message["question"], vectordb)
             json_ans = self.get_filter_json(prompt, llm)
             new_schema_str = self.prune_schema(json_ans,schema_str)
             message["schema"] = new_schema_str

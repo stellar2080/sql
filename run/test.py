@@ -12,7 +12,6 @@ m = Manager(
         'platform': 'Qwen',
         'model': 'qwen-max',
         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
-        'mapdb_path': os.path.join(ROOT_PATH, "db", "map.sqlite3"),
         'vectordb_path': os.path.join(ROOT_PATH, 'vectordb'),
         'client': 'http',
         'host': 'localhost',
@@ -45,4 +44,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
-m.chat_nl2sql("list current ratios of all companies!")
+m.chat_nl2sql("list CURRENT RATIOS OF all companies!")
