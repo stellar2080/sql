@@ -56,6 +56,11 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "ip"},
         )
+        self.memory_collection = self.chroma_client.get_or_create_collection(
+            name="memory",
+            embedding_function=self.embedding_function,
+            metadata={"hnsw:space": "ip"},
+        )
 
     def generate_embedding(self, data:str, **kwargs):
         embedding = self.embedding_function([data])
@@ -143,7 +148,7 @@ class VectorDB(VectorDB_Base):
             result = self.document_collection.get(ids=embedding_ids)
             return result['documents']
 
-    def clear(self):
+    def clear_rag(self):
         try:
             self.chroma_client.delete_collection(name="document")
             self.chroma_client.delete_collection(name="schema")
@@ -161,6 +166,19 @@ class VectorDB(VectorDB_Base):
             )
             self.chroma_client.create_collection(
                 name="key",
+                embedding_function=self.embedding_function,
+                metadata={"hnsw:space": "ip"},
+            )
+
+        except Exception as error:
+            info(error)
+
+    def clear_memory(self):
+        try:
+            self.chroma_client.delete_collection(name="memory")
+
+            self.chroma_client.create_collection(
+                name="memory",
                 embedding_function=self.embedding_function,
                 metadata={"hnsw:space": "ip"},
             )

@@ -81,8 +81,10 @@ class Manager:
         self
     ):
         try:
-            info("Clearing vectordb...")
-            self.vectordb.clear()
+            info("Clearing rag data...")
+            self.vectordb.clear_rag()
+            info("Clearing memory data...")
+            self.vectordb.clear_memory()
         except Exception as e:
             info(e)
 

@@ -28,7 +28,7 @@ m = Manager(
 #             count += 1
 #
 #             question = item["question"]
-#             message = m.chat(question=question)
+#             message = m.chat_nl2sql(question=question)
 #             sql_0 = item["sql"]
 #             result_0 = m.reviser.run_sql(sql_0)
 #             sql_1 = message['sql']
@@ -44,4 +44,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
-m.chat_nl2sql("list CURRENT RATIOS OF all companies!")
+m.chat_nl2sql("Find the banks whose cash inflow from operating activities is more than the cash inflow from investment activities of any other bank.")
