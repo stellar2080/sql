@@ -7,7 +7,7 @@ Your goal is to identify the relevant tables and columns based on the user quest
 【Requirements】
 - If all columns of a table need to be kept, mark it as "keep_all".
 - If a table is completely irrelevant to the user question and evidence, mark it as "drop_all".
-- If not for the previous two cases, you need to determine which columns need to be kept to solve the problem.
+- If not for the previous two cases, sort the columns in each relevant table in descending order of relevance, determine which columns need to be kept.
 - The output should be in JSON format.
 
 ==========
