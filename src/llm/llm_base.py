@@ -5,7 +5,7 @@ class LLM_Base(ABC):
         pass
 
     @abstractmethod
-    def submit_message(self, message, **kwargs) -> str:
+    def call(self, messages, tools=None, **kwargs):
         pass
 
 

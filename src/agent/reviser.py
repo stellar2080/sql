@@ -11,7 +11,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER
 from src.utils.template import reviser_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_sql, info, user_message
+from src.utils.utils import parse_sql, info, user_message, get_res_content
 from src.agent.agent_base import Agent_Base
 
 
@@ -50,9 +50,10 @@ class Reviser(Agent_Base):
         llm: LLM_Base,
     ):
         message = [user_message(prompt)]
-        ans = llm.submit_message(message)
-        info(ans)
-        new_sql = parse_sql(ans)
+        response = llm.call(message)
+        answer = get_res_content(response)
+        info(answer)
+        new_sql = parse_sql(answer)
         return new_sql
 
     def connect_to_sqlite(

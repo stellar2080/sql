@@ -1,6 +1,35 @@
+receiver_template_0 = """
+【Background】
+You are an expert in the field of finance and database
+Your task is to determine whether answering the user question requires querying databases
+【Requirements】
+- If you need to get the database schema to make a decision, you don't need to output any text, just make a "function calling"
+- If not for the previous case, you can output your answer directly
+
+【Question】
+{}
+【Answer】
+"""
+
+receiver_template_1 = """
+【Background】
+You are an expert in the field of finance and database
+Given the 【Schema】, your task is to determine whether answering the user question requires querying databases
+【Requirements】
+- If you need to query the database to answer, you don't need to output any text, just make a "function calling"
+- If not for the previous case, you can output your answer directly
+
+【Question】
+{}
+【Schema】
+{}
+【Answer】
+"""
+
 filter_template = """
 【Background】
-As an experienced and professional database administrator, your task is to analyze a user question and a database schema to provide relevant information. 
+As an experienced and professional database administrator
+Your task is to analyze a user question and a database schema to provide relevant information. 
 The database schema consists of table descriptions, each containing multiple column descriptions. 
 Your goal is to identify the relevant tables and columns based on the user question and evidence provided.
 
@@ -67,7 +96,7 @@ Here is a new example, considering 【Requirements】, please start answering:
 
 decompose_template = """
 【Background】
-Given a 【Database schema】 description, a knowledge 【Evidence】 and the 【Question】, you need to use valid SQLite and understand the database and knowledge, and then decompose the question into subquestions for text-to-SQL generation.
+Given a 【Schema】 description, a knowledge 【Evidence】 and the 【Question】, you need to use valid SQLite and understand the database and knowledge, and then decompose the question into subquestions for text-to-SQL generation.
 
 【Requirements】
 - Keep your answers brief

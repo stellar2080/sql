@@ -1,11 +1,12 @@
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
+from src.agent.receiver import Receiver
 from src.agent.reviser import Reviser
 from src.exceptions import ArgsException
 from src.llm.qwen import Qwen
 from src.utils.utils import info, deterministic_uuid, user_message
 from src.vectordb.vectordb import VectorDB
-from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER
+from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, RECEIVER
 
 
 class Manager:
@@ -18,6 +19,7 @@ class Manager:
             self.platform = config.get('platform',None)
             if self.platform is None or self.platform == 'Qwen':
                 self.llm = Qwen(config)
+            self.receiver = Receiver()
             self.filter = Filter()
             self.decomposer = Decomposer()
             self.reviser = Reviser(config)
@@ -89,7 +91,7 @@ class Manager:
             info(e)
 
 
-    def chat_nl2sql(
+    def chat(
         self,
         question=None
     ):
@@ -107,6 +109,8 @@ class Manager:
             if self.message["message_to"] == MANAGER:
                 info("The message is begin processed by manager...")
                 break
+            elif self.message["message_to"] == RECEIVER:
+                self.message = self.receiver.chat(self.message, self.llm)
             elif self.message["message_to"] == FILTER:
                 self.message = self.filter.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == DECOMPOSER:
@@ -116,15 +120,3 @@ class Manager:
         # for key, value in self.message.items():
         #     print(f"{key}: {value}")
         return self.message
-
-    def chat(
-        self,
-        question=None
-    ):
-        if question is not None:
-            self.message["question"] = question
-        else:
-            raise ArgsException("Please provide a question")
-        messages = [user_message(question)]
-        response = self.llm.submit_message(messages)
-        return response

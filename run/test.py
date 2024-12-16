@@ -5,7 +5,7 @@ from src.manager.manager import Manager
 from src.utils.utils import info
 
 ROOT_PATH = os.path.abspath("../")
-os.environ["DASHSCOPE_API_KEY"] = "sk-6189784a69b24e53b99310316a1de2fc"
+os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 
 m = Manager(
     config={
@@ -44,4 +44,13 @@ m = Manager(
 #               file=txt_file
 #             )
 
-m.chat_nl2sql("Find the banks whose cash inflow from operating activities is more than the cash inflow from investment activities of any other bank.")
+message = {
+    "question": "hello! I want to know the current ratio of all companies",
+    "sql": None,
+    "schema": None,
+    "evidence": None,
+    "message_to": None,
+    "result": None
+}
+
+m.receiver.chat(message,m.llm)

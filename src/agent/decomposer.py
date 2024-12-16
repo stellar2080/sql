@@ -4,7 +4,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import DECOMPOSER, REVISER
 from src.utils.template import decompose_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_sql, info, user_message
+from src.utils.utils import parse_sql, info, user_message, get_res_content
 
 
 class Decomposer(Agent_Base):
@@ -26,9 +26,10 @@ class Decomposer(Agent_Base):
         llm: LLM_Base
     ) -> str:
         message = [user_message(prompt)]
-        ans = llm.submit_message(messages=message)
-        info(ans)
-        sql = parse_sql(ans)
+        response = llm.call(messages=message)
+        answer = get_res_content(response)
+        info(answer)
+        sql = parse_sql(answer)
         return sql
 
 

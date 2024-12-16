@@ -113,3 +113,12 @@ def user_message(message: str):
 
 def assistant_message(message: str):
     return {'role': 'assistant', 'content': message}
+
+def get_res_content(response):
+    return response.output.choices[0].message.content
+
+def get_res_finish_reason(response):
+    return response.output.choices[0].finish_reason
+
+def get_res_tool_calls(response):
+    return response.output.choices[0].message.tool_calls

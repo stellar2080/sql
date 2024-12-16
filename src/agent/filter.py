@@ -3,7 +3,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
 from src.utils.template import filter_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_json, info, user_message
+from src.utils.utils import parse_json, info, user_message, get_res_content
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
 
@@ -47,9 +47,10 @@ class Filter(Agent_Base):
         llm: LLM_Base
     ) -> (dict, str):
         llm_message = [user_message(prompt)]
-        ans = llm.submit_message(messages=llm_message)
-        info(ans)
-        json_ans = parse_json(ans)
+        response = llm.call(messages=llm_message)
+        answer = get_res_content(response)
+        info(answer)
+        json_ans = parse_json(answer)
         return json_ans
 
     def prune_schema(
