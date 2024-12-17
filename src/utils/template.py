@@ -1,10 +1,11 @@
 receiver_template = """
 【Background】
-You are an expert in the field of finance and database
-Your task is to determine whether answering the user question requires querying databases
+You are an expert in the field of finance and database.
+Your task is to determine whether answering the user question requires querying databases.
+
 【Requirements】
-- If you need to get the database schema to make a decision, you don't need to output any text, just make a "function calling"
-- If not for the previous case, you can output your answer directly
+- If you need to get the database schema to make a decision, you don't need to output any text, just make a "function calling".
+- If not for the above case, you can output your answer directly.
 
 【Question】
 {}
@@ -13,18 +14,22 @@ Your task is to determine whether answering the user question requires querying 
 
 filter_template = """
 【Background】
-As an experienced and professional database administrator.
-Given a database schema consisting of table descriptions, each table contains multiple column descriptions.
-Your goal is to identify the relevant tables and columns based on the user question and evidence provided.
+You are an expert in the field of finance and database. 
+Given a user question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
+
+Your task involves two cases:
+(1) If you can answer a question without querying the database, you can output your answer directly.
+(2) If not for the above case, refer to 【Requirements】.
 
 【Requirements】
+Please identify the relevant tables and columns based on the user question and evidence provided.
 - If all columns of a table need to be kept, mark it as "keep_all".
 - If a table is completely irrelevant to the user question and evidence, mark it as "drop_all".
 - If not for the previous two cases, sort the columns in each relevant table in descending order of relevance, determine which columns need to be kept.
 - You don't need to give any explanation, just output the answer in JSON format.
 
 ==========
-Here is a typical example:
+Here is an example about case (1):
 
 【Schema】
 =====
@@ -66,6 +71,12 @@ What is the fee and commission income of China Construction Bank in millions of 
 }}
 ```
 
+Here is an example about case (2):
+【Question】
+Hello!
+【Answer】
+Hello! How can I help you?
+
 ==========
 Here is a new example, considering 【Requirements】, please start answering:
 
@@ -80,13 +91,14 @@ Here is a new example, considering 【Requirements】, please start answering:
 
 decompose_template = """
 【Background】
+You are an experienced database administrator.
 Given a 【Schema】 description, a knowledge 【Evidence】 and the 【Question】, you need to use valid SQLite and understand the database and knowledge, and then decompose the question into subquestions for text-to-SQL generation.
 
 【Requirements】
 - Keep your answers brief
 - When you have generated an SQL statement that already solves the problem, there is no need to generate more text
 
-【Constraints】
+【SQL Constraints】
 When generating SQL, we should always consider constraints:
 - In `SELECT <column>`, just select needed columns in the 【Question】 without any unnecessary column or value
 - In `FROM <table>` or `JOIN <table>`, do not include unnecessary table
@@ -140,12 +152,13 @@ Here is a new example, please start answering:
 【Question】
 {}
 
-Decompose the question into sub questions, considering 【Requirements】 and 【Constraints】, and generate the SQL after thinking step by step:
+Decompose the question into sub questions, considering 【Requirements】 and 【SQL Constraints】, and generate the SQL after thinking step by step:
 【Answer】
 """
 
 reviser_template = """
 【Background】
+You are an experienced database administrator.
 When executing SQL below, some errors occurred, please fix up SQL and generate new SQL based on the information given.
 Solve the task step by step if you need to. When you find an answer, verify the answer carefully. 
 

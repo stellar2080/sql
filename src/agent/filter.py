@@ -1,6 +1,6 @@
 from src.exceptions import AgentTypeException
 from src.llm.llm_base import LLM_Base
-from src.utils.const import FILTER, DECOMPOSER
+from src.utils.const import FILTER, DECOMPOSER, MANAGER
 from src.utils.template import filter_template
 from src.utils.timeout import timeout
 from src.utils.utils import parse_json, info, user_message, get_res_content, \
@@ -42,7 +42,7 @@ class Filter(Agent_Base):
         return prompt,schema_str,evidence_str
 
     @timeout(180)
-    def get_filter_json(
+    def get_filter_ans(
         self,
         prompt: str,
         llm: LLM_Base
@@ -51,8 +51,7 @@ class Filter(Agent_Base):
         response = llm.call(messages=llm_message)
         answer = get_res_content(response)
         info(answer)
-        json_ans = parse_json(answer)
-        return json_ans
+        return answer
 
     def prune_schema(
         self,
@@ -108,9 +107,15 @@ class Filter(Agent_Base):
             else:
                 schema_str = message['schema']
                 prompt, _, evidence_str = self.create_filter_prompt(message["question"], vectordb,schema_str)
-            json_ans = self.get_filter_json(prompt, llm)
-            new_schema_str = self.prune_schema(json_ans,schema_str)
-            message["schema"] = new_schema_str
-            message["evidence"] = evidence_str
-            message["message_to"] = DECOMPOSER
+            ans = self.get_filter_ans(prompt, llm)
+            json_ans,flag = parse_json(ans)
+
+            if flag:
+                new_schema_str = self.prune_schema(json_ans,schema_str)
+                message["schema"] = new_schema_str
+                message["evidence"] = evidence_str
+                message["message_to"] = DECOMPOSER
+                return message
+
+            message["message_to"] = MANAGER
             return message

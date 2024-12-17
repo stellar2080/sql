@@ -44,4 +44,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
-m.chat("I want to know the name of all companies")
+m.chat("Hello!I want to KNOW the name of all companies")

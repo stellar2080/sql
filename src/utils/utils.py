@@ -18,7 +18,7 @@ def deterministic_uuid(content: Union[str, bytes]) -> str:
 
     return content_uuid
 
-def parse_json(text: str) -> dict:
+def parse_json(text: str):
     start = text.rfind("```json")
     end = text.rfind("```", start + 7)
 
@@ -29,15 +29,15 @@ def parse_json(text: str) -> dict:
             json_data = json.loads(json_string)
             valid = check_filter_response(json_data)
             if valid:
-                return json_data
+                return json_data,True
             else:
-                return {}
+                return json_data,False
         except:
             info(f"parse json error!\n")
             info(f"json_string: {json_string}\n\n")
             pass
 
-    return {}
+    return text,False
 
 def check_filter_response(json_data: Dict) -> bool:
     FLAGS = ['keep_all', 'drop_all']
