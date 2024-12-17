@@ -30,4 +30,4 @@ TOOLS = [
     }
 ]
 
-FUNC_NAMES = ['get_schema','query_database']
+FUNC_NAMES = ['get_schema']
