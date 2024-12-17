@@ -29,7 +29,6 @@ class Manager:
                 "schema": None,
                 "evidence": None,
                 "message_to": None,
-                "receiver_mode": None,
                 "result": None
             }
         elif self.mode == 'train':
@@ -101,7 +100,6 @@ class Manager:
             info("MESSAGE: " + str(self.message))
             if i == 0:
                 self.message["message_to"] = RECEIVER
-                self.message["receiver_mode"] = 0
 
             if self.message["message_to"] == MANAGER:
                 info("The message is begin processed by manager...")

@@ -1,5 +1,4 @@
-receiver_template = [
-"""
+receiver_template = """
 【Background】
 You are an expert in the field of finance and database
 Your task is to determine whether answering the user question requires querying databases
@@ -10,29 +9,12 @@ Your task is to determine whether answering the user question requires querying 
 【Question】
 {}
 【Answer】
-""",
-
 """
-【Background】
-You are an expert in the field of finance and database
-Given the 【Schema】, your task is to determine whether answering the user question requires querying databases
-【Requirements】
-- If you need to query the database to answer, you don't need to output any text, just make a "function calling"
-- If not for the previous case, you can output your answer directly
-
-【Question】
-{}
-【Schema】
-{}
-【Answer】
-"""
-]
 
 filter_template = """
 【Background】
-As an experienced and professional database administrator
-Your task is to analyze a user question and a database schema to provide relevant information. 
-The database schema consists of table descriptions, each containing multiple column descriptions. 
+As an experienced and professional database administrator.
+Given a database schema consisting of table descriptions, each table contains multiple column descriptions.
 Your goal is to identify the relevant tables and columns based on the user question and evidence provided.
 
 【Requirements】
