@@ -25,4 +25,5 @@ class Qwen(LLM_Base):
       max_tokens=MAX_TOKENS,
       tools=tools,
     )
+    info(response)
     return response

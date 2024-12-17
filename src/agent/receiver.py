@@ -58,7 +58,6 @@ class Receiver(Agent_Base):
             message['schema'] = schema_str
 
         response = self.get_response(prompt, llm, mode)
-        info(response)
 
         finish_reason = get_res_finish_reason(response)
 
