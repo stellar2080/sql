@@ -1,11 +1,9 @@
-import json
-
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 
-from src.utils.utils import deterministic_uuid, extract_documents, extract_embedding_ids, info
+from src.utils.utils import extract_documents, extract_embedding_ids, info
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY
 
 

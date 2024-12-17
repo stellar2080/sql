@@ -29,6 +29,7 @@ class Manager:
                 "schema": None,
                 "evidence": None,
                 "message_to": None,
+                "receiver_mode": None,
                 "result": None
             }
         elif self.mode == 'train':
@@ -37,16 +38,11 @@ class Manager:
 
     def train(
         self,
-        question: str = None,
-        sql: str = None,
         schema: str = None,
         doc: list = None,
         schema_list: list = None,
         doc_list: list = None,
     ):
-        if question and sql:
-            info("Adding sql...")
-            self.vectordb.add_question_sql(question=question, sql=sql)
         if schema:
             info("Adding schema...")
             self.train_schema(schema)
@@ -104,19 +100,18 @@ class Manager:
             info("ITERATION {}".format(i))
             info("MESSAGE: " + str(self.message))
             if i == 0:
-                self.message["message_to"] = FILTER
+                self.message["message_to"] = RECEIVER
+                self.message["receiver_mode"] = 0
 
             if self.message["message_to"] == MANAGER:
                 info("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == RECEIVER:
-                self.message = self.receiver.chat(self.message, self.llm)
+                self.message = self.receiver.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == FILTER:
                 self.message = self.filter.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
                 self.message = self.reviser.chat(self.message, self.llm)
-        # for key, value in self.message.items():
-        #     print(f"{key}: {value}")
         return self.message

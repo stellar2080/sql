@@ -1,4 +1,5 @@
-receiver_template_0 = """
+receiver_template = [
+"""
 【Background】
 You are an expert in the field of finance and database
 Your task is to determine whether answering the user question requires querying databases
@@ -9,9 +10,9 @@ Your task is to determine whether answering the user question requires querying 
 【Question】
 {}
 【Answer】
-"""
+""",
 
-receiver_template_1 = """
+"""
 【Background】
 You are an expert in the field of finance and database
 Given the 【Schema】, your task is to determine whether answering the user question requires querying databases
@@ -25,6 +26,7 @@ Given the 【Schema】, your task is to determine whether answering the user que
 {}
 【Answer】
 """
+]
 
 filter_template = """
 【Background】

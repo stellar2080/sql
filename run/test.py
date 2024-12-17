@@ -44,13 +44,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
-message = {
-    "question": "hello! I want to know the current ratio of all companies",
-    "sql": None,
-    "schema": None,
-    "evidence": None,
-    "message_to": None,
-    "result": None
-}
-
-m.receiver.chat(message,m.llm)
+print(m.chat("I want to know the name of all companies"))

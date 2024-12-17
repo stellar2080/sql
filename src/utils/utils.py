@@ -122,3 +122,9 @@ def get_res_finish_reason(response):
 
 def get_res_tool_calls(response):
     return response.output.choices[0].message.tool_calls
+
+def schema_list_to_str(schema_list):
+    schema_str = ""
+    for schema in schema_list:
+        schema_str += "=====" + schema
+    return schema_str
