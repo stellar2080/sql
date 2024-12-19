@@ -15,9 +15,12 @@ m = Manager(
     },
 )
 
-# m.clear()
+# m.clear_rag()
+
 # m.train(schema_list=SCHEMA)
 # m.train(doc_list=DOCUMENT)
+
+# m.clear_memory()
 
 # with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_train_text2sql.json')) as f:
 #     data = json.load(f)
@@ -25,4 +28,3 @@ m = Manager(
 #         print("question: ", item["question"],
 #               "\nsql: ", item["sql"],)
 #         m.train(item["question"],item["sql"])
-

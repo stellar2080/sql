@@ -74,12 +74,17 @@ class Manager:
         self.vectordb.add_key(embedding_id=embedding_id,key=doc[0])
         self.vectordb.add_doc(embedding_id=embedding_id,document=doc[1])
 
-    def clear(
+    def clear_rag(
         self
     ):
         try:
             info("Clearing rag data...")
             self.vectordb.clear_rag()
+        except Exception as e:
+            info(e)
+
+    def clear_memory(self):
+        try:
             info("Clearing memory data...")
             self.vectordb.clear_memory()
         except Exception as e:

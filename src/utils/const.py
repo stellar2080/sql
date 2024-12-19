@@ -20,6 +20,10 @@ N_RESULTS_DOC = 6
 
 N_RESULTS_KEY = 6
 
+N_RESULTS_SC = 6
+
+N_RESULTS_MEMORY = 3
+
 TOOLS = [
     {
         'type': 'function',

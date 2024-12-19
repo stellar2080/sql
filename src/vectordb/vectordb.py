@@ -5,7 +5,7 @@ from .vectordb_base import VectorDB_Base
 import time
 
 from src.utils.utils import extract_documents, extract_embedding_ids, info, deterministic_uuid
-from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY
+from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC
 
 
 class VectorDB(VectorDB_Base):
@@ -19,9 +19,10 @@ class VectorDB(VectorDB_Base):
 
         default_ef = embedding_functions.DefaultEmbeddingFunction()
         self.embedding_function = config.get("embedding_function", default_ef)
-        self.n_results_key = config.get("n_results_key", config.get("n_results", N_RESULTS_KEY))
-        self.n_results_doc = config.get("n_results_doc", config.get("n_results", N_RESULTS_DOC))
-        self.n_results_schema = config.get("n_results_schema", config.get("n_results", 10))
+        self.n_results_key = config.get("n_results_key", N_RESULTS_KEY)
+        self.n_results_doc = config.get("n_results_doc", N_RESULTS_DOC)
+        self.n_results_schema = config.get("n_results_schema", N_RESULTS_SC)
+        self.n_results_memory = config.get("n_results_memory", N_RESULTS_MEMORY)
 
         self.chroma_client = None
 
@@ -96,7 +97,7 @@ class VectorDB(VectorDB_Base):
             ids=embedding_id,
             documents=memory,
             embeddings=self.generate_embedding(memory),
-            metadatas={"Timestamp": timestamp},
+            metadatas={"timestamp": timestamp},
         )
 
     def remove_data(self, embedding_id: str, **kwargs) -> bool:
@@ -114,6 +115,24 @@ class VectorDB(VectorDB_Base):
             return True
         else:
             return False
+
+    def get_last_n_memory(self, last_n:int):
+        count = self.memory_collection.count()
+        return extract_documents(
+            self.memory_collection.get(offset=count - last_n)
+        )
+
+    def get_related_memory(
+        self,
+        question: str,
+        **kwargs
+    ):
+        return extract_documents(
+            self.memory_collection.query(
+                query_texts=[question],
+                n_results=self.n_results_memory,
+            )
+        )
 
     def get_related_schema(self, question: str, **kwargs) -> list:
         return extract_documents(
