@@ -2,8 +2,9 @@ import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
+import time
 
-from src.utils.utils import extract_documents, extract_embedding_ids, info
+from src.utils.utils import extract_documents, extract_embedding_ids, info, deterministic_uuid
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY
 
 
@@ -66,31 +67,39 @@ class VectorDB(VectorDB_Base):
             return embedding[0]
         return embedding
 
-    def add_schema(self, embedding_id: str, schema: str, **kwargs) -> str:
+    def add_schema(self, embedding_id: str, schema: str, **kwargs):
         self.schema_collection.add(
+            ids=embedding_id,
             documents=schema,
             embeddings=self.generate_embedding(schema),
-            ids=embedding_id,
         )
-        return embedding_id
 
-    def add_doc(self, embedding_id: str, document: str, **kwargs) -> str:
+    def add_doc(self, embedding_id: str, document: str, **kwargs):
         self.document_collection.add(
+            ids=embedding_id,
             documents=document,
             embeddings=self.generate_embedding(document),
-            ids=embedding_id,
         )
-        return embedding_id
 
-    def add_key(self, embedding_id: str, key: str, **kwargs) -> str:
+    def add_key(self, embedding_id: str, key: str, **kwargs):
         self.key_collection.add(
+            ids=embedding_id,
             documents=key,
             embeddings=self.generate_embedding(key),
-            ids=embedding_id,
         )
-        return embedding_id
 
-    def remove_training_data(self, embedding_id: str, **kwargs) -> bool:
+    def add_memory(self, memory: str, **kwargs):
+        timestamp = time.time()
+        info(timestamp)
+        embedding_id = deterministic_uuid(memory) + "-mem"
+        self.memory_collection.add(
+            ids=embedding_id,
+            documents=memory,
+            embeddings=self.generate_embedding(memory),
+            metadatas={"Timestamp": timestamp},
+        )
+
+    def remove_data(self, embedding_id: str, **kwargs) -> bool:
         if embedding_id.endswith("-key"):
             self.key_collection.delete(ids=[embedding_id])
             return True
@@ -99,6 +108,9 @@ class VectorDB(VectorDB_Base):
             return True
         elif embedding_id.endswith("-doc"):
             self.document_collection.delete(ids=[embedding_id])
+            return True
+        elif embedding_id.endswith("-mem"):
+            self.memory_collection.delete(ids=[embedding_id])
             return True
         else:
             return False

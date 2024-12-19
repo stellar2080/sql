@@ -43,4 +43,3 @@ m = Manager(
 #               file=txt_file
 #             )
 
-m.chat("Hello!I want to KNOW the code of all companies")

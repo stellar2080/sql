@@ -18,7 +18,11 @@ class VectorDB_Base(ABC):
         pass
 
     @abstractmethod
-    def remove_training_data(self, id: str, **kwargs) -> bool:
+    def add_memory(self, memory: str, **kwargs) -> str:
+        pass
+
+    @abstractmethod
+    def remove_data(self, id: str, **kwargs) -> bool:
         pass
 
     @abstractmethod
