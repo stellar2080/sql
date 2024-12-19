@@ -52,14 +52,14 @@ class Receiver(Agent_Base):
             if tool_calls is None:
                 raise Exception("No tool calls found.")
 
-            elif len(tool_calls) == 1:
+            else:
                 info(tool_calls)
                 func_name = tool_calls[0]['function']['name']
 
                 if func_name not in FUNC_NAMES:
                     raise Exception("The called function was not found")
 
-                elif func_name == 'get_schema':
+                elif func_name == 'query_database':
                     message['message_to'] = FILTER
                     return message
 

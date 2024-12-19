@@ -29,15 +29,15 @@ def parse_json(text: str):
             json_data = json.loads(json_string)
             valid = check_filter_response(json_data)
             if valid:
-                return json_data,True
+                return json_data
             else:
-                return json_data,False
+                return text
         except:
             info(f"parse json error!\n")
             info(f"json_string: {json_string}\n\n")
             pass
 
-    return text,False
+    return text
 
 def check_filter_response(json_data: Dict) -> bool:
     FLAGS = ['keep_all', 'drop_all']

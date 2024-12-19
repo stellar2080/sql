@@ -4,7 +4,7 @@ You are an expert in the field of finance and database.
 Your task is to determine whether answering the user question requires querying databases.
 
 【Requirements】
-- If you need to get the database schema to make a decision, you don't need to output any text, just make a "function calling".
+- If answering the question requires querying the database, you don't need to output any text, just make a "function calling".
 - If not for the above case, you can output your answer directly.
 
 【Question】
@@ -16,20 +16,16 @@ filter_template = """
 【Background】
 You are an expert in the field of finance and database. 
 Given a user question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
-
-Your task involves two cases:
-(1) If you can answer a question without querying the database, you can output your answer directly.
-(2) If not for the above case, refer to 【Requirements】.
+Your task is to select relevant tables and columns based on user questions and evidence provided.
 
 【Requirements】
-Please identify the relevant tables and columns based on the user question and evidence provided.
 - If all columns of a table need to be kept, mark it as "keep_all".
 - If a table is completely irrelevant to the user question and evidence, mark it as "drop_all".
 - If not for the previous two cases, sort the columns in each relevant table in descending order of relevance, determine which columns need to be kept.
 - You don't need to give any explanation, just output the answer in JSON format.
 
 ==========
-Here is an example about case (1):
+Here is a typical example:
 
 【Schema】
 =====
@@ -42,18 +38,13 @@ Column: [
 Table: balance_sheet,
 Column: [
 (stk_code, Comment: securities code. Types: text.),
-(cash_cb, Comment: cash and deposits with central bank. Types: real.),
 (ib_deposits, Comment: due from interbank deposits. Types: real.),
 (prec_metals, Comment: noble metal. Types: real.),
-(lending_funds, Comment: lending funds. Types: real.),
-(trad_fas, Comment: trading financial assets. Types: real.),
 ]
 =====
 Table: income_statement,
 Column: [
 (stk_code, Comment: securities code. Types: text.),
-(oper_rev, Comment: operating income. Types: real.),
-(net_int_inc, Comment: net interest income. Types: real.),
 (fee_com_net_inc, Comment: net income from handling fees and commissions. Types: real.),
 (fee_com_inc, Comment: fee and commission income. Types: real.),
 (fee_com_exp, Comment: handling fees and commission expenses. Types: real.),
@@ -71,12 +62,6 @@ What is the fee and commission income of China Construction Bank in millions of 
 }}
 ```
 
-Here is an example about case (2):
-【Question】
-Hello!
-【Answer】
-Hello! How can I help you?
-
 ==========
 Here is a new example, considering 【Requirements】, please start answering:
 
@@ -91,8 +76,9 @@ Here is a new example, considering 【Requirements】, please start answering:
 
 decompose_template = """
 【Background】
-You are an experienced database administrator.
-Given a 【Schema】 description, a knowledge 【Evidence】 and the 【Question】, you need to use valid SQLite and understand the database and knowledge, and then decompose the question into subquestions for text-to-SQL generation.
+You are an experienced financial database administrator.
+Given a database schema, an evidence and a question.
+Your task is to decompose the question into subquestions and use the SQLite dialect for text-to-SQL generation.
 
 【Requirements】
 - Keep your answers brief
@@ -124,7 +110,7 @@ Column: [
 【Question】
 List securities codes and securities names with cash and deposits with central bank over the average.
 
-Decompose the question into sub questions, considering 【Requirements】 and 【Constraints】, and generate the SQL after thinking step by step:
+Decompose the question into sub questions, considering 【Requirements】 and 【SQL Constraints】, and generate the SQL after thinking step by step:
 【Answer】
 Sub question 1: Get the average value of cash and deposits with central bank.
 SQL
@@ -140,6 +126,7 @@ FROM balance_sheet AS b1 INNER JOIN basic_info AS b2
 ON b1.stk_code = b2.stk_code
 WHERE cash_cb > (SELECT AVG(cash_cb) FROM balance_sheet)
 ```
+
 This SQL statement already solves the problem, so there is no need to continue generating text.
 
 ==========
@@ -158,11 +145,11 @@ Decompose the question into sub questions, considering 【Requirements】 and �
 
 reviser_template = """
 【Background】
-You are an experienced database administrator.
+You are an experienced financial database administrator.
 When executing SQL below, some errors occurred, please fix up SQL and generate new SQL based on the information given.
 Solve the task step by step if you need to. When you find an answer, verify the answer carefully. 
 
-【Constraints】
+【SQL Constraints】
 When generating SQL, we should always consider constraints:
 - In `SELECT <column>`, just select needed columns in the 【Question】 without any unnecessary column or value
 - In `FROM <table>` or `JOIN <table>`, do not include unnecessary table

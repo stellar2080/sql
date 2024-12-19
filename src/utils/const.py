@@ -24,10 +24,10 @@ TOOLS = [
     {
         'type': 'function',
         'function': {
-            'name': 'get_schema',
-            'description': 'Get the schema of financial databases'
+            'name': 'query_database',
+            'description': 'Query the financial databases'
         }
     }
 ]
 
-FUNC_NAMES = ['get_schema']
+FUNC_NAMES = ['query_database']

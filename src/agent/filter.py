@@ -31,11 +31,9 @@ class Filter(Agent_Base):
         self,
         question: str,
         vectordb: VectorDB,
-        schema_str: str = None,
     ) -> (str,str):
-        if schema_str is None:
-            schema_list = vectordb.get_related_schema(question)
-            schema_str = schema_list_to_str(schema_list)
+        schema_list = vectordb.get_related_schema(question)
+        schema_str = schema_list_to_str(schema_list)
         evidence_str = self.get_evidence_str(question, vectordb)
         prompt = filter_template.format(schema_str, evidence_str, question)
         info(prompt)
@@ -102,20 +100,15 @@ class Filter(Agent_Base):
             raise AgentTypeException("The message should not be processed by " + FILTER + ". It is sent to " + message["message_to"])
         else:
             info("The message is being processed by " + FILTER + "...")
-            if message['schema'] is None:
-                prompt, schema_str, evidence_str = self.create_filter_prompt(message["question"], vectordb)
-            else:
-                schema_str = message['schema']
-                prompt, _, evidence_str = self.create_filter_prompt(message["question"], vectordb,schema_str)
+            prompt, schema_str, evidence_str = self.create_filter_prompt(message["question"], vectordb)
             ans = self.get_filter_ans(prompt, llm)
-            json_ans,flag = parse_json(ans)
+            json_ans = parse_json(ans)
 
-            if flag:
+            if type(json_ans) == dict:
                 new_schema_str = self.prune_schema(json_ans,schema_str)
                 message["schema"] = new_schema_str
                 message["evidence"] = evidence_str
                 message["message_to"] = DECOMPOSER
                 return message
 
-            message["message_to"] = MANAGER
-            return message
+            raise Exception("Error parsing json: "+json_ans)
