@@ -25,7 +25,7 @@ TOOLS = [
         'type': 'function',
         'function': {
             'name': 'query_database',
-            'description': 'Query the financial databases'
+            'description': 'No arguments needed, query the financial databases.'
         }
     }
 ]

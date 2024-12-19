@@ -98,7 +98,7 @@ class Manager:
         for i in range(MAX_ITERATIONS):
             info("ITERATION {}".format(i))
             info("MESSAGE: " + str(self.message))
-            if i == 0:
+            if i == 0 and self.message["message_to"] is None:
                 self.message["message_to"] = RECEIVER
 
             if self.message["message_to"] == MANAGER:
@@ -112,4 +112,5 @@ class Manager:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
                 self.message = self.reviser.chat(self.message, self.llm)
+
         return self.message

@@ -2,7 +2,6 @@ import json
 import os
 
 from src.manager.manager import Manager
-from src.utils.utils import info
 
 ROOT_PATH = os.path.abspath("../")
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
