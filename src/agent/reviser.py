@@ -81,16 +81,16 @@ class Reviser(Agent_Base):
     def run_sql(
         self,
         sql: str,
-        func: int = 0
+        mode: str = "cr"
     ):
         if self.is_conn() is False:
             raise DbConnException("Please connect to database first.")
-        if func == 0:
+        if mode == "cr":
             cursor = self.conn.cursor()
             cursor.execute(sql)
             result = cursor.fetchall()
             return result
-        elif func == 1:
+        elif mode == "pd":
             result = pd.read_sql_query(sql, self.conn)
             return result
 
@@ -98,32 +98,35 @@ class Reviser(Agent_Base):
     def chat(
         self,
         message: dict,
-        llm: LLM_Base=None
+        llm: LLM_Base=None,
+        mode: str = "cr"
     ):
         if message["message_to"] != REVISER:
             raise AgentTypeException("The message should not be processed by " + REVISER + ". It is sent to " + message["message_to"])
         else:
             info("The message is being processed by " + REVISER + "...")
             sqlite_error = ""
-            error_class = ""
             except_flag = False
             result = None
             try:
-                result = self.run_sql(message["sql"])
-            except (sqlite3.Error,Exception) as error:
-                sqlite_error = str(error.args)
-                error_class = str(error.__class__)
-                except_flag = True
+                result = self.run_sql(message["sql"],mode)
+            except Exception as error:
+                if mode == "cr":
+                    sqlite_error = str(error.args[0])
+                    except_flag = True
+                elif mode == "pd":
+                    sqlite_error = str(error.args[0])
+                    sqlite_error = sqlite_error[sqlite_error.index("': ") + 3:]
+                    except_flag = True
 
             if except_flag is False:
                 message["message_to"] = MANAGER
-                message["result"] = result
+                message["result"] = str(result)
                 return message
             else:
                 prompt = self.create_reviser_prompt(
                     message,
                     sqlite_error,
-                    error_class
                 )
                 new_sql = self.revise(prompt, llm)
                 message["sql"] = new_sql

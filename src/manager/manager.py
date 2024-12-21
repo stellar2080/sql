@@ -127,7 +127,7 @@ class Manager:
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
-                self.message = self.reviser.chat(self.message, self.llm)
+                self.message = self.reviser.chat(self.message, self.llm, mode="pd")
 
         if self.message["result"] is not None:
             mem_messages = [user_message(self.message["question"]), assistant_message(self.message["result"])]

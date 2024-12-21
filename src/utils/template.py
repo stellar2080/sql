@@ -173,9 +173,6 @@ When generating SQL, we should always consider constraints:
 【SQLite error】 
 {}
 
-【Exception class】
-{}
-
 Now please fix up old SQL and generate new SQL again.
 The format of the new SQL is as follows.
 ```sql
