@@ -1,6 +1,7 @@
 import os
 
 from src.manager.manager import Manager
+from src.utils.const import MANAGER
 from src.utils.data_rag import SCHEMA,DOCUMENT
 
 ROOT_PATH = os.path.abspath("../")
@@ -19,8 +20,6 @@ m = Manager(
 
 # m.train(schema_list=SCHEMA)
 # m.train(doc_list=DOCUMENT)
-
-# m.clear_memory()
 
 # with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_train_text2sql.json')) as f:
 #     data = json.load(f)

@@ -43,3 +43,5 @@ m = Manager(
 #               file=txt_file
 #             )
 
+# m.clear_memory()
+m.chat(question="hello!!")

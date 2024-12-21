@@ -4,7 +4,7 @@ from src.agent.receiver import Receiver
 from src.agent.reviser import Reviser
 from src.exceptions import ArgsException
 from src.llm.qwen import Qwen
-from src.utils.utils import info, deterministic_uuid, user_message
+from src.utils.utils import info, deterministic_uuid, user_message, assistant_message, error
 from src.vectordb.vectordb import VectorDB
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, RECEIVER
 
@@ -81,24 +81,35 @@ class Manager:
             info("Clearing rag data...")
             self.vectordb.clear_rag()
         except Exception as e:
-            info(e)
+            error(e)
+
+    def add_memory(self,messages:list):
+        try:
+            info("Adding memory...")
+            memory_str = ','.join(map(str, messages))
+            self.vectordb.add_memory(memory_str)
+        except Exception as e:
+            error(e)
 
     def clear_memory(self):
         try:
             info("Clearing memory data...")
             self.vectordb.clear_memory()
         except Exception as e:
-            info(e)
+            error(e)
 
 
     def chat(
         self,
-        question=None
+        question: str = None,
+        message: dict = None,
     ):
         if question is not None:
             self.message["question"] = question
+        elif message is not None:
+            self.message = message
         else:
-            raise ArgsException("Please provide a question")
+            raise ArgsException("Please provide a question or a message")
 
         for i in range(MAX_ITERATIONS):
             info("ITERATION {}".format(i))
@@ -118,4 +129,7 @@ class Manager:
             elif self.message["message_to"] == REVISER:
                 self.message = self.reviser.chat(self.message, self.llm)
 
+        if self.message["result"] is not None:
+            mem_messages = [user_message(self.message["question"]), assistant_message(self.message["result"])]
+            self.add_memory(mem_messages)
         return self.message

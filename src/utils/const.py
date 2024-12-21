@@ -24,6 +24,8 @@ N_RESULTS_SC = 6
 
 N_RESULTS_MEMORY = 3
 
+N_LAST_MEMORY = 1
+
 TOOLS = [
     {
         'type': 'function',

@@ -5,24 +5,17 @@ from .vectordb_base import VectorDB_Base
 import time
 
 from src.utils.utils import extract_documents, extract_embedding_ids, info, deterministic_uuid
-from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC
+from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY
 
 
 class VectorDB(VectorDB_Base):
     def __init__(self, config):
         super().__init__(config)
 
-        path = config.get("vectordb_path", ".")
+        path = config.get("vectordb_path", None)
         curr_client = config.get("client", "persistent")
         host = config.get("host", None)
         port = config.get("port", None)
-
-        default_ef = embedding_functions.DefaultEmbeddingFunction()
-        self.embedding_function = config.get("embedding_function", default_ef)
-        self.n_results_key = config.get("n_results_key", N_RESULTS_KEY)
-        self.n_results_doc = config.get("n_results_doc", N_RESULTS_DOC)
-        self.n_results_schema = config.get("n_results_schema", N_RESULTS_SC)
-        self.n_results_memory = config.get("n_results_memory", N_RESULTS_MEMORY)
 
         self.chroma_client = None
 
@@ -32,14 +25,15 @@ class VectorDB(VectorDB_Base):
             )
         elif curr_client == "http":
             self.chroma_client = chromadb.HttpClient(host=host, port=port)
-        elif curr_client == "in-memory":
+        elif curr_client == "ephemeral":
             self.chroma_client = chromadb.EphemeralClient(
                 settings=Settings(anonymized_telemetry=False)
             )
-        elif isinstance(curr_client, chromadb.api.client.Client):
-            self.chroma_client = curr_client
         else:
             raise TypeError(f"Unknown client type or it is unsupported: {curr_client}")
+
+        default_ef = embedding_functions.DefaultEmbeddingFunction()
+        self.embedding_function = config.get("embedding_function", default_ef)
 
         self.document_collection = self.chroma_client.get_or_create_collection(
             name="document",
@@ -90,8 +84,8 @@ class VectorDB(VectorDB_Base):
         )
 
     def add_memory(self, memory: str, **kwargs):
-        timestamp = time.time()
-        info(timestamp)
+        timestamp = str(time.time())
+        info("MEMORY_TIMESTAMP: " + timestamp)
         embedding_id = deterministic_uuid(memory) + "-mem"
         self.memory_collection.add(
             ids=embedding_id,
@@ -116,10 +110,10 @@ class VectorDB(VectorDB_Base):
         else:
             return False
 
-    def get_last_n_memory(self, last_n:int):
+    def get_last_n_memory(self):
         count = self.memory_collection.count()
         return extract_documents(
-            self.memory_collection.get(offset=count - last_n)
+            self.memory_collection.get(offset=count - N_LAST_MEMORY)
         )
 
     def get_related_memory(
@@ -130,7 +124,7 @@ class VectorDB(VectorDB_Base):
         return extract_documents(
             self.memory_collection.query(
                 query_texts=[question],
-                n_results=self.n_results_memory,
+                n_results=N_RESULTS_MEMORY,
             )
         )
 
@@ -138,7 +132,7 @@ class VectorDB(VectorDB_Base):
         return extract_documents(
             self.schema_collection.query(
                 query_texts=[question],
-                n_results=self.n_results_schema,
+                n_results=N_RESULTS_SC,
             )
         )
 
@@ -146,7 +140,7 @@ class VectorDB(VectorDB_Base):
         return extract_documents(
             self.document_collection.query(
                 query_texts=[question],
-                n_results=self.n_results_doc,
+                n_results=N_RESULTS_DOC,
             )
         )
 
@@ -154,7 +148,7 @@ class VectorDB(VectorDB_Base):
         return extract_documents(
             self.key_collection.query(
                 query_texts=[question],
-                n_results=self.n_results_key,
+                n_results=N_RESULTS_KEY,
             )
         )
 
@@ -162,7 +156,7 @@ class VectorDB(VectorDB_Base):
         return extract_embedding_ids(
             self.key_collection.query(
                 query_texts=[question],
-                n_results=self.n_results_key,
+                n_results=N_RESULTS_KEY,
             )
         )
 

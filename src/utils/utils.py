@@ -33,8 +33,8 @@ def parse_json(text: str):
             else:
                 return text
         except:
-            info(f"parse json error!\n")
-            info(f"json_string: {json_string}\n\n")
+            error(f"parse json error!\n")
+            error(f"json_string: {json_string}\n\n")
             pass
 
     return text
@@ -50,8 +50,8 @@ def check_filter_response(json_data: Dict) -> bool:
         elif isinstance(v, list):
             pass
         else:
-            info(f"invalid flag type: {v}\n")
-            info(f"json_data: {json_data}\n\n")
+            error(f"invalid flag type: {v}\n")
+            error(f"json_data: {json_data}\n\n")
             return False
     return True
 
@@ -64,10 +64,10 @@ def parse_sql(text: str) -> str:
             sql_string = text[start + 7: end]
             return sql_string
         else:
-            info(f"parse sql error!\n")
+            error(f"parse sql error!\n")
             return ""
-    except Exception as error:
-        info(error)
+    except Exception as e:
+        error(e)
         pass
 
 def extract_documents(query_results) -> list:
@@ -102,6 +102,10 @@ def extract_embedding_ids(query_results) -> list:
 
 def info(message):
     print("[INFO]:",end="")
+    print(message)
+
+def error(message):
+    print("[ERROR]:",end="")
     print(message)
 
 
