@@ -44,6 +44,5 @@ m = Manager(
 #             )
 
 # m.clear_memory()
-# m.chat("I want to know name of all company")
-print(m.vectordb.get_last_n_memory())
+m.chat("Tell me the name of all company")
 

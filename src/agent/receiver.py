@@ -42,7 +42,7 @@ class Receiver(Agent_Base):
         finish_reason = get_res_finish_reason(response)
 
         if finish_reason == "stop":
-            message["result"] = get_res_content(response)
+            message["response"] = get_res_content(response)
             message['message_to'] = MANAGER
             return message
 

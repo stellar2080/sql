@@ -4,7 +4,7 @@ from src.agent.receiver import Receiver
 from src.agent.reviser import Reviser
 from src.exceptions import ArgsException
 from src.llm.qwen import Qwen
-from src.utils.utils import info, deterministic_uuid, user_message, assistant_message, error
+from src.utils.utils import info, deterministic_uuid, error, get_memory_str
 from src.vectordb.vectordb import VectorDB
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, RECEIVER
 
@@ -29,7 +29,8 @@ class Manager:
                 "schema": None,
                 "evidence": None,
                 "message_to": None,
-                "result": None
+                "response": None,
+                "sql_result": None
             }
         elif self.mode == 'train':
             info("training mode")
@@ -83,10 +84,17 @@ class Manager:
         except Exception as e:
             error(e)
 
-    def add_memory(self,messages:list):
+    def record_memory(self):
         try:
-            info("Adding memory...")
-            memory_str = ','.join(map(str, messages))
+
+            if self.message["sql_result"] is not None:
+                memory_str = get_memory_str(["user", "assistant"],[self.message['question'],self.message["sql"]])
+            elif self.message["response"] is not None:
+                memory_str = get_memory_str(["user", "assistant"],[self.message['question'],self.message["response"]])
+            else:
+                error("Failed to record memory.")
+                return
+            info("Recording memory...")
             self.vectordb.add_memory(memory_str)
         except Exception as e:
             error(e)
@@ -128,8 +136,5 @@ class Manager:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
                 self.message = self.reviser.chat(self.message, self.llm, mode="pd")
-
-        if self.message["result"] is not None:
-            mem_messages = [user_message(self.message["question"]), assistant_message(self.message["result"])]
-            self.add_memory(mem_messages)
+        self.record_memory()
         return self.message

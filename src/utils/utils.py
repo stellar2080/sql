@@ -118,6 +118,10 @@ def user_message(message: str):
 def assistant_message(message: str):
     return {'role': 'assistant', 'content': message}
 
+def get_memory_str(role: list,memory: list) -> str:
+    memory_dict = {role[0]: memory[0], role[1]: memory[1]}
+    return json.dumps(memory_dict)
+
 def get_res_content(response):
     return response.output.choices[0].message.content
 

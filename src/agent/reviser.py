@@ -121,7 +121,7 @@ class Reviser(Agent_Base):
 
             if except_flag is False:
                 message["message_to"] = MANAGER
-                message["result"] = str(result)
+                message["sql_result"] = result
                 return message
             else:
                 prompt = self.create_reviser_prompt(
