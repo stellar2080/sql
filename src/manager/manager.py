@@ -2,10 +2,9 @@ from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.receiver import Receiver
 from src.agent.reviser import Reviser
-from src.exceptions import ArgsException
 from src.llm.qwen import Qwen
-from src.utils.utils import info, deterministic_uuid, error, get_memory_str
 from src.vectordb.vectordb import VectorDB
+from src.utils.utils import info, deterministic_uuid, error, get_memory_str
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, RECEIVER
 
 
@@ -71,9 +70,10 @@ class Manager:
         doc: list = None,
     ):
         key_n_doc = doc[0] + ": " +  doc[1]
-        embedding_id = deterministic_uuid(key_n_doc) + "-doc"
-        self.vectordb.add_key(embedding_id=embedding_id,key=doc[0])
-        self.vectordb.add_doc(embedding_id=embedding_id,document=doc[1])
+        key_id = deterministic_uuid(key_n_doc) + "-key"
+        doc_id = deterministic_uuid(doc[1]) + "-doc"
+        self.vectordb.add_key(embedding_id=key_id,key=doc[0],doc_id=doc_id)
+        self.vectordb.add_doc(embedding_id=doc_id,document=doc[1])
 
     def clear_rag(
         self
@@ -117,7 +117,7 @@ class Manager:
         elif message is not None:
             self.message = message
         else:
-            raise ArgsException("Please provide a question or a message")
+            raise Exception("Please provide a question or a message")
 
         for i in range(MAX_ITERATIONS):
             info("ITERATION {}".format(i))

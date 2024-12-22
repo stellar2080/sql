@@ -1,10 +1,11 @@
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
+
 from .vectordb_base import VectorDB_Base
 import time
 
-from src.utils.utils import extract_documents, extract_embedding_ids, info, deterministic_uuid
+from src.utils.utils import info, deterministic_uuid, extract_query_results
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY
 
 
@@ -76,11 +77,12 @@ class VectorDB(VectorDB_Base):
             embeddings=self.generate_embedding(document),
         )
 
-    def add_key(self, embedding_id: str, key: str, **kwargs):
+    def add_key(self, embedding_id: str, key: str, doc_id: str,**kwargs):
         self.key_collection.add(
             ids=embedding_id,
             documents=key,
             embeddings=self.generate_embedding(key),
+            metadatas={"doc_id": doc_id}
         )
 
     def add_memory(self, memory: str, **kwargs):
@@ -112,8 +114,9 @@ class VectorDB(VectorDB_Base):
 
     def get_last_n_memory(self):
         count = self.memory_collection.count()
-        return extract_documents(
-            self.memory_collection.get(offset=count - N_LAST_MEMORY)
+        return extract_query_results(
+            self.memory_collection.get(offset=count - N_LAST_MEMORY),
+            extract='documents'
         )
 
     def get_related_memory(
@@ -121,53 +124,68 @@ class VectorDB(VectorDB_Base):
         question: str,
         **kwargs
     ):
-        return extract_documents(
+        return extract_query_results(
             self.memory_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_MEMORY,
-            )
+            ),
+            extract='documents'
         )
 
     def get_related_schema(self, question: str, **kwargs) -> list:
-        return extract_documents(
+        return extract_query_results(
             self.schema_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_SC,
-            )
+            ),
+            extract='documents'
         )
 
     def get_related_doc(self, question: str, **kwargs) -> list:
-        return extract_documents(
+        return extract_query_results(
             self.document_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_DOC,
-            )
+            ),
+            extract='documents'
         )
 
     def get_related_key(self, question: str, **kwargs) -> list:
-        return extract_documents(
+        return extract_query_results(
             self.key_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,
-            )
+            ),
+            extract='documents'
         )
 
     def get_related_key_ids(self, question: str, **kwargs) -> list:
-        return extract_embedding_ids(
+        return extract_query_results(
             self.key_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,
-            )
+            ),
+            extract='ids'
         )
+
+    def get_related_key_meta(self, question: str, **kwargs) -> list:
+        res =  extract_query_results(
+            self.key_collection.query(
+                query_texts=[question],
+                n_results=N_RESULTS_KEY,
+            ),
+            extract='metadatas'
+        )
+        return [item['doc_id'] for item in res]
 
     def get_doc_by_id(
         self,
         embedding_ids,
     ):
-        if type(embedding_ids) == str:
+        if isinstance(embedding_ids,str):
             result = self.document_collection.get(ids=[embedding_ids])
             return result['documents'][0]
-        elif type(embedding_ids) == list:
+        elif isinstance(embedding_ids,list):
             result = self.document_collection.get(ids=embedding_ids)
             return result['documents']
 

@@ -70,35 +70,23 @@ def parse_sql(text: str) -> str:
         error(e)
         pass
 
-def extract_documents(query_results) -> list:
+def extract_query_results(query_results,extract: str) -> list:
     if query_results is None:
         return []
     info(query_results)
-    if "documents" in query_results:
-        documents = query_results["documents"]
+    if extract != 'documents' and extract != 'ids' and extract != 'metadatas':
+        raise ValueError("Extract type is not supported.")
+    if extract in query_results:
+        extracts = query_results[extract]
 
-        if len(documents) == 1 and isinstance(documents[0], list):
+        if len(extracts) == 1 and isinstance(extracts[0], list):
             try:
-                documents = [json.loads(doc) for doc in documents[0]]
+                extracts = [json.loads(doc) for doc in extracts[0]]
             except Exception as e:
-                return documents[0]
+                return extracts[0]
 
-        return documents
+        return extracts
 
-def extract_embedding_ids(query_results) -> list:
-    if query_results is None:
-        return []
-    info(query_results)
-    if "ids" in query_results:
-        ids = query_results["ids"]
-
-        if len(ids) == 1 and isinstance(ids[0], list):
-            try:
-                ids = [json.loads(doc) for doc in ids[0]]
-            except Exception as e:
-                return ids[0]
-
-        return ids
 
 def info(message):
     print("[INFO]:",end="")

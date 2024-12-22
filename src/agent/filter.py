@@ -1,6 +1,5 @@
-from src.exceptions import AgentTypeException
 from src.llm.llm_base import LLM_Base
-from src.utils.const import FILTER, DECOMPOSER, MANAGER
+from src.utils.const import FILTER, DECOMPOSER
 from src.utils.template import filter_template
 from src.utils.timeout import timeout
 from src.utils.utils import parse_json, info, user_message, get_res_content, \
@@ -97,14 +96,14 @@ class Filter(Agent_Base):
         vectordb: VectorDB= None,
     ):
         if message["message_to"] != FILTER:
-            raise AgentTypeException("The message should not be processed by " + FILTER + ". It is sent to " + message["message_to"])
+            raise Exception("The message should not be processed by " + FILTER + ". It is sent to " + message["message_to"])
         else:
             info("The message is being processed by " + FILTER + "...")
             prompt, schema_str, evidence_str = self.create_filter_prompt(message["question"], vectordb)
             ans = self.get_filter_ans(prompt, llm)
             json_ans = parse_json(ans)
 
-            if type(json_ans) == dict:
+            if isinstance(json_ans,dict):
                 new_schema_str = self.prune_schema(json_ans,schema_str)
                 message["schema"] = new_schema_str
                 message["evidence"] = evidence_str

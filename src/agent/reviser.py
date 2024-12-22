@@ -6,7 +6,6 @@ import pandas as pd
 import requests
 from typing_extensions import override
 
-from src.exceptions import AgentTypeException, DbConnException
 from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER
 from src.utils.template import reviser_template
@@ -84,7 +83,7 @@ class Reviser(Agent_Base):
         mode: str = "cr"
     ):
         if self.is_conn() is False:
-            raise DbConnException("Please connect to database first.")
+            raise Exception("Please connect to database first.")
         if mode == "cr":
             cursor = self.conn.cursor()
             cursor.execute(sql)
@@ -102,7 +101,7 @@ class Reviser(Agent_Base):
         mode: str = "cr"
     ):
         if message["message_to"] != REVISER:
-            raise AgentTypeException("The message should not be processed by " + REVISER + ". It is sent to " + message["message_to"])
+            raise Exception("The message should not be processed by " + REVISER + ". It is sent to " + message["message_to"])
         else:
             info("The message is being processed by " + REVISER + "...")
             sqlite_error = ""

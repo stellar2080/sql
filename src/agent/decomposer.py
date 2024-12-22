@@ -1,5 +1,4 @@
 from src.agent.agent_base import Agent_Base
-from src.exceptions import AgentTypeException
 from src.llm.llm_base import LLM_Base
 from src.utils.const import DECOMPOSER, REVISER
 from src.utils.template import decompose_template
@@ -39,7 +38,7 @@ class Decomposer(Agent_Base):
         llm: LLM_Base = None
     ):
         if message["message_to"] != DECOMPOSER:
-            raise AgentTypeException("The message should not be processed by " + DECOMPOSER + ". It is sent to " + message["message_to"])
+            raise Exception("The message should not be processed by " + DECOMPOSER + ". It is sent to " + message["message_to"])
         else:
             info("The message is being processed by " + DECOMPOSER + "...")
             prompt = self.create_decomposer_prompt(message)

@@ -1,7 +1,6 @@
 import functools
 import queue
 import threading
-from src.exceptions import TimeoutException
 
 def timeout(time_args):
     def _timeout(func):
@@ -19,7 +18,7 @@ def timeout(time_args):
             thread.start()
             thread.join(time_args)
             if thread.is_alive():
-                raise TimeoutException("Function call timed out.")
+                raise Exception("Function call timed out.")
             result, exception = q.get()
             if exception:
                 raise exception
