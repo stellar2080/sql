@@ -17,7 +17,7 @@ class Filter(Agent_Base):
         question: str,
         vectordb: VectorDB,
     ):
-        evidence_ids = vectordb.get_related_key_ids(question)
+        evidence_ids = vectordb.get_related_key_meta(question)
         evidence_set = set()
         evidence_str = ""
         for evidence_id in evidence_ids:
