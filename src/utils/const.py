@@ -30,6 +30,8 @@ N_LAST_MEMORY = 1
 
 QUERY_MODE = 'pd'
 
+IS_RECORD_MEMORY = False
+
 TOOLS = [
     {
         'type': 'function',

@@ -1,54 +1,54 @@
 from src.agent.agent_base import Agent_Base
 from src.llm.llm_base import LLM_Base
 from src.utils.const import TOOLS, FUNC_NAMES, FILTER, MANAGER
-from src.utils.template import receiver_template
+from src.utils.template import receiver_template, memory_template_0, memory_template_1
 from src.utils.timeout import timeout
-from src.utils.utils import info, user_message, get_res_finish_reason, get_res_tool_calls, get_res_content, \
-    assistant_message
+from src.utils.utils import info, user_message, get_res_finish_reason, get_res_tool_calls, get_res_content
 from src.vectordb.vectordb import VectorDB
 
 
 class Receiver(Agent_Base):
     def __init__(self):
         super().__init__()
+        self.mem_prompt = ""
 
-    def get_mem_string(
+    def add_mem_string(
         self,
-        assiatant_str: str,
-        result
+        count: int,
+        question: str,
+        answer: str,
+        result = None,
     ):
-        if isinstance(result, list):
-            result = str(result)
-        string = "【SQL】\n" + assiatant_str + "\n【SQL_result】\n" + result
+        if result is None:
+            self.mem_prompt += memory_template_0.format(count, question, answer)
+        else:
+            if isinstance(result, list):
+                result = str(result)
+            self.mem_prompt += memory_template_1.format(count, question, answer, result)
 
-        return string
-
-    def get_mem_message(
+    def get_mem_prompt(
         self,
         question: str,
         vectordb: VectorDB
-    ) -> list:
+    ):
         memories = vectordb.get_related_memory(question)
-        llm_message = []
+        count = 1
         for item in memories:
-            llm_message.append(user_message(item['user']))
-            if 'result' not in item.keys():
-                llm_message.append(assistant_message(item['assistant']))
+            if 'result' in item.keys():
+                self.add_mem_string(count, item['user'], item['assistant'], item['result'])
             else:
-                string = self.get_mem_string(item['assistant'], item['result'])
-                llm_message.append(assistant_message(string))
-
-        return llm_message
+                self.add_mem_string(count, item['user'], item['assistant'])
+            count += 1
 
     def create_llm_message(
         self,
         question: str,
         vectordb: VectorDB
     ):
-        llm_message = self.get_mem_message(question, vectordb)
-        prompt = receiver_template.format(question)
-        llm_message.append(user_message(prompt))
-        info(llm_message)
+        self.get_mem_prompt(question, vectordb)
+        prompt = receiver_template.format(self.mem_prompt,question)
+        info(prompt)
+        llm_message = [user_message(prompt)]
 
         return llm_message
 
