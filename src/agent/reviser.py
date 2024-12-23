@@ -48,8 +48,8 @@ class Reviser(Agent_Base):
         prompt: str,
         llm: LLM_Base,
     ):
-        message = [user_message(prompt)]
-        response = llm.call(message)
+        llm_message = [user_message(prompt)]
+        response = llm.call(llm_message)
         answer = get_res_content(response)
         info(answer)
         new_sql = parse_sql(answer)

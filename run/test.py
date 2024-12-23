@@ -2,6 +2,7 @@ import json
 import os
 
 from src.manager.manager import Manager
+from src.utils.utils import user_message, assistant_message
 
 ROOT_PATH = os.path.abspath("../")
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
@@ -45,4 +46,13 @@ m = Manager(
 
 # m.clear_memory()
 res = m.vectordb.get_related_memory("hello")
-print(res)
+llm_message = []
+for item in res:
+    llm_message.append(user_message(item['user']))
+    if 'result' not in item.keys():
+        llm_message.append(assistant_message(item['assistant']))
+    else:
+        string = item['assistant'] + "\n【SQL_result】\n" + str(item['result'])
+        llm_message.append(assistant_message(string))
+
+print(llm_message)

@@ -22,12 +22,6 @@ def user_message(message: str):
 def assistant_message(message: str):
     return {'role': 'assistant', 'content': message}
 
-def get_memory_str(role: list,memory: list) -> str:
-    if len(role) != len(memory):
-        raise ValueError("length of role and memory must be equal.")
-    memory_dict = {r:m for r,m in zip(role,memory)}
-    return json.dumps(memory_dict)
-
 def get_res_content(response):
     return response.output.choices[0].message.content
 
@@ -36,12 +30,6 @@ def get_res_finish_reason(response):
 
 def get_res_tool_calls(response):
     return response.output.choices[0].message.tool_calls
-
-def schema_list_to_str(schema_list):
-    schema_str = ""
-    for schema in schema_list:
-        schema_str += "=====" + schema
-    return schema_str
 
 def deterministic_uuid(content: Union[str, bytes]) -> str:
     if isinstance(content, str):
@@ -109,20 +97,5 @@ def parse_sql(text: str) -> str:
         error(e)
         pass
 
-def extract_query_results(query_results,extract: str) -> list:
-    if query_results is None:
-        return []
-    info(query_results)
-    if extract != 'documents' and extract != 'ids' and extract != 'metadatas':
-        raise ValueError("Extract type is not supported.")
-    if extract in query_results:
-        extracts = query_results[extract]
 
-        if len(extracts) == 1 and isinstance(extracts[0], list):
-            try:
-                extracts = [json.loads(doc) for doc in extracts[0]]
-            except Exception as e:
-                return extracts[0]
-
-        return extracts
 

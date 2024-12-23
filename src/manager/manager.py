@@ -1,10 +1,12 @@
+import json
+
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.receiver import Receiver
 from src.agent.reviser import Reviser
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
-from src.utils.utils import info, deterministic_uuid, error, get_memory_str
+from src.utils.utils import info, deterministic_uuid, error
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, RECEIVER
 
 
@@ -62,8 +64,7 @@ class Manager:
         self,
         schema: str = None,
     ):
-        embedding_id = deterministic_uuid(schema) + "-sc"
-        self.vectordb.add_schema(embedding_id=embedding_id,schema=schema)
+        self.vectordb.add_schema(schema=schema)
 
     def train_doc(
         self,
@@ -72,8 +73,8 @@ class Manager:
         key_n_doc = doc[0] + ": " +  doc[1]
         key_id = deterministic_uuid(key_n_doc) + "-key"
         doc_id = deterministic_uuid(doc[1]) + "-doc"
-        self.vectordb.add_key(embedding_id=key_id,key=doc[0],doc_id=doc_id)
-        self.vectordb.add_doc(embedding_id=doc_id,document=doc[1])
+        self.vectordb.add_key(key=doc[0], doc_id=doc_id, embedding_id=key_id)
+        self.vectordb.add_doc(document=doc[1])
 
     def clear_rag(
         self
@@ -84,12 +85,18 @@ class Manager:
         except Exception as e:
             error(e)
 
+    def get_memory_str(self,role: list, memory: list) -> str:
+        if len(role) != len(memory):
+            raise ValueError("length of role and memory must be equal.")
+        memory_dict = {r: m for r, m in zip(role, memory)}
+        return json.dumps(memory_dict)
+
     def record_memory(self):
         try:
             if self.message["sql_result"] is not None:
-                memory_str = get_memory_str(["user", "assistant","result"],[self.message['question'],self.message["sql"],self.message['sql_result']])
+                memory_str = self.get_memory_str(["user", "assistant","result"],[self.message['question'],self.message["sql"],self.message['sql_result']])
             elif self.message["response"] is not None:
-                memory_str = get_memory_str(["user", "assistant"],[self.message['question'],self.message["response"]])
+                memory_str = self.get_memory_str(["user", "assistant"],[self.message['question'],self.message["response"]])
             else:
                 error("Failed to record memory.")
                 return
@@ -134,6 +141,6 @@ class Manager:
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
-                self.message = self.reviser.chat(self.message, self.llm, mode="cr")
+                self.message = self.reviser.chat(self.message, self.llm)
         self.record_memory()
         return self.message

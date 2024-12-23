@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 import chromadb
@@ -7,7 +8,7 @@ from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 import time
 
-from src.utils.utils import info, deterministic_uuid, extract_query_results
+from src.utils.utils import info, deterministic_uuid
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY, \
     MEMORY_SORT_BY_TIME
 
@@ -66,21 +67,29 @@ class VectorDB(VectorDB_Base):
             return embedding[0]
         return embedding
 
-    def add_schema(self, embedding_id: str, schema: str, **kwargs):
+    def add_schema(self, schema: str, embedding_id: str = None,**kwargs):
+        if embedding_id is None:
+            embedding_id = deterministic_uuid(schema) + "-sc"
+        else:
+            embedding_id = embedding_id
         self.schema_collection.add(
             ids=embedding_id,
             documents=schema,
             embeddings=self.generate_embedding(schema),
         )
 
-    def add_doc(self, embedding_id: str, document: str, **kwargs):
+    def add_doc(self, document: str, embedding_id: str = None, **kwargs):
+        if embedding_id is None:
+            embedding_id = deterministic_uuid(document) + "-doc"
+        else:
+            embedding_id = embedding_id
         self.document_collection.add(
             ids=embedding_id,
             documents=document,
             embeddings=self.generate_embedding(document),
         )
 
-    def add_key(self, embedding_id: str, key: str, doc_id: str,**kwargs):
+    def add_key(self, key: str, doc_id: str, embedding_id: str = None, **kwargs):
         self.key_collection.add(
             ids=embedding_id,
             documents=key,
@@ -115,11 +124,28 @@ class VectorDB(VectorDB_Base):
         else:
             return False
 
+    def extract_query_results(self,query_results, extract: str) -> list:
+        if query_results is None:
+            return []
+        # info(query_results)
+        if extract != 'documents' and extract != 'ids' and extract != 'metadatas':
+            raise ValueError("Extract type is not supported.")
+        if extract in query_results:
+            extracts = query_results[extract]
+
+            if len(extracts) == 1 and isinstance(extracts[0], list):
+                try:
+                    extracts = [json.loads(doc) for doc in extracts[0]]
+                except Exception as e:
+                    return extracts[0]
+
+            return extracts
+
     def get_last_n_memory(self,n_last_memory:int = None):
         if n_last_memory is None:
             n_last_memory = N_LAST_MEMORY
         count = self.memory_collection.count()
-        return extract_query_results(
+        return self.extract_query_results(
             self.memory_collection.get(offset=count - n_last_memory),
             extract='documents'
         )
@@ -136,14 +162,14 @@ class VectorDB(VectorDB_Base):
             query_texts=[question],
             n_results=N_RESULTS_MEMORY,
         )
-        doc_res = extract_query_results(
+        doc_res = self.extract_query_results(
             res,
             extract='documents'
         )
         if not sort_by_t:
             return doc_res
 
-        meta_res: List[dict] = extract_query_results(
+        meta_res: List[dict] = self.extract_query_results(
             res,
             extract='metadatas'
         )
@@ -152,7 +178,7 @@ class VectorDB(VectorDB_Base):
 
 
     def get_related_schema(self, question: str, **kwargs) -> list:
-        return extract_query_results(
+        return self.extract_query_results(
             self.schema_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_SC,
@@ -161,7 +187,7 @@ class VectorDB(VectorDB_Base):
         )
 
     def get_related_doc(self, question: str, **kwargs) -> list:
-        return extract_query_results(
+        return self.extract_query_results(
             self.document_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_DOC,
@@ -170,7 +196,7 @@ class VectorDB(VectorDB_Base):
         )
 
     def get_related_key(self, question: str, **kwargs) -> list:
-        return extract_query_results(
+        return self.extract_query_results(
             self.key_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,
@@ -179,7 +205,7 @@ class VectorDB(VectorDB_Base):
         )
 
     def get_related_key_ids(self, question: str, **kwargs) -> list:
-        return extract_query_results(
+        return self.extract_query_results(
             self.key_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,
@@ -188,7 +214,7 @@ class VectorDB(VectorDB_Base):
         )
 
     def get_related_key_meta(self, question: str, **kwargs) -> list:
-        res =  extract_query_results(
+        res = self.extract_query_results(
             self.key_collection.query(
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,

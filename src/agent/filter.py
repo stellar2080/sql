@@ -2,8 +2,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
 from src.utils.template import filter_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_json, info, user_message, get_res_content, \
-    schema_list_to_str
+from src.utils.utils import parse_json, info, user_message, get_res_content
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
 
@@ -11,6 +10,12 @@ from src.vectordb.vectordb import VectorDB
 class Filter(Agent_Base):
     def __init__(self):
         super().__init__()
+
+    def schema_list_to_str(self,schema_list):
+        schema_str = ""
+        for schema in schema_list:
+            schema_str += "=====" + schema
+        return schema_str
 
     def get_evidence_str(
         self,
@@ -32,7 +37,7 @@ class Filter(Agent_Base):
         vectordb: VectorDB,
     ) -> (str,str):
         schema_list = vectordb.get_related_schema(question)
-        schema_str = schema_list_to_str(schema_list)
+        schema_str = self.schema_list_to_str(schema_list)
         evidence_str = self.get_evidence_str(question, vectordb)
         prompt = filter_template.format(schema_str, evidence_str, question)
         info(prompt)

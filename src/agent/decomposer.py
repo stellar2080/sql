@@ -24,8 +24,8 @@ class Decomposer(Agent_Base):
         prompt: str,
         llm: LLM_Base
     ) -> str:
-        message = [user_message(prompt)]
-        response = llm.call(messages=message)
+        llm_message = [user_message(prompt)]
+        response = llm.call(messages=llm_message)
         answer = get_res_content(response)
         info(answer)
         sql = parse_sql(answer)
