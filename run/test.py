@@ -44,4 +44,4 @@ m = Manager(
 #             )
 
 # m.clear_memory()
-m.chat("how many companies")
+m.chat("the name of all company")

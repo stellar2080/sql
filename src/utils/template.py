@@ -9,7 +9,6 @@ memory_template_1 = """===Dialogue {}===
 [Question]
 {}
 [Answer]
-Returned by function calling:
 SQL:
 {}
 Result:
