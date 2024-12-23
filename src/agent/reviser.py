@@ -81,7 +81,7 @@ class Reviser(Agent_Base):
         self,
         sql: str,
         mode: str = "cr"
-    ):
+    ) -> list:
         if self.is_conn() is False:
             raise Exception("Please connect to database first.")
         if mode == "cr":
@@ -91,7 +91,7 @@ class Reviser(Agent_Base):
             return result
         elif mode == "pd":
             result = pd.read_sql_query(sql, self.conn)
-            return result
+            return result.values.tolist()
 
     @override
     def chat(

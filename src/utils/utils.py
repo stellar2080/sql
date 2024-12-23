@@ -107,7 +107,9 @@ def assistant_message(message: str):
     return {'role': 'assistant', 'content': message}
 
 def get_memory_str(role: list,memory: list) -> str:
-    memory_dict = {role[0]: memory[0], role[1]: memory[1]}
+    if len(role) != len(memory):
+        raise ValueError("length of role and memory must be equal.")
+    memory_dict = {r:m for r,m in zip(role,memory)}
     return json.dumps(memory_dict)
 
 def get_res_content(response):

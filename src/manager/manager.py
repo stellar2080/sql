@@ -86,9 +86,8 @@ class Manager:
 
     def record_memory(self):
         try:
-
             if self.message["sql_result"] is not None:
-                memory_str = get_memory_str(["user", "assistant"],[self.message['question'],self.message["sql"]])
+                memory_str = get_memory_str(["user", "assistant","result"],[self.message['question'],self.message["sql"],self.message['sql_result']])
             elif self.message["response"] is not None:
                 memory_str = get_memory_str(["user", "assistant"],[self.message['question'],self.message["response"]])
             else:
@@ -135,6 +134,6 @@ class Manager:
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
-                self.message = self.reviser.chat(self.message, self.llm, mode="pd")
+                self.message = self.reviser.chat(self.message, self.llm, mode="cr")
         self.record_memory()
         return self.message

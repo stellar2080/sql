@@ -1,7 +1,7 @@
 import os
 
 from src.manager.manager import Manager
-from src.utils.const import MANAGER
+from src.utils.const import MANAGER, REVISER
 from src.utils.data_rag import SCHEMA,DOCUMENT
 
 ROOT_PATH = os.path.abspath("../")
@@ -17,7 +17,7 @@ m = Manager(
 )
 
 # m.clear_rag()
-
+#
 # m.train(schema_list=SCHEMA)
 # m.train(doc_list=DOCUMENT)
 
@@ -27,3 +27,13 @@ m = Manager(
 #         print("question: ", item["question"],
 #               "\nsql: ", item["sql"],)
 #         m.train(item["question"],item["sql"])
+
+# m.message = {
+#     "question": "1",
+#     "sql": None,
+#     "schema": None,
+#     "evidence": None,
+#     "message_to": REVISER,
+#     "response": "3",
+#     "sql_result": None
+# }
