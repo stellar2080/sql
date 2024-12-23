@@ -24,7 +24,11 @@ N_RESULTS_SC = 6
 
 N_RESULTS_MEMORY = 3
 
+MEMORY_SORT_BY_TIME = True
+
 N_LAST_MEMORY = 1
+
+QUERY_MODE = 'pd'
 
 TOOLS = [
     {

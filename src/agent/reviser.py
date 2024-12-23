@@ -7,7 +7,7 @@ import requests
 from typing_extensions import override
 
 from src.llm.llm_base import LLM_Base
-from src.utils.const import REVISER, MANAGER
+from src.utils.const import REVISER, MANAGER, QUERY_MODE
 from src.utils.template import reviser_template
 from src.utils.timeout import timeout
 from src.utils.utils import parse_sql, info, user_message, get_res_content
@@ -79,17 +79,16 @@ class Reviser(Agent_Base):
 
     def run_sql(
         self,
-        sql: str,
-        mode: str = "cr"
+        sql: str
     ) -> list:
         if self.is_conn() is False:
             raise Exception("Please connect to database first.")
-        if mode == "cr":
+        if QUERY_MODE == "cr":
             cursor = self.conn.cursor()
             cursor.execute(sql)
             result = cursor.fetchall()
             return result
-        elif mode == "pd":
+        elif QUERY_MODE == "pd":
             result = pd.read_sql_query(sql, self.conn)
             return result.values.tolist()
 
@@ -97,8 +96,7 @@ class Reviser(Agent_Base):
     def chat(
         self,
         message: dict,
-        llm: LLM_Base=None,
-        mode: str = "cr"
+        llm: LLM_Base=None
     ):
         if message["message_to"] != REVISER:
             raise Exception("The message should not be processed by " + REVISER + ". It is sent to " + message["message_to"])
@@ -108,12 +106,12 @@ class Reviser(Agent_Base):
             except_flag = False
             result = None
             try:
-                result = self.run_sql(message["sql"],mode)
+                result = self.run_sql(message["sql"])
             except Exception as error:
-                if mode == "cr":
+                if QUERY_MODE == "cr":
                     sqlite_error = str(error.args[0])
                     except_flag = True
-                elif mode == "pd":
+                elif QUERY_MODE == "pd":
                     sqlite_error = str(error.args[0])
                     sqlite_error = sqlite_error[sqlite_error.index("': ") + 3:]
                     except_flag = True

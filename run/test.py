@@ -44,4 +44,5 @@ m = Manager(
 #             )
 
 # m.clear_memory()
-# m.chat("hello")
+res = m.vectordb.get_related_memory("hello")
+print(res)

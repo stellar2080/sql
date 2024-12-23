@@ -4,6 +4,45 @@ from typing import Union
 import json
 from typing import Dict
 
+
+def info(message):
+    print("[INFO]:",end="")
+    print(message)
+
+def error(message):
+    print("[ERROR]:",end="")
+    print(message)
+
+def system_message(message: str):
+    return {'role': 'system', 'content': message}
+
+def user_message(message: str):
+    return {'role': 'user', 'content': message}
+
+def assistant_message(message: str):
+    return {'role': 'assistant', 'content': message}
+
+def get_memory_str(role: list,memory: list) -> str:
+    if len(role) != len(memory):
+        raise ValueError("length of role and memory must be equal.")
+    memory_dict = {r:m for r,m in zip(role,memory)}
+    return json.dumps(memory_dict)
+
+def get_res_content(response):
+    return response.output.choices[0].message.content
+
+def get_res_finish_reason(response):
+    return response.output.choices[0].finish_reason
+
+def get_res_tool_calls(response):
+    return response.output.choices[0].message.tool_calls
+
+def schema_list_to_str(schema_list):
+    schema_str = ""
+    for schema in schema_list:
+        schema_str += "=====" + schema
+    return schema_str
+
 def deterministic_uuid(content: Union[str, bytes]) -> str:
     if isinstance(content, str):
         content_bytes = content.encode("utf-8")
@@ -87,42 +126,3 @@ def extract_query_results(query_results,extract: str) -> list:
 
         return extracts
 
-
-def info(message):
-    print("[INFO]:",end="")
-    print(message)
-
-def error(message):
-    print("[ERROR]:",end="")
-    print(message)
-
-
-def system_message(message: str):
-    return {'role': 'system', 'content': message}
-
-def user_message(message: str):
-    return {'role': 'user', 'content': message}
-
-def assistant_message(message: str):
-    return {'role': 'assistant', 'content': message}
-
-def get_memory_str(role: list,memory: list) -> str:
-    if len(role) != len(memory):
-        raise ValueError("length of role and memory must be equal.")
-    memory_dict = {r:m for r,m in zip(role,memory)}
-    return json.dumps(memory_dict)
-
-def get_res_content(response):
-    return response.output.choices[0].message.content
-
-def get_res_finish_reason(response):
-    return response.output.choices[0].finish_reason
-
-def get_res_tool_calls(response):
-    return response.output.choices[0].message.tool_calls
-
-def schema_list_to_str(schema_list):
-    schema_str = ""
-    for schema in schema_list:
-        schema_str += "=====" + schema
-    return schema_str

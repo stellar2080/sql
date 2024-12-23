@@ -1,3 +1,5 @@
+from typing import List
+
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
@@ -6,7 +8,8 @@ from .vectordb_base import VectorDB_Base
 import time
 
 from src.utils.utils import info, deterministic_uuid, extract_query_results
-from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY
+from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY, \
+    MEMORY_SORT_BY_TIME
 
 
 class VectorDB(VectorDB_Base):
@@ -112,25 +115,41 @@ class VectorDB(VectorDB_Base):
         else:
             return False
 
-    def get_last_n_memory(self):
+    def get_last_n_memory(self,n_last_memory:int = None):
+        if n_last_memory is None:
+            n_last_memory = N_LAST_MEMORY
         count = self.memory_collection.count()
         return extract_query_results(
-            self.memory_collection.get(offset=count - N_LAST_MEMORY),
+            self.memory_collection.get(offset=count - n_last_memory),
             extract='documents'
         )
 
     def get_related_memory(
         self,
         question: str,
+        sort_by_t: bool = None,
         **kwargs
     ):
-        return extract_query_results(
-            self.memory_collection.query(
-                query_texts=[question],
-                n_results=N_RESULTS_MEMORY,
-            ),
+        if sort_by_t is None:
+            sort_by_t = MEMORY_SORT_BY_TIME
+        res = self.memory_collection.query(
+            query_texts=[question],
+            n_results=N_RESULTS_MEMORY,
+        )
+        doc_res = extract_query_results(
+            res,
             extract='documents'
         )
+        if not sort_by_t:
+            return doc_res
+
+        meta_res: List[dict] = extract_query_results(
+            res,
+            extract='metadatas'
+        )
+        doc_res = sorted(doc_res, key=lambda doc: meta_res[doc_res.index(doc)]['timestamp'])
+        return doc_res
+
 
     def get_related_schema(self, question: str, **kwargs) -> list:
         return extract_query_results(
