@@ -1,10 +1,10 @@
 receiver_template = """
 【Background】
 You are an expert in the field of finance and database.
-Your task is to determine whether answering the user question requires querying databases.
+Your task is to determine whether answering user question requires querying databases.
 
 【Requirements】
-- If answering the question requires querying the database, you don't need to output any text, just make a "function calling".
+- If querying databases is required, you don't need to output any text, just make a "function calling".
 - If not for the above case, you can output your answer directly.
 
 【Question】

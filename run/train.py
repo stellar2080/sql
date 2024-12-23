@@ -17,9 +17,9 @@ m = Manager(
 )
 
 # m.clear_rag()
-#
-# m.train(schema_list=SCHEMA)
-# m.train(doc_list=DOCUMENT)
+
+m.train(schema_list=SCHEMA)
+m.train(doc_list=DOCUMENT)
 
 # with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_train_text2sql.json')) as f:
 #     data = json.load(f)
