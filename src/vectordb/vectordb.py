@@ -1,14 +1,11 @@
 import json
-from typing import List
-
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
-
 from .vectordb_base import VectorDB_Base
 import time
 
-from src.utils.utils import info, deterministic_uuid, remove_duplicates_from_end
+from src.utils.utils import info, deterministic_uuid
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY, \
     MEMORY_SORT_BY_TIME
 
@@ -124,24 +121,27 @@ class VectorDB(VectorDB_Base):
         else:
             return False
 
-    def extract_query_results(self,query_results, extract: str, to_dict:bool = True) -> list:
+    def extract_query_results(self,query_results, extracts) -> list:
         if query_results is None:
             return []
-        # info(query_results)
-        if extract != 'documents' and extract != 'ids' and extract != 'metadatas':
-            raise ValueError("Extract type is not supported.")
-        if extract in query_results:
-            extracts = query_results[extract]
-            if len(extracts) == 1:
-                try:
-                    if isinstance(extracts[0], list):
-                        extracts = [json.loads(doc) for doc in extracts[0]] if to_dict else extracts[0]
-                    elif isinstance(extracts[0], str):
-                        extracts = [json.loads(extracts[0])] if to_dict else [extracts[0]]
-                except Exception as e:
-                    return extracts[0]
+        extracted_results = []
+        if isinstance(extracts, str):
+            extracts = [extracts]
+        for item in extracts:
+            if item not in query_results:
+                raise ValueError("Extract type {} is not supported.".format(item))
+            extract_item = query_results[item]
+            if len(extract_item) == 1:
+                if isinstance(extract_item[0], list):
+                    extracted_results.append([json.loads(doc) if isinstance(doc,str) else doc for doc in extract_item[0]])
+                elif isinstance(extract_item[0], str):
+                    extracted_results.append([json.loads(extract_item[0])])
+                elif isinstance(extract_item[0], dict):
+                    extracted_results.append(extract_item)
 
-            return extracts
+        if len(extracted_results) == 1:
+            return extracted_results[0]
+        return extracted_results
 
     def get_related_schema(self, question: str, **kwargs) -> list:
         return self.extract_query_results(
@@ -149,7 +149,7 @@ class VectorDB(VectorDB_Base):
                 query_texts=[question],
                 n_results=N_RESULTS_SC,
             ),
-            extract='documents'
+            extracts='documents'
         )
 
     def get_related_doc(self, question: str, **kwargs) -> list:
@@ -158,7 +158,7 @@ class VectorDB(VectorDB_Base):
                 query_texts=[question],
                 n_results=N_RESULTS_DOC,
             ),
-            extract='documents'
+            extracts='documents'
         )
 
     def get_related_key(self, question: str, **kwargs) -> list:
@@ -167,7 +167,7 @@ class VectorDB(VectorDB_Base):
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,
             ),
-            extract='documents'
+            extracts='documents'
         )
 
     def get_related_key_ids(self, question: str, **kwargs) -> list:
@@ -176,7 +176,7 @@ class VectorDB(VectorDB_Base):
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,
             ),
-            extract='ids'
+            extracts='ids'
         )
 
     def get_related_key_meta(self, question: str, **kwargs) -> list:
@@ -185,7 +185,7 @@ class VectorDB(VectorDB_Base):
                 query_texts=[question],
                 n_results=N_RESULTS_KEY,
             ),
-            extract='metadatas'
+            extracts='metadatas'
         )
         return [item['doc_id'] for item in res]
 
@@ -229,8 +229,7 @@ class VectorDB(VectorDB_Base):
         count = self.memory_collection.count()
         return self.extract_query_results(
             self.memory_collection.get(offset=count-N_LAST_MEMORY),
-            extract='documents',
-            to_dict=False
+            extracts=['documents','metadatas'],
         )
 
     def get_related_memory(
@@ -238,34 +237,52 @@ class VectorDB(VectorDB_Base):
         question: str,
         **kwargs
     ):
-        res = self.memory_collection.query(
-            query_texts=[question],
-            n_results=N_RESULTS_MEMORY + N_LAST_MEMORY,
+        return self.extract_query_results(
+            self.memory_collection.query(
+                query_texts=[question],
+                n_results=N_RESULTS_MEMORY + N_LAST_MEMORY,
+            ),
+            extracts=['documents','metadatas'],
         )
-        doc_res = self.extract_query_results(
-            res,
-            extract='documents',
-            to_dict=False
-        )
-        if not MEMORY_SORT_BY_TIME:
-            return doc_res
 
-        meta_res: List[dict] = self.extract_query_results(
-            res,
-            extract='metadatas'
-        )
-        doc_res = sorted(doc_res, key=lambda doc: meta_res[doc_res.index(doc)]['timestamp'])
-        return doc_res
+    def remove_duplicates_from_end(self,lst: list) -> list:
+        seen = set()
+        for i in range(len(lst[0]) - 1, -1, -1):
+            if str(lst[0][i]) in seen:
+                del lst[0][i]
+                del lst[1][i]
+            else:
+                seen.add(str(lst[0][i]))
+        return lst
+
+    def remove_extra_memories(self,memories: list) -> list:
+        del_num = len(memories[0]) - N_RESULTS_MEMORY - N_LAST_MEMORY
+        start_num = len(memories[0]) - 1 - N_LAST_MEMORY
+        if del_num > 0:
+            for i in range(start_num, start_num - del_num, -1):
+                del memories[0][i]
+                del memories[1][i]
+        return memories
 
     def get_memory(
         self,
         question: str,
     ):
-        memories = self.get_related_memory(question)
+        related_memory = self.get_related_memory(question)
+        print(related_memory)
         last_n_memory = self.get_last_n_memory()
-        memories.extend(last_n_memory)
-        memories = remove_duplicates_from_end(memories)
-        memories = [json.loads(mem) for mem in memories]
+        print(last_n_memory)
+        memories = [related_memory[i] + last_n_memory[i] for i in range(len(related_memory))]
+        print(memories)
+        memories = self.remove_duplicates_from_end(memories)
+        print(memories)
+        memories = self.remove_extra_memories(memories)
+        print(memories)
+
+        time_list = memories[1]
+        memories = memories[0]
+        if MEMORY_SORT_BY_TIME:
+            memories = sorted(memories, key=lambda x: time_list[memories.index(x)]['timestamp'])
         return memories
 
     def clear_memory(self):
@@ -280,3 +297,4 @@ class VectorDB(VectorDB_Base):
 
         except Exception as error:
             info(error)
+

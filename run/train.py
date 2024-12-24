@@ -38,5 +38,4 @@ m = Manager(
 #     "sql_result": None
 # }
 
-res = m.vectordb.get_memory("hello")
-print(res)
+m.vectordb.get_memory("hello,how many company?")
