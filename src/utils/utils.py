@@ -97,5 +97,11 @@ def parse_sql(text: str) -> str:
         error(e)
         pass
 
-
-
+def remove_duplicates_from_end(lst):
+    seen = set()
+    for i in range(len(lst) - 1, -1, -1):
+        if lst[i] in seen:
+            del lst[i]
+        else:
+            seen.add(lst[i])
+    return lst

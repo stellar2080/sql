@@ -31,7 +31,7 @@ class Receiver(Agent_Base):
         question: str,
         vectordb: VectorDB
     ):
-        memories = vectordb.get_related_memory(question)
+        memories = vectordb.get_memory(question)
         count = 1
         for item in memories:
             if 'result' in item.keys():

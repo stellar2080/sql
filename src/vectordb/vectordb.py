@@ -8,7 +8,7 @@ from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 import time
 
-from src.utils.utils import info, deterministic_uuid
+from src.utils.utils import info, deterministic_uuid, remove_duplicates_from_end
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY, \
     MEMORY_SORT_BY_TIME
 
@@ -124,7 +124,7 @@ class VectorDB(VectorDB_Base):
         else:
             return False
 
-    def extract_query_results(self,query_results, extract: str) -> list:
+    def extract_query_results(self,query_results, extract: str, to_dict:bool = True) -> list:
         if query_results is None:
             return []
         # info(query_results)
@@ -132,50 +132,16 @@ class VectorDB(VectorDB_Base):
             raise ValueError("Extract type is not supported.")
         if extract in query_results:
             extracts = query_results[extract]
-
-            if len(extracts) == 1 and isinstance(extracts[0], list):
+            if len(extracts) == 1:
                 try:
-                    extracts = [json.loads(doc) for doc in extracts[0]]
+                    if isinstance(extracts[0], list):
+                        extracts = [json.loads(doc) for doc in extracts[0]] if to_dict else extracts[0]
+                    elif isinstance(extracts[0], str):
+                        extracts = [json.loads(extracts[0])] if to_dict else [extracts[0]]
                 except Exception as e:
                     return extracts[0]
 
             return extracts
-
-    def get_last_n_memory(self,n_last_memory:int = None):
-        if n_last_memory is None:
-            n_last_memory = N_LAST_MEMORY
-        count = self.memory_collection.count()
-        return self.extract_query_results(
-            self.memory_collection.get(offset=count - n_last_memory),
-            extract='documents'
-        )
-
-    def get_related_memory(
-        self,
-        question: str,
-        sort_by_t: bool = None,
-        **kwargs
-    ):
-        if sort_by_t is None:
-            sort_by_t = MEMORY_SORT_BY_TIME
-        res = self.memory_collection.query(
-            query_texts=[question],
-            n_results=N_RESULTS_MEMORY,
-        )
-        doc_res = self.extract_query_results(
-            res,
-            extract='documents'
-        )
-        if not sort_by_t:
-            return doc_res
-
-        meta_res: List[dict] = self.extract_query_results(
-            res,
-            extract='metadatas'
-        )
-        doc_res = sorted(doc_res, key=lambda doc: meta_res[doc_res.index(doc)]['timestamp'])
-        return doc_res
-
 
     def get_related_schema(self, question: str, **kwargs) -> list:
         return self.extract_query_results(
@@ -258,6 +224,49 @@ class VectorDB(VectorDB_Base):
 
         except Exception as error:
             info(error)
+
+    def get_last_n_memory(self):
+        count = self.memory_collection.count()
+        return self.extract_query_results(
+            self.memory_collection.get(offset=count-N_LAST_MEMORY),
+            extract='documents',
+            to_dict=False
+        )
+
+    def get_related_memory(
+        self,
+        question: str,
+        **kwargs
+    ):
+        res = self.memory_collection.query(
+            query_texts=[question],
+            n_results=N_RESULTS_MEMORY + N_LAST_MEMORY,
+        )
+        doc_res = self.extract_query_results(
+            res,
+            extract='documents',
+            to_dict=False
+        )
+        if not MEMORY_SORT_BY_TIME:
+            return doc_res
+
+        meta_res: List[dict] = self.extract_query_results(
+            res,
+            extract='metadatas'
+        )
+        doc_res = sorted(doc_res, key=lambda doc: meta_res[doc_res.index(doc)]['timestamp'])
+        return doc_res
+
+    def get_memory(
+        self,
+        question: str,
+    ):
+        memories = self.get_related_memory(question)
+        last_n_memory = self.get_last_n_memory()
+        memories.extend(last_n_memory)
+        memories = remove_duplicates_from_end(memories)
+        memories = [json.loads(mem) for mem in memories]
+        return memories
 
     def clear_memory(self):
         try:

@@ -44,4 +44,4 @@ m = Manager(
 #             )
 
 # m.clear_memory()
-m.chat("the name of all company")
+m.receiver.create_llm_message("hello",m.vectordb)
