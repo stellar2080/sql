@@ -6,7 +6,7 @@ from src.agent.receiver import Receiver
 from src.agent.reviser import Reviser
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
-from src.utils.utils import info, deterministic_uuid, error
+from src.utils.utils import deterministic_uuid
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, RECEIVER, IS_RECORD_MEMORY
 
 
@@ -16,7 +16,7 @@ class Manager:
             config = {}
         self.mode = config.get('mode',None)
         if self.mode is None or self.mode == 'run':
-            info("running mode")
+            print("running mode")
             self.platform = config.get('platform',None)
             if self.platform is None or self.platform == 'Qwen':
                 self.llm = Qwen(config)
@@ -34,7 +34,7 @@ class Manager:
                 "sql_result": None
             }
         elif self.mode == 'train':
-            info("training mode")
+            print("training mode")
         self.vectordb = VectorDB(config)
 
     def train(
@@ -45,18 +45,17 @@ class Manager:
         doc_list: list = None,
     ):
         if schema:
-            info("Adding schema...")
+            print("Adding schema...")
             self.train_schema(schema)
         if doc:
-            info("Adding document...")
+            print("Adding document...")
             self.train_doc(doc)
         if schema_list:
-            info("Adding schema in the list...")
+            print("Adding schema in the list...")
             for schema in schema_list:
                 self.train_schema(schema=schema)
-            pass
         if doc_list:
-            info("Adding document in the list...")
+            print("Adding document in the list...")
             for doc in doc_list:
                 self.train_doc(doc=doc)
 
@@ -80,10 +79,10 @@ class Manager:
         self
     ):
         try:
-            info("Clearing rag data...")
+            print("Clearing rag data...")
             self.vectordb.clear_rag()
         except Exception as e:
-            error(e)
+            print(e)
 
     def get_memory_str(self,role: list, memory: list) -> str:
         if len(role) != len(memory):
@@ -98,19 +97,19 @@ class Manager:
             elif self.message["response"] is not None:
                 memory_str = self.get_memory_str(["user", "assistant"],[self.message['question'],self.message["response"]])
             else:
-                error("Failed to record memory.")
+                print("Failed to record memory.")
                 return
-            info("Recording memory...")
+            print("Recording memory...")
             self.vectordb.add_memory(memory_str)
         except Exception as e:
-            error(e)
+            print(e)
 
     def clear_memory(self):
         try:
-            info("Clearing memory data...")
+            print("Clearing memory data...")
             self.vectordb.clear_memory()
         except Exception as e:
-            error(e)
+            print(e)
 
 
     def chat(
@@ -126,13 +125,13 @@ class Manager:
             raise Exception("Please provide a question or a message")
 
         for i in range(MAX_ITERATIONS):
-            info("ITERATION {}".format(i))
-            info("MESSAGE: " + str(self.message))
+            print("ITERATION {}".format(i))
+            print("MESSAGE: " + str(self.message))
             if i == 0 and self.message["message_to"] is None:
                 self.message["message_to"] = RECEIVER
 
             if self.message["message_to"] == MANAGER:
-                info("The message is begin processed by manager...")
+                print("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == RECEIVER:
                 self.message = self.receiver.chat(self.message, self.llm, self.vectordb)

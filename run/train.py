@@ -10,9 +10,9 @@ m = Manager(
     config={
         'mode': 'train',
         'vectordb_path': os.path.join(ROOT_PATH, 'vectordb'),
-        'client': 'http',
-        'host': 'localhost',
-        'port': '8000',
+        'vectordb_client': 'http',
+        'vectordb_host': 'localhost',
+        'vectordb_port': '8000',
     },
 )
 
@@ -39,3 +39,4 @@ m = Manager(
 # }
 
 m.vectordb.get_memory("hello,how many company?")
+

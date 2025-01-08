@@ -10,7 +10,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER, QUERY_MODE
 from src.utils.template import reviser_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_sql, info, user_message, get_res_content
+from src.utils.utils import parse_sql, user_message, get_res_content
 from src.agent.agent_base import Agent_Base
 
 
@@ -39,7 +39,7 @@ class Reviser(Agent_Base):
             sqlite_error,
             error_class
         )
-        info(prompt)
+        print(prompt)
         return prompt
 
     @timeout(180)
@@ -51,7 +51,7 @@ class Reviser(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(llm_message)
         answer = get_res_content(response)
-        info(answer)
+        print(answer)
         new_sql = parse_sql(answer)
         return new_sql
 
@@ -101,7 +101,7 @@ class Reviser(Agent_Base):
         if message["message_to"] != REVISER:
             raise Exception("The message should not be processed by " + REVISER + ". It is sent to " + message["message_to"])
         else:
-            info("The message is being processed by " + REVISER + "...")
+            print("The message is being processed by " + REVISER + "...")
             sqlite_error = ""
             except_flag = False
             result = None

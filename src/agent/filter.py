@@ -2,7 +2,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
 from src.utils.template import filter_template
 from src.utils.timeout import timeout
-from src.utils.utils import parse_json, info, user_message, get_res_content
+from src.utils.utils import parse_json, user_message, get_res_content
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
 
@@ -40,7 +40,7 @@ class Filter(Agent_Base):
         schema_str = self.schema_list_to_str(schema_list)
         evidence_str = self.get_evidence_str(question, vectordb)
         prompt = filter_template.format(schema_str, evidence_str, question)
-        info(prompt)
+        print(prompt)
         return prompt,schema_str,evidence_str
 
     @timeout(180)
@@ -52,7 +52,7 @@ class Filter(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_res_content(response)
-        info(answer)
+        print(answer)
         return answer
 
     def prune_schema(
@@ -103,7 +103,7 @@ class Filter(Agent_Base):
         if message["message_to"] != FILTER:
             raise Exception("The message should not be processed by " + FILTER + ". It is sent to " + message["message_to"])
         else:
-            info("The message is being processed by " + FILTER + "...")
+            print("The message is being processed by " + FILTER + "...")
             prompt, schema_str, evidence_str = self.create_filter_prompt(message["question"], vectordb)
             ans = self.get_filter_ans(prompt, llm)
             json_ans = parse_json(ans)

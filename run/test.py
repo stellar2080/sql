@@ -12,9 +12,9 @@ m = Manager(
         'model': 'qwen-max',
         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
         'vectordb_path': os.path.join(ROOT_PATH, 'vectordb'),
-        'client': 'http',
-        'host': 'localhost',
-        'port': '8000'
+        'vectordb_client': 'http',
+        'vectordb_host': 'localhost',
+        'vectordb_port': '8000'
     },
 )
 
@@ -44,4 +44,3 @@ m = Manager(
 #             )
 
 # m.clear_memory()
-m.receiver.create_llm_message("hello",m.vectordb)

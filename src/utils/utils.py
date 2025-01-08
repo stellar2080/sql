@@ -4,15 +4,6 @@ from typing import Union
 import json
 from typing import Dict
 
-
-def info(message):
-    print("[INFO]:",end="")
-    print(message)
-
-def error(message):
-    print("[ERROR]:",end="")
-    print(message)
-
 def system_message(message: str):
     return {'role': 'system', 'content': message}
 
@@ -60,8 +51,8 @@ def parse_json(text: str):
             else:
                 return text
         except:
-            error(f"parse json error!\n")
-            error(f"json_string: {json_string}\n\n")
+            print(f"parse json error!\n")
+            print(f"json_string: {json_string}\n\n")
             pass
 
     return text
@@ -71,14 +62,14 @@ def check_filter_response(json_data: Dict) -> bool:
     for k, v in json_data.items():
         if isinstance(v, str):
             if v not in FLAGS:
-                info(f"invalid table flag: {v}\n")
-                info(f"json_data: {json_data}\n\n")
+                print(f"invalid table flag: {v}\n")
+                print(f"json_data: {json_data}\n\n")
                 return False
         elif isinstance(v, list):
             pass
         else:
-            error(f"invalid flag type: {v}\n")
-            error(f"json_data: {json_data}\n\n")
+            print(f"invalid flag type: {v}\n")
+            print(f"json_data: {json_data}\n\n")
             return False
     return True
 
@@ -91,8 +82,8 @@ def parse_sql(text: str) -> str:
             sql_string = text[start + 7: end]
             return sql_string
         else:
-            error(f"parse sql error!\n")
+            print(f"parse sql error!\n")
             return ""
     except Exception as e:
-        error(e)
+        print(e)
         pass

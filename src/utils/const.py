@@ -8,7 +8,7 @@ REVISER = "reviser"
 
 MANAGER = "manager"
 
-AGENT_LIST = [FILTER, DECOMPOSER, REVISER, MANAGER]
+AGENT_LIST = [RECEIVER, FILTER, DECOMPOSER, REVISER, MANAGER]
 
 MAX_ITERATIONS = 6
 
@@ -31,15 +31,3 @@ MEMORY_SORT_BY_TIME = True
 QUERY_MODE = 'pd'
 
 IS_RECORD_MEMORY = False
-
-TOOLS = [
-    {
-        'type': 'function',
-        'function': {
-            'name': 'query_database',
-            'description': 'No arguments needed, query the financial databases.'
-        }
-    }
-]
-
-FUNC_NAMES = ['query_database']

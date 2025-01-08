@@ -5,7 +5,7 @@ from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 import time
 
-from src.utils.utils import info, deterministic_uuid
+from src.utils.utils import deterministic_uuid
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY, \
     MEMORY_SORT_BY_TIME
 
@@ -15,9 +15,12 @@ class VectorDB(VectorDB_Base):
         super().__init__(config)
 
         path = config.get("vectordb_path", None)
-        curr_client = config.get("client", "persistent")
-        host = config.get("host", None)
-        port = config.get("port", None)
+        curr_client = config.get("vectordb_client", "persistent")
+        host = config.get("vectordb_host", None)
+        port = config.get("vectordb_port", None)
+
+        default_ef = embedding_functions.DefaultEmbeddingFunction()
+        self.embedding_function = config.get("embedding_function", default_ef)
 
         self.chroma_client = None
 
@@ -33,9 +36,6 @@ class VectorDB(VectorDB_Base):
             )
         else:
             raise TypeError(f"Unknown client type or it is unsupported: {curr_client}")
-
-        default_ef = embedding_functions.DefaultEmbeddingFunction()
-        self.embedding_function = config.get("embedding_function", default_ef)
 
         self.document_collection = self.chroma_client.get_or_create_collection(
             name="document",
@@ -96,7 +96,7 @@ class VectorDB(VectorDB_Base):
 
     def add_memory(self, memory: str, **kwargs):
         timestamp = str(time.time())
-        info("MEMORY_TIMESTAMP: " + timestamp)
+        print("MEMORY_TIMESTAMP: " + timestamp)
         embedding_id = deterministic_uuid(memory) + "-mem"
         self.memory_collection.add(
             ids=embedding_id,
@@ -223,7 +223,7 @@ class VectorDB(VectorDB_Base):
             )
 
         except Exception as error:
-            info(error)
+            print(error)
 
     def get_last_n_memory(self):
         count = self.memory_collection.count()
@@ -296,5 +296,5 @@ class VectorDB(VectorDB_Base):
             )
 
         except Exception as error:
-            info(error)
+            print(error)
 

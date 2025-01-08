@@ -1,11 +1,22 @@
 from src.agent.agent_base import Agent_Base
 from src.llm.llm_base import LLM_Base
-from src.utils.const import TOOLS, FUNC_NAMES, FILTER, MANAGER
+from src.utils.const import FILTER, MANAGER
 from src.utils.template import receiver_template, memory_template_0, memory_template_1
 from src.utils.timeout import timeout
-from src.utils.utils import info, user_message, get_res_finish_reason, get_res_tool_calls, get_res_content
+from src.utils.utils import user_message, get_res_finish_reason, get_res_tool_calls, get_res_content
 from src.vectordb.vectordb import VectorDB
 
+TOOLS = [
+    {
+        'type': 'function',
+        'function': {
+            'name': 'query_database',
+            'description': 'No arguments needed, query the financial databases.'
+        }
+    }
+]
+
+FUNC_NAMES = ['query_database']
 
 class Receiver(Agent_Base):
     def __init__(self):
@@ -47,7 +58,7 @@ class Receiver(Agent_Base):
     ):
         self.get_mem_prompt(question, vectordb)
         prompt = receiver_template.format(self.mem_prompt,question)
-        info(prompt)
+        print(prompt)
         llm_message = [user_message(prompt)]
 
         return llm_message
@@ -84,7 +95,7 @@ class Receiver(Agent_Base):
                 raise Exception("No tool calls found.")
 
             else:
-                info(tool_calls)
+                print(tool_calls)
                 func_name = tool_calls[0]['function']['name']
 
                 if func_name not in FUNC_NAMES:
