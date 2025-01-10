@@ -1,36 +1,3 @@
-memory_template_0 = """===Dialogue {}===
-[Question]
-{}
-[Answer]
-{}
-"""
-
-memory_template_1 = """===Dialogue {}===
-[Question]
-{}
-[Answer]
-SQL:
-{}
-Result:
-{}
-"""
-
-receiver_template = """
-[Background]
-You are an expert in the field of finance and database.
-Given [Conversation History], your task is to understand historical conversations and determine whether answering user question requires querying databases.
-
-[Requirements]
-- If querying databases is required, you don't need to output any text, just make a "function calling".
-- If not for the above case, you can output the answer directly and concisely.
-
-[Conversation History]
-{}
-[Question]
-{}
-[Answer]
-"""
-
 filter_template = """
 [Background]
 You are an expert in the field of finance and database. 

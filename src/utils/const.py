@@ -1,5 +1,3 @@
-RECEIVER = "receiver"
-
 FILTER = "filter"
 
 DECOMPOSER = "decomposer"
@@ -7,8 +5,6 @@ DECOMPOSER = "decomposer"
 REVISER = "reviser"
 
 MANAGER = "manager"
-
-AGENT_LIST = [RECEIVER, FILTER, DECOMPOSER, REVISER, MANAGER]
 
 MAX_ITERATIONS = 6
 
@@ -22,12 +18,4 @@ N_RESULTS_KEY = 6
 
 N_RESULTS_SC = 6
 
-N_RESULTS_MEMORY = 1
-
-N_LAST_MEMORY = 1
-
-MEMORY_SORT_BY_TIME = True
-
 QUERY_MODE = 'pd'
-
-IS_RECORD_MEMORY = False

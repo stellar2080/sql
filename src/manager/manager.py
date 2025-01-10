@@ -1,13 +1,11 @@
 import json
-
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
-from src.agent.receiver import Receiver
 from src.agent.reviser import Reviser
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
-from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, RECEIVER, IS_RECORD_MEMORY
+from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER
 
 
 class Manager:
@@ -20,7 +18,6 @@ class Manager:
             self.platform = config.get('platform',None)
             if self.platform is None or self.platform == 'Qwen':
                 self.llm = Qwen(config)
-            self.receiver = Receiver()
             self.filter = Filter()
             self.decomposer = Decomposer()
             self.reviser = Reviser(config)
@@ -84,34 +81,6 @@ class Manager:
         except Exception as e:
             print(e)
 
-    def get_memory_str(self,role: list, memory: list) -> str:
-        if len(role) != len(memory):
-            raise ValueError("length of role and memory must be equal.")
-        memory_dict = {r: m for r, m in zip(role, memory)}
-        return json.dumps(memory_dict)
-
-    def record_memory(self):
-        try:
-            if self.message["sql_result"] is not None:
-                memory_str = self.get_memory_str(["user", "assistant","result"],[self.message['question'],self.message["sql"],self.message['sql_result']])
-            elif self.message["response"] is not None:
-                memory_str = self.get_memory_str(["user", "assistant"],[self.message['question'],self.message["response"]])
-            else:
-                print("Failed to record memory.")
-                return
-            print("Recording memory...")
-            self.vectordb.add_memory(memory_str)
-        except Exception as e:
-            print(e)
-
-    def clear_memory(self):
-        try:
-            print("Clearing memory data...")
-            self.vectordb.clear_memory()
-        except Exception as e:
-            print(e)
-
-
     def chat(
         self,
         question: str = None,
@@ -128,19 +97,15 @@ class Manager:
             print("ITERATION {}".format(i))
             print("MESSAGE: " + str(self.message))
             if i == 0 and self.message["message_to"] is None:
-                self.message["message_to"] = RECEIVER
+                self.message["message_to"] = FILTER
 
             if self.message["message_to"] == MANAGER:
                 print("The message is begin processed by manager...")
                 break
-            elif self.message["message_to"] == RECEIVER:
-                self.message = self.receiver.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == FILTER:
                 self.message = self.filter.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
                 self.message = self.reviser.chat(self.message, self.llm)
-        if IS_RECORD_MEMORY:
-            self.record_memory()
         return self.message

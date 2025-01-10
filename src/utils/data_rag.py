@@ -260,3 +260,47 @@ DOCUMENT = [
     ["cash flow adequacy ratio",
      "cash flow adequacy ratio = net_cf_op / (cash_pay_assets + distribute_dividends_profits)"],
 ]
+
+
+NODE_LIST = [
+    ("Elem","current ratio"),
+    ("Elem","current assets"),
+    ("Elem","current liabilities"),
+    ("Col", "cash_cb"),
+    ("Col", "ib_deposits"),
+    ("Col", "prec_metals"),
+    ("Col", "trad_fas"),
+    ("Col", "deriv_assets"),
+    ("Col", "buyback_fas"),
+    ("Col", "int_receiv"),
+    ("Col", "loans_adv"),
+    ("Col", "avai_sale_fas"),
+    ("Col", "recv_invest"),
+    ("Col", "acc_deposits"),
+    ("Col", "emp_comp_pay"),
+    ("Col", "tax_pay"),
+    ("Col", "int_pay"),
+    ("Col", "est_liab"),
+    ("Col", "oth_liab"),
+]
+
+RELATION_LIST = [
+    ("Op", "Num", "Elem", "current ratio", "Elem", "current assets"),
+    ("Op", "Den", "Elem", "current ratio", "Elem", "current liabilities"),
+    ("Op", "Add", "Elem", "current assets", "Col", "cash_cb"),
+    ("Op", "Add", "Elem", "current assets", "Col", "ib_deposits"),
+    ("Op", "Add", "Elem", "current assets", "Col", "prec_metals"),
+    ("Op", "Add", "Elem", "current assets", "Col", "trad_fas"),
+    ("Op", "Add", "Elem", "current assets", "Col", "deriv_assets"),
+    ("Op", "Add", "Elem", "current assets", "Col", "buyback_fas"),
+    ("Op", "Add", "Elem", "current assets", "Col", "int_receiv"),
+    ("Op", "Add", "Elem", "current assets", "Col", "loans_adv"),
+    ("Op", "Add", "Elem", "current assets", "Col", "avai_sale_fas"),
+    ("Op", "Add", "Elem", "current assets", "Col", "recv_invest"),
+    ("Op", "Add", "Elem", "current liabilities", "Col", "acc_deposits"),
+    ("Op", "Add", "Elem", "current liabilities", "Col", "emp_comp_pay"),
+    ("Op", "Add", "Elem", "current liabilities", "Col", "tax_pay"),
+    ("Op", "Add", "Elem", "current liabilities", "Col", "int_pay"),
+    ("Op", "Add", "Elem", "current liabilities", "Col", "est_liab"),
+    ("Op", "Add", "Elem", "current liabilities", "Col", "oth_liab"),
+]

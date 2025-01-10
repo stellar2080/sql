@@ -6,9 +6,7 @@ from .vectordb_base import VectorDB_Base
 import time
 
 from src.utils.utils import deterministic_uuid
-from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_MEMORY, N_RESULTS_SC, N_LAST_MEMORY, \
-    MEMORY_SORT_BY_TIME
-
+from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_SC
 
 class VectorDB(VectorDB_Base):
     def __init__(self, config):
@@ -49,11 +47,6 @@ class VectorDB(VectorDB_Base):
         )
         self.key_collection = self.chroma_client.get_or_create_collection(
             name="key",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "ip"},
-        )
-        self.memory_collection = self.chroma_client.get_or_create_collection(
-            name="memory",
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "ip"},
         )
@@ -124,6 +117,7 @@ class VectorDB(VectorDB_Base):
     def extract_query_results(self,query_results, extracts) -> list:
         if query_results is None:
             return []
+
         extracted_results = []
         if isinstance(extracts, str):
             extracts = [extracts]
@@ -131,6 +125,7 @@ class VectorDB(VectorDB_Base):
             if item not in query_results:
                 raise ValueError("Extract type {} is not supported.".format(item))
             extract_item = query_results[item]
+            print(extract_item)
             if len(extract_item) == 1:
                 if isinstance(extract_item[0], list):
                     extracted_results.append([json.loads(doc) if isinstance(doc,str) else doc for doc in extract_item[0]])
@@ -224,77 +219,3 @@ class VectorDB(VectorDB_Base):
 
         except Exception as error:
             print(error)
-
-    def get_last_n_memory(self):
-        count = self.memory_collection.count()
-        return self.extract_query_results(
-            self.memory_collection.get(offset=count-N_LAST_MEMORY),
-            extracts=['documents','metadatas'],
-        )
-
-    def get_related_memory(
-        self,
-        question: str,
-        **kwargs
-    ):
-        return self.extract_query_results(
-            self.memory_collection.query(
-                query_texts=[question],
-                n_results=N_RESULTS_MEMORY + N_LAST_MEMORY,
-            ),
-            extracts=['documents','metadatas'],
-        )
-
-    def remove_duplicates_from_end(self,lst: list) -> list:
-        seen = set()
-        for i in range(len(lst[0]) - 1, -1, -1):
-            if str(lst[0][i]) in seen:
-                del lst[0][i]
-                del lst[1][i]
-            else:
-                seen.add(str(lst[0][i]))
-        return lst
-
-    def remove_extra_memories(self,memories: list) -> list:
-        del_num = len(memories[0]) - N_RESULTS_MEMORY - N_LAST_MEMORY
-        start_num = len(memories[0]) - 1 - N_LAST_MEMORY
-        if del_num > 0:
-            for i in range(start_num, start_num - del_num, -1):
-                del memories[0][i]
-                del memories[1][i]
-        return memories
-
-    def get_memory(
-        self,
-        question: str,
-    ):
-        related_memory = self.get_related_memory(question)
-        print(related_memory)
-        last_n_memory = self.get_last_n_memory()
-        print(last_n_memory)
-        memories = [related_memory[i] + last_n_memory[i] for i in range(len(related_memory))]
-        print(memories)
-        memories = self.remove_duplicates_from_end(memories)
-        print(memories)
-        memories = self.remove_extra_memories(memories)
-        print(memories)
-
-        time_list = memories[1]
-        memories = memories[0]
-        if MEMORY_SORT_BY_TIME:
-            memories = sorted(memories, key=lambda x: time_list[memories.index(x)]['timestamp'])
-        return memories
-
-    def clear_memory(self):
-        try:
-            self.chroma_client.delete_collection(name="memory")
-
-            self.chroma_client.create_collection(
-                name="memory",
-                embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "ip"},
-            )
-
-        except Exception as error:
-            print(error)
-

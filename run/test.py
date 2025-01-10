@@ -43,4 +43,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
-# m.clear_memory()
+# m.chat("how many companies?")
