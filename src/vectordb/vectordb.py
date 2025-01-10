@@ -87,17 +87,6 @@ class VectorDB(VectorDB_Base):
             metadatas={"doc_id": doc_id}
         )
 
-    def add_memory(self, memory: str, **kwargs):
-        timestamp = str(time.time())
-        print("MEMORY_TIMESTAMP: " + timestamp)
-        embedding_id = deterministic_uuid(memory) + "-mem"
-        self.memory_collection.add(
-            ids=embedding_id,
-            documents=memory,
-            embeddings=self.generate_embedding(memory),
-            metadatas={"timestamp": timestamp},
-        )
-
     def remove_data(self, embedding_id: str, **kwargs) -> bool:
         if embedding_id.endswith("-key"):
             self.key_collection.delete(ids=[embedding_id])
@@ -108,31 +97,24 @@ class VectorDB(VectorDB_Base):
         elif embedding_id.endswith("-doc"):
             self.document_collection.delete(ids=[embedding_id])
             return True
-        elif embedding_id.endswith("-mem"):
-            self.memory_collection.delete(ids=[embedding_id])
-            return True
         else:
             return False
 
     def extract_query_results(self,query_results, extracts) -> list:
         if query_results is None:
             return []
-
         extracted_results = []
         if isinstance(extracts, str):
             extracts = [extracts]
         for item in extracts:
             if item not in query_results:
-                raise ValueError("Extract type {} is not supported.".format(item))
+                raise TypeError("Extract type {} is not supported.".format(item))
             extract_item = query_results[item]
-            print(extract_item)
             if len(extract_item) == 1:
                 if isinstance(extract_item[0], list):
-                    extracted_results.append([json.loads(doc) if isinstance(doc,str) else doc for doc in extract_item[0]])
+                    extracted_results.append(extract_item[0])
                 elif isinstance(extract_item[0], str):
-                    extracted_results.append([json.loads(extract_item[0])])
-                elif isinstance(extract_item[0], dict):
-                    extracted_results.append(extract_item)
+                    extracted_results.append([extract_item[0]])
 
         if len(extracted_results) == 1:
             return extracted_results[0]

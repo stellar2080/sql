@@ -1,7 +1,6 @@
 import os
 
 from src.manager.manager import Manager
-from src.utils.const import MANAGER, REVISER
 from src.utils.data_rag import SCHEMA,DOCUMENT
 
 ROOT_PATH = os.path.abspath("../")
@@ -28,15 +27,5 @@ m = Manager(
 #               "\nsql: ", item["sql"],)
 #         m.train(item["question"],item["sql"])
 
-# m.message = {
-#     "question": "1",
-#     "sql": None,
-#     "schema": None,
-#     "evidence": None,
-#     "message_to": REVISER,
-#     "response": "3",
-#     "sql_result": None
-# }
-
-m.vectordb.get_memory("hello,how many company?")
-
+result = m.vectordb.get_related_key_meta("how many companies?")
+print(result)

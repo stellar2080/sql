@@ -43,4 +43,4 @@ m = Manager(
 #               file=txt_file
 #             )
 
-# m.chat("how many companies?")
+m.chat("how many companies?")
