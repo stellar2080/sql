@@ -263,9 +263,15 @@ class GraphDB(GraphDB_Base):
 
         return return_str
 
-    def query(self, node_type, name):
+    def query(self, name):
         with self.driver.session() as session:
-            result = self.recursion(node_type, name, session)
-            string = name + " = " + result
-            print(string)
+            if isinstance(name, str):
+                result = self.recursion("Elem", name, session)
+                string = name + " = " + result
+            elif isinstance(name, list):
+                string = []
+                for item in name:
+                    result = self.recursion("Elem", item, session)
+                    string.append(item + " = " + result)
         self.driver.close()
+        return string

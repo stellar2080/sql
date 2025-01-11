@@ -105,7 +105,7 @@ class Manager:
                 print("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == FILTER:
-                self.message = self.filter.chat(self.message, self.llm, self.vectordb)
+                self.message = self.filter.chat(self.message, self.llm, self.vectordb, self.graphdb)
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:

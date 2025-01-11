@@ -42,5 +42,3 @@ m = Manager(
 #               "\n\n",
 #               file=txt_file
 #             )
-
-m.chat("how many companies?")
