@@ -257,8 +257,8 @@ DOCUMENT = [
     ["total stockholder's equity",
      "total stockholder's equity and total owner's equity are the same"],
 
-    ["shareholders' equity",
-     "shareholders' equity and total owner's equity are the same"],
+    ["shareholder's equity",
+     "shareholder's equity and total owner's equity are the same"],
 ]
 
 
@@ -285,6 +285,9 @@ GRAPH_LIST = [
     ("Elem","capital expenditure ratio"),
     ("Elem","cash dividend ratio"),
     ("Elem","cash flow adequacy ratio"),
+    ("Elem","net assets"),
+    ("Elem","total stockholder's equity"),
+    ("Elem","shareholder's equity"),
 
     ("Mid","cash flow adequacy ratio_0"),
 
@@ -417,4 +420,10 @@ GRAPH_LIST = [
     ("Op", "Dvs", "Elem", "cash flow adequacy ratio", "Mid", "cash flow adequacy ratio_0", 1),
     ("Op", "Add", "Mid", "cash flow adequacy ratio_0", "Col", "cash_pay_assets"),
     ("Op", "Add", "Mid", "cash flow adequacy ratio_0", "Col", "distribute_dividends_profits"),
+
+    ("Op", "EQ", "Elem", "shareholder's equity", "Col", "tot_own_eq"),
+
+    ("Op", "EQ", "Elem", "total stockholder's equity", "Col", "tot_own_eq"),
+
+    ("Op", "EQ", "Elem", "net assets", "Col", "tot_own_eq"),
 ]

@@ -4,28 +4,31 @@ from src.graphdb.graphdb_base import GraphDB_Base
 
 
 def create_node_tx(tx, node_type, name):
-    cypher = f"MERGE (a:{node_type} {{name:'{name}'}})"
+    cypher = f'''MERGE (a:{node_type} {{name:"{name}"}})'''
     tx.run(cypher)
 
 def create_relation_tx(tx, relation_type, relation_name, type_a, name_a, type_b, name_b, priority):
-    cypher = f"MATCH (a:{type_a} {{name:'{name_a}'}}), (b:{type_b} {{name:'{name_b}'}}) MERGE (a)-[:{relation_type} {{name:'{relation_name}',priority:{priority}}}]->(b)"
+    cypher = f'''
+        MATCH (a:{type_a} {{name:"{name_a}"}}), (b:{type_b} {{name:"{name_b}"}}) 
+        MERGE (a)-[:{relation_type} {{name:"{relation_name}",priority:{priority}}}]->(b)
+    '''
     tx.run(cypher)
 
 def create_index_tx(tx, index_name, node_type):
-    cypher = f"CREATE INDEX {index_name} FOR (a:{node_type}) ON (a.name)"
+    cypher = f'''CREATE INDEX {index_name} FOR (a:{node_type}) ON (a.name)'''
     tx.run(cypher)
 
 def get_nodes_tx(tx, node_type=None, name=None):
     if node_type == "Node":
         if name:
-            cypher = f"MATCH (a) WHERE a.name='{name}' RETURN a"
+            cypher = f'''MATCH (a) WHERE a.name="{name}" RETURN a'''
         else:
-            cypher = "MATCH (a) RETURN a"
+            cypher = '''MATCH (a) RETURN a'''
     else:
         if name:
-            cypher = f"MATCH (a:{node_type}) WHERE a.name='{name}' RETURN a"
+            cypher = f'''MATCH (a:{node_type}) WHERE a.name="{name}" RETURN a'''
         else:
-            cypher = f"MATCH (a:{node_type}) RETURN a"
+            cypher = f'''MATCH (a:{node_type}) RETURN a'''
 
     result = tx.run(cypher)
     for record in result:
@@ -39,14 +42,14 @@ def get_nodes_tx(tx, node_type=None, name=None):
 def get_relation_tx(tx, relation_type=None,relation_name=None):
     if relation_type == "Fig":
         if relation_name:
-            cypher = f"MATCH (a)-[r]->(b) WHERE r.name='{relation_name}' RETURN a, r, b"
+            cypher = f'''MATCH (a)-[r]->(b) WHERE r.name="{relation_name}" RETURN a, r, b'''
         else:
-            cypher = f"MATCH (a)-[r]->(b) RETURN a, r, b"
+            cypher = f'''MATCH (a)-[r]->(b) RETURN a, r, b'''
     else:
         if relation_name:
-            cypher = f"MATCH (a)-[r:{relation_type}]->(b) WHERE r.name='{relation_name}' RETURN a, r, b"
+            cypher = f'''MATCH (a)-[r:{relation_type}]->(b) WHERE r.name="{relation_name}" RETURN a, r, b'''
         else:
-            cypher = f"MATCH (a)-[r:{relation_type}]->(b) RETURN a, r, b"
+            cypher = f'''MATCH (a)-[r:{relation_type}]->(b) RETURN a, r, b'''
 
     result = tx.run(cypher)
     for record in result:
@@ -73,28 +76,28 @@ def show_index_tx(tx):
 def del_nodes_tx(tx, node_type=None, name=None):
     if node_type == "Node":
         if name:
-            cypher = f"MATCH (a) WHERE a.name = '{name}' DETACH DELETE a"
+            cypher = f'''MATCH (a) WHERE a.name = "{name}“ DETACH DELETE a'''
         else:
-            cypher = "MATCH (a) DETACH DELETE a"
+            cypher = '''MATCH (a) DETACH DELETE a'''
     else:
         if name:
-            cypher = f"MATCH (a:{node_type}) WHERE a.name = '{name}' DETACH DELETE a"
+            cypher = f'''MATCH (a:{node_type}) WHERE a.name = ”{name}" DETACH DELETE a'''
         else:
-            cypher = f"MATCH (a:{node_type}) DETACH DELETE a"
+            cypher = f'''MATCH (a:{node_type}) DETACH DELETE a'''
 
     tx.run(cypher)
 
 def del_relation_tx(tx, relation_type=None, relation_name=None):
     if relation_type == "Relation":
         if relation_name:
-            cypher = f"MATCH (a)-[r]->(b) WHERE r.name='{relation_name}' DELETE r"
+            cypher = f'''MATCH (a)-[r]->(b) WHERE r.name="{relation_name}" DELETE r'''
         else:
-            cypher = f"MATCH (a)-[r]->(b) DELETE r"
+            cypher = f'''MATCH (a)-[r]->(b) DELETE r'''
     else:
         if relation_name:
-            cypher = f"MATCH (a)-[r:{relation_type}]->(b) WHERE r.name='{relation_name}' DELETE r"
+            cypher = f'''MATCH (a)-[r:{relation_type}]->(b) WHERE r.name="{relation_name}" DELETE r'''
         else:
-            cypher = f"MATCH (a)-[r:{relation_type}]->(b) DELETE r"
+            cypher = f'''MATCH (a)-[r:{relation_type}]->(b) DELETE r'''
 
     tx.run(cypher)
 
@@ -179,7 +182,7 @@ class GraphDB(GraphDB_Base):
                     if not func:
                         raise Exception("Node_type not found")
                     session.execute_write(func, node_type, name)
-                    print(f"Node: (:{node_type} {{name:'{name}'}}) merged.")
+                    print(f'''Node: (:{node_type} {{name:"{name}"}}) merged.''')
                 else:
                     priority = 0
                     if len(item) == 6:
@@ -192,7 +195,7 @@ class GraphDB(GraphDB_Base):
                     if relation_name not in FIG_LIST:
                         raise Exception("Relation_name not supported")
                     session.execute_write(func, relation_type, relation_name, node_type_a, name_a, node_type_b, name_b, priority)
-                    print(f"Relation: ({name_a})-[:{relation_type} {{name:'{relation_name}'}}]->({name_b}) merged.")
+                    print(f'''Relation: ({name_a})-[:{relation_type} {{name:"{relation_name}"}}]->({name_b}) merged.''')
         self.driver.close()
 
 
