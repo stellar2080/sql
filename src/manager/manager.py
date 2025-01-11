@@ -2,6 +2,7 @@ import json
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
+from src.graphdb.graphdb import GraphDB
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
@@ -33,6 +34,7 @@ class Manager:
         elif self.mode == 'train':
             print("training mode")
         self.vectordb = VectorDB(config)
+        self.graphdb = GraphDB(config)
 
     def train(
         self,

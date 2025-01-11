@@ -4,11 +4,11 @@ from src.graphdb.graphdb_base import GraphDB_Base
 
 
 def create_node_tx(tx, node_type, name):
-    cypher = f"CREATE (a:{node_type} {{name:'{name}'}})"
+    cypher = f"MERGE (a:{node_type} {{name:'{name}'}})"
     tx.run(cypher)
 
-def create_relation_tx(tx, relation_type, relation_name, type_a, name_a, type_b, name_b):
-    cypher = f"MATCH (a:{type_a} {{name:'{name_a}'}}), (b:{type_b} {{name:'{name_b}'}}) CREATE (a)-[:{relation_type} {{name:'{relation_name}'}}]->(b)"
+def create_relation_tx(tx, relation_type, relation_name, type_a, name_a, type_b, name_b, priority):
+    cypher = f"MATCH (a:{type_a} {{name:'{name_a}'}}), (b:{type_b} {{name:'{name_b}'}}) MERGE (a)-[:{relation_type} {{name:'{relation_name}',priority:{priority}}}]->(b)"
     tx.run(cypher)
 
 def create_index_tx(tx, index_name, node_type):
@@ -105,7 +105,7 @@ def del_index_tx(tx, index_name):
 
     tx.run(cypher)
 
-FIG_LIST = ["EQ","Add","Min","Sub","Mul","Num","Den"]
+FIG_LIST = ["EQ","Add","Mnd","Sub","Mul","Dvd","Dvs"]
 
 C_FUNC_LIST = {
     "Elem": create_node_tx,
@@ -135,6 +135,13 @@ D_FUNC_LIST = {
     "Relation": del_relation_tx,
 }
 
+op_map = {
+    "Add": " + ",
+    "Sub": " - ",
+    "Mul": " * ",
+    "Dvs": " / ",
+}
+
 class GraphDB(GraphDB_Base):
     def __init__(self,config):
         super().__init__(config)
@@ -150,44 +157,46 @@ class GraphDB(GraphDB_Base):
         with self.driver.session() as session:
             session.execute_write(func, node_type, name)
         self.driver.close()
-        print(f"Node: (:{node_type}, {{name:{name}}}) created.")
+        print(f"Node: (:{node_type}, {{name:{name}}}) merged.")
 
-    def create_relation(self, relation_type, relation_name, node_type_a, name_a, node_type_b, name_b):
+    def create_relation(self, relation_type, relation_name, node_type_a, name_a, node_type_b, name_b, priority):
         func = C_FUNC_LIST[relation_type]
         if not func:
             raise Exception("Relation_type not supported")
         if relation_name not in FIG_LIST:
             raise Exception("Relation_name not supported")
         with self.driver.session() as session:
-            session.execute_write(func, relation_type, relation_name, node_type_a, name_a, node_type_b, name_b)
+            session.execute_write(func, relation_type, relation_name, node_type_a, name_a, node_type_b, name_b, priority)
         self.driver.close()
-        print(f"Relation: ({name_a})-[:{relation_type}{{name:{relation_name}}}]->({name_b}) created.")
+        print(f"Relation: ({name_a})-[:{relation_type}{{name:{relation_name}}}]->({name_b}) merged.")
 
-    def create_node_by_list(self, node_list):
+    def create_by_list(self, _list):
         with self.driver.session() as session:
-            for item in node_list:
-                node_type, name = item
-                func = C_FUNC_LIST[node_type]
-                if not func:
-                    raise Exception("Node_type not found")
-                session.execute_write(func, node_type, name)
-                print(f"Node: (:{node_type} {{name:'{name}'}}) created.")
+            for item in _list:
+                if len(item) == 2:
+                    node_type, name = item
+                    func = C_FUNC_LIST[node_type]
+                    if not func:
+                        raise Exception("Node_type not found")
+                    session.execute_write(func, node_type, name)
+                    print(f"Node: (:{node_type} {{name:'{name}'}}) merged.")
+                else:
+                    priority = 0
+                    if len(item) == 6:
+                        relation_type, relation_name, node_type_a, name_a, node_type_b, name_b = item
+                    elif len(item) == 7:
+                        relation_type, relation_name, node_type_a, name_a, node_type_b, name_b, priority = item
+                    func = C_FUNC_LIST[relation_type]
+                    if not func:
+                        raise Exception("Relation_type not supported")
+                    if relation_name not in FIG_LIST:
+                        raise Exception("Relation_name not supported")
+                    session.execute_write(func, relation_type, relation_name, node_type_a, name_a, node_type_b, name_b, priority)
+                    print(f"Relation: ({name_a})-[:{relation_type} {{name:'{relation_name}'}}]->({name_b}) merged.")
         self.driver.close()
 
-    def create_relation_by_list(self, relation_list):
-        with self.driver.session() as session:
-            for item in relation_list:
-                relation_type, relation_name, node_type_a, name_a, node_type_b, name_b = item
-                func = C_FUNC_LIST[relation_type]
-                if not func:
-                    raise Exception("Relation_type not found")
-                if relation_name not in FIG_LIST:
-                    raise Exception("Relation_name not supported")
-                session.execute_write(func, relation_type, relation_name, node_type_a, name_a, node_type_b, name_b)
-                print(f"Relation: ({name_a})-[:{relation_type} {{name:'{relation_name}'}}]->({name_b}) created.")
-        self.driver.close()
 
-    def get_sth(self, _type=None, _name=None):
+    def get_sth(self, _type, _name=None):
         func = G_FUNC_LIST[_type]
         if not func:
             raise Exception("Type not found")
@@ -196,12 +205,19 @@ class GraphDB(GraphDB_Base):
         self.driver.close()
         return result
 
-    def del_sth(self, _type=None, _name=None):
+    def del_sth(self, _type, _name=None):
         func = D_FUNC_LIST[_type]
         if not func:
             raise Exception("Type not found")
         with self.driver.session() as session:
             session.execute_write(func, _type, _name)
+        self.driver.close()
+        print("Successfully delete.")
+
+    def del_all(self):
+        with self.driver.session() as session:
+            session.execute_write(del_nodes_tx,"Node")
+            session.execute_write(del_relation_tx,"Relation")
         self.driver.close()
         print("Successfully delete.")
 
@@ -222,3 +238,31 @@ class GraphDB(GraphDB_Base):
             session.execute_write(show_index_tx)
         self.driver.close()
 
+    def recursion(self, node_type, _name, session):
+        return_str = ""
+        cypher = f"""
+            MATCH path = (root:{node_type} {{name:"{_name}"}})-[rel:Op]->(child)
+            ORDER BY rel.priority ASC
+            RETURN rel, child
+        """
+        result = session.run(cypher)
+        for record in result:
+            rel_name = record['rel']['name']
+            (child_type,) = record['child'].labels
+            child_name = record['child']['name']
+            if child_type != "Col":
+                append_str = '(' + self.recursion(child_type, child_name, session) + ')'
+            else:
+                append_str = child_name
+            if len(return_str) != 0:
+                return_str += op_map[rel_name]
+            return_str += append_str
+
+        return return_str
+
+    def query(self, node_type, name):
+        with self.driver.session() as session:
+            result = self.recursion(node_type, name, session)
+            string = name + " = " + result
+            print(string)
+        self.driver.close()
