@@ -1,4 +1,8 @@
+import functools
 import hashlib
+import queue
+import threading
+import time
 import uuid
 from typing import Union
 import json
@@ -87,3 +91,36 @@ def parse_sql(text: str) -> str:
     except Exception as e:
         print(e)
         pass
+
+def show_perf(func):
+    def wrapper(*args, **kwargs):
+        print('*' * 20)
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        print(f'{func.__name__} Cost: {time.perf_counter() - start}')
+        return result
+    return wrapper
+
+def timeout(time_args):
+    def _timeout(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            q = queue.Queue(maxsize=1)
+            def run():
+                try:
+                    result = func(*args, **kwargs)
+                    q.put((result,None))
+                except Exception as e:
+                    exception = e
+                    q.put((None,exception))
+            thread = threading.Thread(target=run)
+            thread.start()
+            thread.join(time_args)
+            if thread.is_alive():
+                raise Exception("Function call timed out.")
+            result, exception = q.get()
+            if exception:
+                raise exception
+            return result
+        return wrapper
+    return _timeout

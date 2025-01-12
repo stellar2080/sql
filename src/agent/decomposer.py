@@ -2,8 +2,7 @@ from src.agent.agent_base import Agent_Base
 from src.llm.llm_base import LLM_Base
 from src.utils.const import DECOMPOSER, REVISER
 from src.utils.template import decompose_template
-from src.utils.timeout import timeout
-from src.utils.utils import parse_sql, user_message, get_res_content
+from src.utils.utils import parse_sql, user_message, get_res_content, timeout
 
 
 class Decomposer(Agent_Base):

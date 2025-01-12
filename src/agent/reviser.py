@@ -9,8 +9,7 @@ from typing_extensions import override
 from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER, QUERY_MODE
 from src.utils.template import reviser_template
-from src.utils.timeout import timeout
-from src.utils.utils import parse_sql, user_message, get_res_content
+from src.utils.utils import parse_sql, user_message, get_res_content, timeout
 from src.agent.agent_base import Agent_Base
 
 

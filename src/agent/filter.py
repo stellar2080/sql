@@ -2,8 +2,7 @@ from src.graphdb.graphdb import GraphDB
 from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
 from src.utils.template import filter_template
-from src.utils.timeout import timeout
-from src.utils.utils import parse_json, user_message, get_res_content
+from src.utils.utils import parse_json, user_message, get_res_content, timeout
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
 
