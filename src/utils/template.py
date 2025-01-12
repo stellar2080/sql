@@ -1,7 +1,30 @@
+extractor_template = """
+[Background]
+You are an expert in the field of finance and database.
+Given a question, your task is to find any named entities from the question, such as organizations, financial terms, and other phrases that contain important aspects of the query.
+
+[Requirements]
+- Your output should be in a python list format.
+
+==========
+Here is a typical example:
+[Question]
+I want to know the working capital and current ratio of China Construction Bank.
+[Answer]
+['working capital','current ratio','China Construction Bank']
+
+==========
+Here is a new example, considering [Requirements], please start answering:
+[Question]
+{}
+[Answer]
+"""
+
+
 filter_template = """
 [Background]
 You are an expert in the field of finance and database. 
-Given a user question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
+Given a question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
 Your task is to select relevant tables and columns based on user questions and evidence provided.
 
 [Requirements]

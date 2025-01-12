@@ -1,3 +1,5 @@
+EXTRACTOR = "extractor"
+
 FILTER = "filter"
 
 DECOMPOSER = "decomposer"

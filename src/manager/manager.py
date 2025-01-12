@@ -1,12 +1,13 @@
 import os
 
+from src.agent.extractor import Extractor
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
-from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER
+from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, EXTRACTOR
 
 
 class Manager:
@@ -19,6 +20,7 @@ class Manager:
             self.platform = config.get('platform',None)
             if self.platform is None or self.platform == 'Qwen':
                 self.llm = Qwen(config)
+            self.extractor = Extractor()
             self.filter = Filter()
             self.decomposer = Decomposer()
             self.reviser = Reviser(config)
@@ -85,11 +87,13 @@ class Manager:
             print("ITERATION {}".format(i))
             print("MESSAGE: " + str(self.message))
             if i == 0 and self.message["message_to"] is None:
-                self.message["message_to"] = FILTER
+                self.message["message_to"] = EXTRACTOR
 
             if self.message["message_to"] == MANAGER:
                 print("The message is begin processed by manager...")
                 break
+            elif self.message["message_to"] == EXTRACTOR:
+                self.message = self.extractor.chat(self.message, self.llm)
             elif self.message["message_to"] == FILTER:
                 self.message = self.filter.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == DECOMPOSER:

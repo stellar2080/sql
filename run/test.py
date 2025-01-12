@@ -43,5 +43,14 @@ m = Manager(
 #               file=txt_file
 #             )
 
-res = m.filter.get_evidence_str("current rtaio",m.vectordb)
-print(res)
+message = {
+    "question": "tell me the debt to asset ratio and equity multiplier of Trump Bank",
+    "sql": None,
+    "schema": None,
+    "evidence": None,
+    "message_to": "extractor",
+    "response": None,
+    "sql_result": None
+}
+
+res = m.extractor.chat(message,m.llm)
