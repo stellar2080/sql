@@ -1,4 +1,3 @@
-from src.graphdb.graphdb import GraphDB
 from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
 from src.utils.template import filter_template
@@ -21,22 +20,12 @@ class Filter(Agent_Base):
         self,
         question: str,
         vectordb: VectorDB,
-        graphdb: GraphDB,
     ):
-        # evidence_ids = vectordb.get_related_key_meta(question)
-        # evidence_set = set()
-        # evidence_str = ""
-        # for evidence_id in evidence_ids:
-        #     evidence_set.add(vectordb.get_doc_by_id(evidence_id))
-        # for evidence in evidence_set:
-        #     evidence_str += "=====\n" + evidence + "\n"
-        # return evidence_str
-        evidence_keys = vectordb.get_related_key(question)
-        query_results = graphdb.query(evidence_keys)
+        evidence_ids = vectordb.get_related_key_meta(question)
         evidence_set = set()
         evidence_str = ""
-        for item in query_results:
-            evidence_set.add(item)
+        for evidence_id in evidence_ids:
+            evidence_set.add(vectordb.get_doc_by_id(evidence_id))
         for evidence in evidence_set:
             evidence_str += "=====\n" + evidence + "\n"
         return evidence_str
@@ -45,11 +34,10 @@ class Filter(Agent_Base):
         self,
         question: str,
         vectordb: VectorDB,
-        graphdb: GraphDB,
     ) -> (str,str):
         schema_list = vectordb.get_related_schema(question)
         schema_str = self.schema_list_to_str(schema_list)
-        evidence_str = self.get_evidence_str(question, vectordb, graphdb)
+        evidence_str = self.get_evidence_str(question, vectordb)
         prompt = filter_template.format(schema_str, evidence_str, question)
         print(prompt)
         return prompt,schema_str,evidence_str
@@ -109,14 +97,13 @@ class Filter(Agent_Base):
         self,
         message: dict,
         llm: LLM_Base = None,
-        vectordb: VectorDB = None,
-        graphdb: GraphDB = None
+        vectordb: VectorDB = None
     ):
         if message["message_to"] != FILTER:
             raise Exception("The message should not be processed by " + FILTER + ". It is sent to " + message["message_to"])
         else:
             print("The message is being processed by " + FILTER + "...")
-            prompt, schema_str, evidence_str = self.create_filter_prompt(message["question"], vectordb, graphdb)
+            prompt, schema_str, evidence_str = self.create_filter_prompt(message["question"], vectordb)
             ans = self.get_filter_ans(prompt, llm)
             json_ans = parse_json(ans)
 

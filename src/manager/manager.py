@@ -1,8 +1,6 @@
-import json
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
-from src.graphdb.graphdb import GraphDB
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
@@ -34,7 +32,6 @@ class Manager:
         elif self.mode == 'train':
             print("training mode")
         self.vectordb = VectorDB(config)
-        self.graphdb = GraphDB(config)
 
     def train(
         self,
@@ -105,7 +102,7 @@ class Manager:
                 print("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == FILTER:
-                self.message = self.filter.chat(self.message, self.llm, self.vectordb, self.graphdb)
+                self.message = self.filter.chat(self.message, self.llm, self.vectordb)
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
