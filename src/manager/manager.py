@@ -1,3 +1,5 @@
+import os
+
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
@@ -33,43 +35,30 @@ class Manager:
             print("training mode")
         self.vectordb = VectorDB(config)
 
-    def train(
-        self,
-        schema: str = None,
-        doc: list = None,
-        schema_list: list = None,
-        doc_list: list = None,
-    ):
-        if schema:
-            print("Adding schema...")
-            self.train_schema(schema)
-        if doc:
-            print("Adding document...")
-            self.train_doc(doc)
-        if schema_list:
-            print("Adding schema in the list...")
-            for schema in schema_list:
-                self.train_schema(schema=schema)
-        if doc_list:
-            print("Adding document in the list...")
-            for doc in doc_list:
-                self.train_doc(doc=doc)
-
     def train_schema(
         self,
         schema: str = None,
     ):
         self.vectordb.add_schema(schema=schema)
 
-    def train_doc(
-        self,
-        doc: list = None,
-    ):
-        key_n_doc = doc[0] + ": " +  doc[1]
-        key_id = deterministic_uuid(key_n_doc) + "-key"
-        doc_id = deterministic_uuid(doc[1]) + "-doc"
-        self.vectordb.add_key(key=doc[0], doc_id=doc_id, embedding_id=key_id)
-        self.vectordb.add_doc(document=doc[1])
+    def train_doc(self, path):
+        if not os.path.exists(path):
+            raise Exception("Path does not exist.")
+        try:
+            with open(path, mode="r") as f:
+                content = f.readlines()
+                for line in content:
+                    key = line[:line.find('=')].strip()
+                    doc = line.rstrip('\n')
+                    key_n_doc = key + ": " + doc
+                    key_id = deterministic_uuid(key_n_doc) + "-key"
+                    doc_id = deterministic_uuid(doc) + "-doc"
+                    self.vectordb.add_key(key=key, doc_id=doc_id, embedding_id=key_id)
+                    self.vectordb.add_doc(document=doc)
+            print(f"Doc:{path} has been trained")
+        except Exception as e:
+            print(e)
+
 
     def clear_rag(
         self

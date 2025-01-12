@@ -42,3 +42,6 @@ m = Manager(
 #               "\n\n",
 #               file=txt_file
 #             )
+
+res = m.filter.get_evidence_str("current rtaio",m.vectordb)
+print(res)
