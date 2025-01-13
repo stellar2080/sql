@@ -1,9 +1,7 @@
-import json
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
-import time
 
 from src.utils.utils import deterministic_uuid
 from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_SC
@@ -38,17 +36,17 @@ class VectorDB(VectorDB_Base):
         self.document_collection = self.chroma_client.get_or_create_collection(
             name="document",
             embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "ip"},
+            metadata={"hnsw:space": "cosine"},
         )
         self.schema_collection = self.chroma_client.get_or_create_collection(
             name="schema",
             embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "ip"},
+            metadata={"hnsw:space": "cosine"},
         )
         self.key_collection = self.chroma_client.get_or_create_collection(
             name="key",
             embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "ip"},
+            metadata={"hnsw:space": "cosine"},
         )
 
     def generate_embedding(self, data:str, **kwargs):
@@ -78,14 +76,20 @@ class VectorDB(VectorDB_Base):
             documents=document,
             embeddings=self.generate_embedding(document),
         )
+        print("Add_doc: ", document, " ID: ", embedding_id)
 
     def add_key(self, key: str, doc_id: str, embedding_id: str = None, **kwargs):
+        if embedding_id is None:
+            doc = self.document_collection.get(ids=[doc_id])['documents'][0]
+            key_n_doc = key + ": " + doc
+            embedding_id = deterministic_uuid(key_n_doc) + "-key"
         self.key_collection.add(
             ids=embedding_id,
             documents=key,
             embeddings=self.generate_embedding(key),
             metadatas={"doc_id": doc_id}
         )
+        print("Add_key: ", key, " Doc_id: ", doc_id)
 
     def remove_data(self, embedding_id: str, **kwargs) -> bool:
         if embedding_id.endswith("-key"):
@@ -138,11 +142,12 @@ class VectorDB(VectorDB_Base):
             extracts='documents'
         )
 
-    def get_related_key(self, question: str, **kwargs) -> list:
+    def get_related_key(self, question: str, n_results=None, **kwargs) -> list:
+        n_results = N_RESULTS_KEY if not n_results else n_results
         return self.extract_query_results(
             self.key_collection.query(
                 query_texts=[question],
-                n_results=N_RESULTS_KEY,
+                n_results=n_results,
             ),
             extracts='documents'
         )
@@ -177,6 +182,10 @@ class VectorDB(VectorDB_Base):
             result = self.document_collection.get(ids=embedding_ids)
             return result['documents']
 
+    def get_all_key(self):
+        res = self.key_collection.get()['documents']
+        return res
+
     def clear_rag(self):
         try:
             self.chroma_client.delete_collection(name="document")
@@ -186,17 +195,17 @@ class VectorDB(VectorDB_Base):
             self.chroma_client.create_collection(
                 name="document",
                 embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "ip"},
+                metadata={"hnsw:space": "cosine"},
             )
             self.chroma_client.create_collection(
                 name="schema",
                 embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "ip"},
+                metadata={"hnsw:space": "cosine"},
             )
             self.chroma_client.create_collection(
                 name="key",
                 embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "ip"},
+                metadata={"hnsw:space": "cosine"},
             )
 
         except Exception as error:

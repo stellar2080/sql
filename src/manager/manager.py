@@ -1,5 +1,7 @@
 import os
 
+from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums, Suppress
+
 from src.agent.extractor import Extractor
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
@@ -47,11 +49,60 @@ class Manager:
         if not os.path.exists(path):
             raise Exception("Path does not exist.")
         try:
+            special_chars = "'_,."
+            word = Word(alphas + nums + special_chars)
+            identifier = Combine(word + ZeroOrMore(White(" ") + word))
+
+            eq_1 = Word("=")
+            operator_1 = oneOf("+ - * /")
+            lparen_1 = Word("(")
+            rparen_1 = Word(")")
+
+            eq_2 = Suppress("=")
+            operator_2 = Suppress(oneOf("+ - * /"))
+            lparen_2 = Suppress("(")
+            rparen_2 = Suppress(")")
+
+            expr_all = Group(
+                identifier + eq_1 + OneOrMore(
+                    Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
+                )
+            )
+            expr_sup = Group(
+                identifier + eq_2 + OneOrMore(
+                    Optional(lparen_2) + identifier + Optional(operator_2 | rparen_2)
+                )
+            )
+
             with open(path, mode="r") as f:
                 content = f.readlines()
                 for line in content:
-                    key = line[:line.find('=')].strip()
-                    doc = line.rstrip('\n')
+                    print("="*30)
+                    result_all = list(expr_all.parseString(line)[0])
+                    result_sup = list(expr_sup.parseString(line)[0])
+                    key = result_all[0]
+                    print(result_all)
+                    print(result_sup)
+                    for num, item in enumerate(result_sup[1:]):
+                        lower_name = item.lower()
+                        results = self.vectordb.key_collection.query(query_texts=lower_name)
+                        threshold = 0.1
+                        filtered_keys = [
+                            (f_key, doc_id) for f_key, distance, doc_id in sorted(
+                                zip(results['documents'][0], results['distances'][0], results['metadatas'][0]),
+                                key=lambda x: x[1]
+                            ) if distance < threshold
+                        ]
+                        print("Elem:", item)
+                        print("Rela:", filtered_keys)
+                        if len(filtered_keys) > 0:
+                            f_key = filtered_keys[0][0]
+                            doc_id = filtered_keys[0][1]['doc_id']
+                            if f_key != lower_name:
+                                result_all[result_all.index(item)] = f_key
+                            self.vectordb.add_key(key=key, doc_id=doc_id)
+                            print("="*10)
+                    doc = " ".join(result_all)
                     key_n_doc = key + ": " + doc
                     key_id = deterministic_uuid(key_n_doc) + "-key"
                     doc_id = deterministic_uuid(doc) + "-doc"

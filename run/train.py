@@ -2,6 +2,8 @@ import os
 
 from src.manager.manager import Manager
 
+
+
 ROOT_PATH = os.path.abspath("../")
 
 m = Manager(
@@ -14,13 +16,14 @@ m = Manager(
     },
 )
 
-# m.clear_rag()
-
+m.clear_rag()
+#
 # m.train_doc(path="../rag/formulas.txt")
-
+#
 # with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_train_text2sql.json')) as f:
 #     data = json.load(f)
 #     for item in data:
 #         print("question: ", item["question"],
 #               "\nsql: ", item["sql"],)
 #         m.train(item["question"],item["sql"])
+
