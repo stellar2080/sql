@@ -50,5 +50,5 @@ class Extractor(Agent_Base):
             prompt = self.create_extractor_prompt(message["question"])
             ans = self.get_extractor_ans(prompt, llm)
             list_ans = self.parse_list(ans)
-            print(list_ans)
+            message["extract"] = list_ans
             message["message_to"] = FILTER

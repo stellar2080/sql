@@ -23,16 +23,16 @@ class Manager:
             if self.platform is None or self.platform == 'Qwen':
                 self.llm = Qwen(config)
             self.extractor = Extractor()
-            self.filter = Filter()
+            self.filter = Filter(config)
             self.decomposer = Decomposer()
             self.reviser = Reviser(config)
             self.message = {
                 "question": None,
+                "extract": None,
                 "sql": None,
                 "schema": None,
                 "evidence": None,
                 "message_to": None,
-                "response": None,
                 "sql_result": None
             }
         elif self.mode == 'train':
@@ -84,8 +84,8 @@ class Manager:
                     print(result_all)
                     print(result_sup)
                     for num, item in enumerate(result_sup[1:]):
-                        lower_name = item.lower()
-                        results = self.vectordb.key_collection.query(query_texts=lower_name)
+                        name = item.lower().replace("_"," ").replace("-"," ").rstrip('s')
+                        results = self.vectordb.key_collection.query(query_texts=name)
                         threshold = 0.1
                         filtered_keys = [
                             (f_key, doc_id) for f_key, distance, doc_id in sorted(
@@ -98,7 +98,7 @@ class Manager:
                         if len(filtered_keys) > 0:
                             f_key = filtered_keys[0][0]
                             doc_id = filtered_keys[0][1]['doc_id']
-                            if f_key != lower_name:
+                            if f_key != name:
                                 result_all[result_all.index(item)] = f_key
                             self.vectordb.add_key(key=key, doc_id=doc_id)
                             print("="*10)

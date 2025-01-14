@@ -1,13 +1,9 @@
-import os
-import sqlite3
-from urllib.parse import urlparse
-
 import pandas as pd
-import requests
 from typing_extensions import override
 
 from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER, QUERY_MODE
+from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import reviser_template
 from src.utils.utils import parse_sql, user_message, get_res_content, timeout
 from src.agent.agent_base import Agent_Base
@@ -18,11 +14,9 @@ class Reviser(Agent_Base):
         if config is None:
             config = {}
         self.config = config
-        self.conn = None
-        self.dialect = None
         url = config.get("db_path",'.')
         check_same_thread = config.get("check_same_thread", False)
-        self.connect_to_sqlite(url=url,check_same_thread=check_same_thread)
+        self.conn, self.dialect = connect_to_sqlite(url=url,check_same_thread=check_same_thread)
 
     def create_reviser_prompt(
         self,
@@ -53,25 +47,6 @@ class Reviser(Agent_Base):
         print(answer)
         new_sql = parse_sql(answer)
         return new_sql
-
-    def connect_to_sqlite(
-        self,
-        url: str,
-        check_same_thread: bool = False,
-        **kwargs
-    ):
-        if not os.path.exists(url):
-            path = os.path.basename(urlparse(url).path)
-            response = requests.get(url)
-            response.raise_for_status()  # Check that the request was successful
-            with open(path, "wb") as f:
-                f.write(response.content)
-        self.conn = sqlite3.connect(
-            url,
-            check_same_thread=check_same_thread,
-            **kwargs
-        )
-        self.dialect = "SQLite"
 
     def is_conn(self):
         return self.conn is not None

@@ -43,14 +43,16 @@ m = Manager(
 #               file=txt_file
 #             )
 
-message = {
-    "question": "tell me the debt to asset ratio and equity multiplier of Trump Bank",
-    "sql": None,
-    "schema": None,
-    "evidence": None,
-    "message_to": "extractor",
-    "response": None,
-    "sql_result": None
-}
+# message = {
+#     "question": "tell me the debt to asset ratio and equity multiplier of Trump Bank",
+#     "sql": None,
+#     "schema": None,
+#     "evidence": None,
+#     "message_to": "extractor",
+#     "response": None,
+#     "sql_result": None
+# }
 
-res = m.extractor.chat(message,m.llm)
+entity_list = ['working_capital','Assets_Imp_Loss']
+res = m.filter.get_related_column(entity_list)
+print(res)

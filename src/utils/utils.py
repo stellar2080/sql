@@ -1,3 +1,4 @@
+import difflib
 import functools
 import hashlib
 import queue
@@ -7,6 +8,7 @@ import uuid
 from typing import Union
 import json
 from typing import Dict
+import Levenshtein
 
 def system_message(message: str):
     return {'role': 'system', 'content': message}
@@ -124,3 +126,13 @@ def timeout(time_args):
             return result
         return wrapper
     return _timeout
+
+def get_subsequence_similarity(entity1, entity2):
+    entity1 = entity1.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+    entity2 = entity2.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+    return difflib.SequenceMatcher(None, entity1, entity2).ratio()
+
+def get_levenshtein_distance(entity1, entity2):
+    entity1 = entity1.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+    entity2 = entity2.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+    return Levenshtein.distance(entity1, entity2)

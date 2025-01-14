@@ -1,7 +1,7 @@
 the debt to asset ratio = total liabilities / total assets
 current assets = cash and deposits with central bank + due from interbank deposits + noble metal + trading financial assets + derivative financial assets + purchase of resale financial assets + interest receivable + issuance of loans and advances + available for sale financial assets + accounts receivable investment
 current liabilities = deposit absorption + payable employee compensation + taxes and fees payable + interest payable + estimated liabilities + other liabilities
-current ratio = current assets / current liabilities
+current ratio = current asset / current liabilities
 equity ratio = total owner's equity / total assets
 net profit margin = net profit / operating income
 return on assets = net profit / total assets

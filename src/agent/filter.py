@@ -1,14 +1,21 @@
 from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
+from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import filter_template
-from src.utils.utils import parse_json, user_message, get_res_content, timeout
+from src.utils.utils import parse_json, user_message, get_res_content, timeout, get_levenshtein_distance, \
+    get_subsequence_similarity
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
 
+from chromadb.utils import embedding_functions
+
 
 class Filter(Agent_Base):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
+        self.url = config.get("db_path", '.')
+        self.check_same_thread = config.get("check_same_thread", False)
+        self.conn, _ = connect_to_sqlite(self.url, self.check_same_thread)
 
     def schema_list_to_str(self,schema_list):
         schema_str = ""
@@ -92,6 +99,52 @@ class Filter(Agent_Base):
                 new_schema += "(" + col + "),\n"
             new_schema += ']\n'
         return new_schema
+
+    def get_schema(self):
+        cur = self.conn.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tbl_names = cur.fetchall()
+        cur.execute("SELECT sql FROM sqlite_master WHERE type='table'")
+        sql_datas = cur.fetchall()
+
+        schema = []
+        for tbl_name in tbl_names:
+            cur.execute(f"PRAGMA table_info('{tbl_name[0]}')")
+            col_datas = cur.fetchall()
+            cols = [[0, 0, 0, tbl_name[0], col_data[1], col_data[2]] for col_data in col_datas]
+            sql_str: str = sql_datas[tbl_names.index(tbl_name)][0]
+            start = 0
+            num = 0
+            while True:
+                idx = sql_str.find("-- ", start)
+                if idx == -1:
+                    break
+                else:
+                    end = sql_str.find("\n", idx)
+                    start = end + 2
+                    sub_str = sql_str[idx + 3:end]
+                    Samples_idx = sub_str.find("Samples:")
+                    cols[num].append(sub_str if Samples_idx == -1 else sub_str[:Samples_idx - 1])
+                    num += 1
+            schema.extend(cols)
+        return schema
+
+    def get_related_column(self, entity_list: list):
+        schema = self.get_schema()
+        for entity in entity_list:
+            for col in schema:
+                col_name = col[4]
+                edit_distance = get_levenshtein_distance(entity, col_name)
+                similarity = get_subsequence_similarity(entity, col_name)
+                col[0] = edit_distance
+                col[1] = similarity
+            print(sorted(schema, key=lambda x: x[0], reverse=False)[:5])
+            print(sorted(schema, key=lambda x: x[1], reverse=True)[:5])
+
+
+    # def get_embedding_list(self, col_list):
+    #     embedding_func = embedding_functions.DefaultEmbeddingFunction()
+
 
     def chat(
         self,
