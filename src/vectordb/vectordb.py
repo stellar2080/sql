@@ -4,7 +4,7 @@ from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 
 from src.utils.utils import deterministic_uuid
-from ..utils.const import N_RESULTS_DOC, N_RESULTS_KEY, N_RESULTS_SC
+from ..utils.const import N_RESULTS_KEY
 
 class VectorDB(VectorDB_Base):
     def __init__(self, config):
@@ -38,11 +38,6 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        self.schema_collection = self.chroma_client.get_or_create_collection(
-            name="schema",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
         self.key_collection = self.chroma_client.get_or_create_collection(
             name="key",
             embedding_function=self.embedding_function,
@@ -54,17 +49,6 @@ class VectorDB(VectorDB_Base):
         if len(embedding) == 1:
             return embedding[0]
         return embedding
-
-    def add_schema(self, schema: str, embedding_id: str = None,**kwargs):
-        if embedding_id is None:
-            embedding_id = deterministic_uuid(schema) + "-sc"
-        else:
-            embedding_id = embedding_id
-        self.schema_collection.add(
-            ids=embedding_id,
-            documents=schema,
-            embeddings=self.generate_embedding(schema),
-        )
 
     def add_doc(self, document: str, embedding_id: str = None, **kwargs):
         if embedding_id is None:
@@ -95,19 +79,16 @@ class VectorDB(VectorDB_Base):
         if embedding_id.endswith("-key"):
             self.key_collection.delete(ids=[embedding_id])
             return True
-        elif embedding_id.endswith("-sc"):
-            self.schema_collection.delete(ids=[embedding_id])
-            return True
         elif embedding_id.endswith("-doc"):
             self.document_collection.delete(ids=[embedding_id])
             return True
         else:
             return False
 
-    def extract_query_results(self,query_results, extracts) -> list:
+    def extract_query_results(self,query_results, extracts) -> dict:
         if query_results is None:
-            return []
-        extracted_results = []
+            return {}
+        extracted_results = {}
         if isinstance(extracts, str):
             extracts = [extracts]
         for item in extracts:
@@ -116,60 +97,34 @@ class VectorDB(VectorDB_Base):
             extract_item = query_results[item]
             if len(extract_item) == 1:
                 if isinstance(extract_item[0], list):
-                    extracted_results.append(extract_item[0])
+                    extracted_results[item] = (extract_item[0])
                 elif isinstance(extract_item[0], str):
-                    extracted_results.append([extract_item[0]])
+                    extracted_results[item] = ([extract_item[0]])
 
-        if len(extracted_results) == 1:
-            return extracted_results[0]
         return extracted_results
 
-    def get_related_schema(self, question: str, **kwargs) -> list:
-        return self.extract_query_results(
-            self.schema_collection.query(
-                query_texts=[question],
-                n_results=N_RESULTS_SC,
-            ),
-            extracts='documents'
-        )
-
-    def get_related_doc(self, question: str, **kwargs) -> list:
+    def get_related_doc(self, query_texts: str, n_results, extracts=None, **kwargs) -> dict:
+        if extracts is None:
+            extracts = 'documents'
         return self.extract_query_results(
             self.document_collection.query(
-                query_texts=[question],
-                n_results=N_RESULTS_DOC,
+                query_texts=query_texts,
+                n_results=n_results,
             ),
-            extracts='documents'
+            extracts=extracts
         )
 
-    def get_related_key(self, question: str, n_results=None, **kwargs) -> list:
+    def get_related_key(self, query_texts: str, n_results=None, extracts=None, **kwargs) -> dict:
+        if extracts is None:
+            extracts = 'documents'
         n_results = N_RESULTS_KEY if not n_results else n_results
         return self.extract_query_results(
             self.key_collection.query(
-                query_texts=[question],
+                query_texts=query_texts,
                 n_results=n_results,
             ),
-            extracts='documents'
+            extracts=extracts
         )
-
-    def get_related_key_ids(self, question: str, **kwargs) -> list:
-        return self.extract_query_results(
-            self.key_collection.query(
-                query_texts=[question],
-                n_results=N_RESULTS_KEY,
-            ),
-            extracts='ids'
-        )
-
-    def get_related_key_meta(self, question: str, **kwargs) -> list:
-        res = self.extract_query_results(
-            self.key_collection.query(
-                query_texts=[question],
-                n_results=N_RESULTS_KEY,
-            ),
-            extracts='metadatas'
-        )
-        return [item['doc_id'] for item in res]
 
     def get_doc_by_id(
         self,

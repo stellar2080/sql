@@ -9,6 +9,10 @@ from typing import Union
 import json
 from typing import Dict
 import Levenshtein
+import ast
+
+import numpy as np
+from chromadb.utils import embedding_functions
 
 def system_message(message: str):
     return {'role': 'system', 'content': message}
@@ -64,7 +68,7 @@ def parse_json(text: str):
     return text
 
 def check_filter_response(json_data: Dict) -> bool:
-    FLAGS = ['keep_all', 'drop_all']
+    FLAGS = ['keep', 'drop']
     for k, v in json_data.items():
         if isinstance(v, str):
             if v not in FLAGS:
@@ -132,7 +136,24 @@ def get_subsequence_similarity(entity1, entity2):
     entity2 = entity2.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
     return difflib.SequenceMatcher(None, entity1, entity2).ratio()
 
-def get_levenshtein_distance(entity1, entity2):
-    entity1 = entity1.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
-    entity2 = entity2.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
-    return Levenshtein.distance(entity1, entity2)
+def get_cos_similarity(vec1, vec2):
+    dot_product = np.dot(vec1, vec2)
+    norm_vec1 = np.linalg.norm(vec1)
+    norm_vec2 = np.linalg.norm(vec2)
+
+    if norm_vec1 == 0 or norm_vec2 == 0:
+        return 0
+    return dot_product / (norm_vec1 * norm_vec2)
+
+def get_embedding_list(_list: list):
+    embedding_func = embedding_functions.DefaultEmbeddingFunction()
+    return embedding_func(_list)
+
+def parse_list(string):
+    try:
+        start = string.rfind('[')
+        end = string.rfind(']')
+        if start != -1 and end != -1:
+            return ast.literal_eval(string[start:end+1])
+    except Exception as e:
+        print(e)

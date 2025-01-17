@@ -43,16 +43,16 @@ m = Manager(
 #               file=txt_file
 #             )
 
-# message = {
-#     "question": "tell me the debt to asset ratio and equity multiplier of Trump Bank",
-#     "sql": None,
-#     "schema": None,
-#     "evidence": None,
-#     "message_to": "extractor",
-#     "response": None,
-#     "sql_result": None
-# }
+message = {
+    "question": "tell me the debt to asset ratio",
+    "extract": ["the debt to asset ratio"],
+    "sql": None,
+    "schema": None,
+    "evidence": None,
+    "message_to": "filter",
+    "response": None,
+    "sql_result": None
+}
 
-entity_list = ['working_capital','Assets_Imp_Loss']
-res = m.filter.get_related_column(entity_list)
-print(res)
+entity_list = ['working capitals','assets imp loss'] #extractor处理
+m.filter.create_filter_prompt(entity_list, "1", m.vectordb)

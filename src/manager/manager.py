@@ -39,12 +39,6 @@ class Manager:
             print("training mode")
         self.vectordb = VectorDB(config)
 
-    def train_schema(
-        self,
-        schema: str = None,
-    ):
-        self.vectordb.add_schema(schema=schema)
-
     def train_doc(self, path):
         if not os.path.exists(path):
             raise Exception("Path does not exist.")
@@ -58,19 +52,9 @@ class Manager:
             lparen_1 = Word("(")
             rparen_1 = Word(")")
 
-            eq_2 = Suppress("=")
-            operator_2 = Suppress(oneOf("+ - * /"))
-            lparen_2 = Suppress("(")
-            rparen_2 = Suppress(")")
-
-            expr_all = Group(
+            expr = Group(
                 identifier + eq_1 + OneOrMore(
                     Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
-                )
-            )
-            expr_sup = Group(
-                identifier + eq_2 + OneOrMore(
-                    Optional(lparen_2) + identifier + Optional(operator_2 | rparen_2)
                 )
             )
 
@@ -78,31 +62,32 @@ class Manager:
                 content = f.readlines()
                 for line in content:
                     print("="*30)
-                    result_all = list(expr_all.parseString(line)[0])
-                    result_sup = list(expr_sup.parseString(line)[0])
+                    result_all = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item for item in list(expr.parseString(line)[0])]
                     key = result_all[0]
                     print(result_all)
-                    print(result_sup)
-                    for num, item in enumerate(result_sup[1:]):
-                        name = item.lower().replace("_"," ").replace("-"," ").rstrip('s')
-                        results = self.vectordb.key_collection.query(query_texts=name)
-                        threshold = 0.1
-                        filtered_keys = [
-                            (f_key, doc_id) for f_key, distance, doc_id in sorted(
-                                zip(results['documents'][0], results['distances'][0], results['metadatas'][0]),
-                                key=lambda x: x[1]
-                            ) if distance < threshold
-                        ]
-                        print("Elem:", item)
-                        print("Rela:", filtered_keys)
-                        if len(filtered_keys) > 0:
-                            f_key = filtered_keys[0][0]
-                            doc_id = filtered_keys[0][1]['doc_id']
-                            if f_key != name:
-                                result_all[result_all.index(item)] = f_key
-                            self.vectordb.add_key(key=key, doc_id=doc_id)
-                            print("="*10)
-                    doc = " ".join(result_all)
+                    for num, name in enumerate(result_all[2:],start=2):
+                        if len(name) <= 1:
+                            continue
+                        results = self.vectordb.get_related_key(query_texts=name, extracts=['documents','distances','metadatas'])
+                        print(results)
+                        if len(results['documents']) != 0:
+                            threshold = 0.1
+                            filtered_keys = [
+                                (f_key, doc_id) for f_key, distance, doc_id in sorted(
+                                    zip(results['documents'], results['distances'], results['metadatas']),
+                                    key=lambda x: x[1]
+                                ) if distance < threshold
+                            ]
+                            print("Elem:", name)
+                            print("Rela:", filtered_keys)
+                            if len(filtered_keys) > 0:
+                                f_key = filtered_keys[0][0]
+                                doc_id = filtered_keys[0][1]['doc_id']
+                                if f_key != name:
+                                    result_all[num] = f_key
+                                self.vectordb.add_key(key=key, doc_id=doc_id)
+                                print("="*10)
+                    doc = str(result_all)
                     key_n_doc = key + ": " + doc
                     key_id = deterministic_uuid(key_n_doc) + "-key"
                     doc_id = deterministic_uuid(doc) + "-doc"
@@ -111,7 +96,6 @@ class Manager:
             print(f"Doc:{path} has been trained")
         except Exception as e:
             print(e)
-
 
     def clear_rag(
         self

@@ -17,9 +17,7 @@ m = Manager(
 )
 
 # m.clear_rag()
-#
 m.train_doc(path="../rag/formulas.txt")
-#
 # with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_train_text2sql.json')) as f:
 #     data = json.load(f)
 #     for item in data:

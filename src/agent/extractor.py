@@ -1,7 +1,7 @@
 from src.llm.llm_base import LLM_Base
 from src.utils.const import EXTRACTOR, FILTER
 from src.utils.template import extractor_template
-from src.utils.utils import user_message, get_res_content, timeout
+from src.utils.utils import user_message, get_res_content, timeout, parse_list
 from src.agent.agent_base import Agent_Base
 
 
@@ -29,15 +29,6 @@ class Extractor(Agent_Base):
         print(answer)
         return answer
 
-    def parse_list(self, string):
-        try:
-            start = string.rfind('[')
-            end = string.rfind(']')
-            if start == -1 or end == -1:
-                return list(string[start:end+1])
-        except Exception as e:
-            print(e)
-
     def chat(
         self,
         message: dict,
@@ -49,6 +40,6 @@ class Extractor(Agent_Base):
             print("The message is being processed by " + EXTRACTOR + "...")
             prompt = self.create_extractor_prompt(message["question"])
             ans = self.get_extractor_ans(prompt, llm)
-            list_ans = self.parse_list(ans)
-            message["extract"] = list_ans
+            entity_list = parse_list(ans)
+            message["extract"] = [entity.lower().replace('_',' ').replace('-',' ') for entity in entity_list]
             message["message_to"] = FILTER

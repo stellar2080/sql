@@ -4,7 +4,7 @@ You are an expert in the field of finance and database.
 Given a question, your task is to find any named entities from the question, such as organizations, financial terms, and other phrases that contain important aspects of the query.
 
 [Requirements]
-- Your output should be in a python list format.
+- Your output should be in a python list fat.
 
 ==========
 Here is a typical example:
@@ -28,8 +28,8 @@ Given a question and a database schema consisting of table descriptions, each ta
 Your task is to select relevant tables and columns based on user questions and evidence provided.
 
 [Requirements]
-- If all columns of a table need to be kept, mark it as "keep_all".
-- If a table is completely irrelevant to the user question and evidence, mark it as "drop_all".
+- If all columns of a table need to be kept, mark it as "keep".
+- If a table is completely irrelevant to the user question and evidence, mark it as "drop".
 - If not for the previous two cases, sort the columns in each relevant table in descending order of relevance, determine which columns need to be kept.
 - You don't need to give any explanation, just output the answer in JSON format.
 
@@ -40,23 +40,23 @@ Here is a typical example:
 =====
 Table: basic_info
 Column: [
-(stk_code, Comment: securities code. Types: text. Primary key.),
-(stk_name, Comment: securities name. Types: text.)
+(stk_code, Comment: securities code, Type: TEXT),
+(stk_name, Comment: securities name, Type: TEXT)
 ]
 =====
-Table: balance_sheet,
+Table: balance_sheet
 Column: [
-(stk_code, Comment: securities code. Types: text.),
-(ib_deposits, Comment: due from interbank deposits. Types: real.),
-(prec_metals, Comment: noble metal. Types: real.),
+(stk_code, Comment: securities code, Type: TEXT),
+(ib_deposits, Comment: due from interbank deposits, Type: REAL),
+(prec_metals, Comment: noble metal, Type: REAL),
 ]
 =====
-Table: income_statement,
+Table: income_statement
 Column: [
-(stk_code, Comment: securities code. Types: text.),
-(fee_com_net_inc, Comment: net income from handling fees and commissions. Types: real.),
-(fee_com_inc, Comment: fee and commission income. Types: real.),
-(fee_com_exp, Comment: handling fees and commission expenses. Types: real.),
+(stk_code, Comment: securities code, Type: TEXT),
+(fee_com_net_inc, Comment: net income from handling fees and commissions, Type: REAL),
+(fee_com_inc, Comment: fee and commission income, Type: REAL),
+(fee_com_exp, Comment: handling fees and commission expenses, Type: REAL),
 ]
 
 [Question]
@@ -65,8 +65,8 @@ What is the fee and commission income of China Construction Bank in millions of 
 [Answer]
 ```json
 {{
-  "basic_info": "keep_all",
-  "balance_sheet": "drop_all",
+  "basic_info": "keep",
+  "balance_sheet": "drop",
   "income_statement": ["stk_code", "fee_com_inc"],
 }}
 ```
@@ -107,14 +107,14 @@ Here is a typical example:
 =====
 Table: basic_info
 Column: [
-(stk_code, Comment: securities code. Types: text. Primary key.),
-(stk_name, Comment: securities name. Types: text.)
+(stk_code, Comment: securities code, Type: TEXT),
+(stk_name, Comment: securities name, Type: TEXT)
 ]
 =====
-Table: balance_sheet,
+Table: balance_sheet
 Column: [
-(stk_code, Comment: securities code. Types: text.),
-(cash_cb, Comment: cash and deposits with central bank. Types: real.),
+(stk_code, Comment: securities code, Type: TEXT),
+(cash_cb, Comment: cash and deposits with central bank, Type: REAL),
 ]
 [Question]
 List securities codes and securities names with cash and deposits with central bank over the average.
