@@ -34,8 +34,10 @@ class Filter(Agent_Base):
                 ) if distance < 0.3
             ]
             # print(filtered_ids)
-            for evidence_id in filtered_ids:
-                evidence_list.append(vectordb.get_doc_by_id(evidence_id))
+            if len(filtered_ids) != 0:
+                evidence_list.extend(vectordb.get_doc_by_id(filtered_ids))
+
+        # print(evidence_list)
         evidence_list = list(dict.fromkeys(evidence_list))
         str_set = set()
         for evidence in evidence_list:
