@@ -141,19 +141,13 @@ class VectorDB(VectorDB_Base):
         res = self.key_collection.get()['documents']
         return res
 
-    def clear_rag(self):
+    def clear_doc(self):
         try:
             self.chroma_client.delete_collection(name="document")
-            self.chroma_client.delete_collection(name="schema")
             self.chroma_client.delete_collection(name="key")
 
             self.chroma_client.create_collection(
                 name="document",
-                embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "cosine"},
-            )
-            self.chroma_client.create_collection(
-                name="schema",
                 embedding_function=self.embedding_function,
                 metadata={"hnsw:space": "cosine"},
             )

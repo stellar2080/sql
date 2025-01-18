@@ -97,12 +97,12 @@ class Manager:
         except Exception as e:
             print(e)
 
-    def clear_rag(
+    def clear_doc(
         self
     ):
         try:
             print("Clearing rag data...")
-            self.vectordb.clear_rag()
+            self.vectordb.clear_doc()
         except Exception as e:
             print(e)
 
