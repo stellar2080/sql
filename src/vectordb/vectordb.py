@@ -100,10 +100,12 @@ class VectorDB(VectorDB_Base):
                     extracted_results[item] = (extract_item[0])
                 elif isinstance(extract_item[0], str):
                     extracted_results[item] = ([extract_item[0]])
+            else:
+                extracted_results[item] = extract_item
 
         return extracted_results
 
-    def get_related_doc(self, query_texts: str, n_results, extracts=None, **kwargs) -> dict:
+    def get_related_doc(self, query_texts, n_results, extracts=None, **kwargs) -> dict:
         if extracts is None:
             extracts = 'documents'
         return self.extract_query_results(
@@ -114,7 +116,7 @@ class VectorDB(VectorDB_Base):
             extracts=extracts
         )
 
-    def get_related_key(self, query_texts: str, n_results=None, extracts=None, **kwargs) -> dict:
+    def get_related_key(self, query_texts, n_results=None, extracts=None, **kwargs) -> dict:
         if extracts is None:
             extracts = 'documents'
         n_results = N_RESULTS_KEY if not n_results else n_results

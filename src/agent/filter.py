@@ -18,17 +18,19 @@ class Filter(Agent_Base):
         self.conn, _ = connect_to_sqlite(self.url, self.check_same_thread)
 
     def get_evidence_str(
-            self,
-            entity_list: list,
-            vectordb: VectorDB,
+        self,
+        entity_list: list,
+        vectordb: VectorDB,
     ):
         evidence_list = []
         evidence_str = ""
-        for entity in entity_list:
-            evidence_ids = vectordb.get_related_key(entity, extracts=['distances', 'metadatas'])
+        evidence_ids = vectordb.get_related_key(entity_list, extracts=['distances', 'metadatas'])
+        for i in range(len(entity_list)):
+            distances = evidence_ids['distances'][i]
+            metadatas = evidence_ids['metadatas'][i]
             filtered_ids = [
                 metadata['doc_id'] for distance, metadata in sorted(
-                    zip(evidence_ids['distances'], evidence_ids['metadatas']), key=lambda x: x[0]
+                    zip(distances, metadatas), key=lambda x: x[0]
                 ) if distance < 0.3
             ]
             # print(filtered_ids)
@@ -208,7 +210,7 @@ class Filter(Agent_Base):
         evidence_str, entity_list = self.get_evidence_str(entity_list, vectordb)
         # print(entity_list)
         column_list, foreign_keys = self.get_related_column(entity_list)
-        print(column_list, foreign_keys)
+        # print(column_list, foreign_keys)
         schema_str = self.get_schema_str(column_list, foreign_keys)
         prompt = filter_template.format(schema_str, evidence_str, question)
         print(prompt)
@@ -273,10 +275,13 @@ class Filter(Agent_Base):
         vectordb: VectorDB = None
     ):
         if message["message_to"] != FILTER:
-            raise Exception("The message should not be processed by " + FILTER + ". It is sent to " + message["message_to"])
+            raise Exception("The message should not be processed by " + FILTER +
+                            ". It is sent to " + message["message_to"])
         else:
             print("The message is being processed by " + FILTER + "...")
-            prompt, schema_str, evidence_str = self.create_filter_prompt(message["extract"], message['question'], vectordb)
+            prompt, schema_str, evidence_str = self.create_filter_prompt(
+                message["extract"], message['question'], vectordb
+            )
             ans = self.get_filter_ans(prompt, llm)
             json_ans = parse_json(ans)
 
