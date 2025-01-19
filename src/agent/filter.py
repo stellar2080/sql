@@ -5,7 +5,7 @@ from src.utils.const import FILTER, DECOMPOSER
 from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import filter_template
 from src.utils.utils import parse_json, user_message, get_res_content, timeout, \
-    get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list
+    get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
 
@@ -58,14 +58,9 @@ class Filter(Agent_Base):
         sql_datas = cur.fetchall()
 
         schema = []
-        primary_keys = []
-        foreign_keys = []
+
         for enum, tbl_name in enumerate(tbl_names,start=0):
             tbl_name = tbl_name[0]
-            cur.execute(f"PRAGMA foreign_key_list({tbl_name})")
-            foreign_col_datas = cur.fetchall()
-            for foreign_col in foreign_col_datas:
-                foreign_keys.append([[tbl_name, foreign_col[4]], [foreign_col[2], foreign_col[3]]])
 
             cur.execute(f"PRAGMA table_info({tbl_name})")
             col_datas = cur.fetchall()
@@ -94,6 +89,24 @@ class Filter(Agent_Base):
                     cols[num].append(())
                     num += 1
             schema.extend(cols)
+
+        # schema = [[pk,tbl_name,col_name,col_type,comment,similarity],...]
+        return schema
+
+    def get_pf_keys(self, schema: list):
+        primary_keys = []
+        foreign_keys = []
+        cur = self.conn.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tbl_names = cur.fetchall()
+
+        for enum, tbl_name in enumerate(tbl_names,start=0):
+            tbl_name = tbl_name[0]
+            cur.execute(f"PRAGMA foreign_key_list({tbl_name})")
+            foreign_col_datas = cur.fetchall()
+            for foreign_col in foreign_col_datas:
+                foreign_keys.append([[tbl_name, foreign_col[4]], [foreign_col[2], foreign_col[3]]])
+
         for item in schema:
             if item[0] == 1:
                 primary_keys.append(item[:5])
@@ -102,13 +115,15 @@ class Filter(Agent_Base):
                     foreign_key[0] = item[:5]
                 elif foreign_key[1][0] == item[1] and foreign_key[1][1] == item[2]:
                     foreign_key[1] = item[:5]
-        return schema, primary_keys, foreign_keys
 
-    def get_related_column(self, entity_list: list):
+        # pk = [[pk,tbl_name,col_name,col_type,comment],...]
+        # fk = [[[tbl_name,col_name],[refer_tbl_name,refer_col_name]],...]
+        return primary_keys, foreign_keys
+
+    def get_related_column(self, entity_list: list, schema, primary_keys, foreign_keys):
         column_set = set()
         tbl_name_set = set()
 
-        schema, primary_keys, foreign_keys = self.get_schema()
         name_embeddings = get_embedding_list([col[2].lower().replace('_',' ').replace('-',' ') for col in schema])
         comment_embeddings = get_embedding_list([col[4].lower().replace('_',' ').replace('-',' ') for col in schema])
         entity_embeddings = get_embedding_list(entity_list)
@@ -121,28 +136,29 @@ class Filter(Agent_Base):
                 name_cos_similarity = get_cos_similarity(entity_embedding, name_embeddings[c_idx])
                 comment_cos_similarity = get_cos_similarity(entity_embedding, comment_embeddings[c_idx])
                 col[5] = (s_similarity,name_cos_similarity,comment_cos_similarity)
-                # print(entity, col_name, (edit_distance,s_similarity,name_cos_similarity,comment_cos_similarity))
+                # print(entity, col_name, (s_similarity,name_cos_similarity,comment_cos_similarity))
 
-            # print("=" * 20)
-            # print(entity)
-            # print("="*30,"subsequence_similarity-col_name")
-            for item in sorted(schema, key=lambda x: x[5][0], reverse=True)[:5]:
-                # print(item)
+            print("=" * 20)
+            print(entity)
+            print("="*30,"subsequence_similarity-col_name")
+            for item in sorted(schema, key=lambda x: x[5][0], reverse=True)[:4]:
+                print(item)
                 if item[5][0] > 0.8:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
-            # print("=" * 30,"cos_similarity-col_name")
-            for item in sorted(schema, key=lambda x: x[5][1], reverse=True)[:5]:
-                # print(item)
+            print("=" * 30,"cos_similarity-col_name")
+            for item in sorted(schema, key=lambda x: x[5][1], reverse=True)[:4]:
+                print(item)
                 if item[5][1] > 0.8:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
-            # print("=" * 30,"cos_similarity-comment")
-            for item in sorted(schema, key=lambda x: x[5][2], reverse=True)[:5]:
-                # print(item)
+            print("=" * 30,"cos_similarity-comment")
+            for item in sorted(schema, key=lambda x: x[5][2], reverse=True)[:4]:
+                print(item)
                 if item[5][2] > 0.8:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
+
 
         for primary_key in primary_keys:
             if primary_key[1] in tbl_name_set:
@@ -159,7 +175,36 @@ class Filter(Agent_Base):
                 foreign_keys.remove(foreign_key)
 
         foreign_keys.sort(key=lambda x: x[0][1])
-        return sorted(list(column_set),key=lambda x: x[1]), foreign_keys
+
+        # column_set = {(pk,tbl_name,col_name,col_type,comment),...}
+        return column_set, foreign_keys
+
+
+    # def get_related_value(self, entity_list: list, schema: list, column_set: set):
+    #     cur = self.conn.cursor()
+    #     for item in schema:
+    #         if item[3] == 'TEXT':
+    #             cur.execute(f"SELECT {item[2]} FROM {item[1]}")
+    #             value_list = [item[0] for item in cur.fetchall()]
+    #             query_results = lsh(entity_list,value_list)
+    #             if query_results != {}:
+    #                 for key, values in query_results.items():
+    #                     embedding_list = get_embedding_list(values.copy().insert(0,key))
+    #                     for idx, value in enumerate(values,start=1):
+    #                         if get_subsequence_similarity(key, value) > 0.8:
+    #                             if get_cos_similarity(embedding_list[0], embedding_list[idx]) > 0.8:
+    #                                 column_set.add(item[:5] + )
+    #             else:
+
+
+
+    def get_related_entity(self, entity_list: list, schema: list, primary_keys, foreign_keys):
+        column_set, foreign_keys = self.get_related_column(entity_list, schema, primary_keys, foreign_keys)
+        # column_set = self.get_related_value(entity_list, schema, column_set)
+
+        column_list = sorted(list(column_set), key=lambda x: x[1])
+        return column_list
+
 
     def get_schema_str(self, column_list: list, foreign_keys: list):
         tbl_name = column_list[0][1]
@@ -211,7 +256,11 @@ class Filter(Agent_Base):
         # print(entity_list)
         evidence_str, entity_list = self.get_evidence_str(entity_list, vectordb)
         # print(entity_list)
-        column_list, foreign_keys = self.get_related_column(entity_list)
+        schema = self.get_schema()
+        # print(schema)
+        primary_keys, foreign_keys = self.get_pf_keys(schema)
+        # print(primary_keys, foreign_keys)
+        column_list = self.get_related_entity(entity_list, schema, primary_keys, foreign_keys)
         # print(column_list, foreign_keys)
         schema_str = self.get_schema_str(column_list, foreign_keys)
         prompt = filter_template.format(schema_str, evidence_str, question)

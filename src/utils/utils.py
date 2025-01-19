@@ -8,7 +8,7 @@ import uuid
 from typing import Union
 import json
 from typing import Dict
-import Levenshtein
+from datasketch import MinHash, MinHashLSH
 import ast
 
 import numpy as np
@@ -131,6 +131,45 @@ def timeout(time_args):
         return wrapper
     return _timeout
 
+
+def parse_list(string):
+    try:
+        start = string.rfind('[')
+        end = string.rfind(']')
+        if start != -1 and end != -1:
+            return ast.literal_eval(string[start:end+1])
+    except Exception as e:
+        print(e)
+
+
+def lsh(query_list: list, target_list: list) -> dict:
+
+    query_results = {}
+
+    lsh = MinHashLSH(threshold=0.6, num_perm=128)
+    n_gram = 3
+
+    for i, target in enumerate(target_list):
+        minhash = MinHash(num_perm=128)
+        target = target.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+        grams = [target[j:j+n_gram] for j in range(len(target) - n_gram + 1)]
+        for gram in grams:
+            minhash.update(gram.encode('utf-8'))
+        lsh.insert(i, minhash)
+
+    for query_str in query_list:
+        query_minhash = MinHash(num_perm=128)
+        query_str = query_str.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+        query_grams = [query_str[j:j+n_gram] for j in range(len(query_str) - n_gram + 1)]
+        for gram in query_grams:
+            query_minhash.update(gram.encode('utf-8'))
+
+        idx_list = lsh.query(query_minhash)
+        if len(idx_list) > 0:
+            query_results[query_str] = idx_list
+
+    return query_results
+
 def get_subsequence_similarity(entity1, entity2):
     entity1 = entity1.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
     entity2 = entity2.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
@@ -148,12 +187,3 @@ def get_cos_similarity(vec1, vec2):
 def get_embedding_list(_list: list):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()
     return embedding_func(_list)
-
-def parse_list(string):
-    try:
-        start = string.rfind('[')
-        end = string.rfind(']')
-        if start != -1 and end != -1:
-            return ast.literal_eval(string[start:end+1])
-    except Exception as e:
-        print(e)

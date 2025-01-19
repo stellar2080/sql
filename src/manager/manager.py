@@ -62,7 +62,8 @@ class Manager:
                 content = f.readlines()
                 for line in content:
                     print("="*30)
-                    result_all = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item for item in list(expr.parseString(line)[0])]
+                    result_all = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item
+                                  for item in list(expr.parseString(line)[0])]
                     key = result_all[0]
                     print(result_all)
                     for num, name in enumerate(result_all[2:],start=2):

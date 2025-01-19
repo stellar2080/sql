@@ -56,3 +56,6 @@ message = {
 
 entity_list = ['working capitals','stk name','fee and commission income'] #extractor处理
 m.filter.create_filter_prompt(entity_list, "1", m.vectordb)
+
+# schema = m.filter.get_schema()
+# m.filter.get_related_value([],schema)
