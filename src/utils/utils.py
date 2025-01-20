@@ -159,14 +159,14 @@ def lsh(query_list: list, target_list: list) -> dict:
 
     for query_str in query_list:
         query_minhash = MinHash(num_perm=128)
-        query_str = query_str.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
-        query_grams = [query_str[j:j+n_gram] for j in range(len(query_str) - n_gram + 1)]
+        query_str_copy = query_str.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+        query_grams = [query_str_copy[j:j+n_gram] for j in range(len(query_str_copy) - n_gram + 1)]
         for gram in query_grams:
             query_minhash.update(gram.encode('utf-8'))
 
         idx_list = lsh.query(query_minhash)
         if len(idx_list) > 0:
-            query_results[query_str] = idx_list
+            query_results[query_str] = [target_list[idx] for idx in idx_list]
 
     return query_results
 

@@ -117,10 +117,10 @@ class Filter(Agent_Base):
                     foreign_key[1] = item[:5]
 
         # pk = [[pk,tbl_name,col_name,col_type,comment],...]
-        # fk = [[[tbl_name,col_name],[refer_tbl_name,refer_col_name]],...]
+        # fk = [[[pk,tbl_name,col_name,col_type,comment],[pk,tbl_name,col_name,col_type,comment]],...]
         return primary_keys, foreign_keys
 
-    def get_related_column(self, entity_list: list, schema, primary_keys, foreign_keys):
+    def get_related_column(self, entity_list: list, schema):
         column_set = set()
         tbl_name_set = set()
 
@@ -160,6 +160,36 @@ class Filter(Agent_Base):
                     column_set.add(tuple(item[:5]))
 
 
+        # column_set = {(pk,tbl_name,col_name,col_type,comment),...}
+        return column_set, tbl_name_set
+
+
+    def get_related_value(self, entity_list: list, schema: list, column_set: set, tbl_name_set: set):
+        cur = self.conn.cursor()
+        for item in schema:
+            if item[3] == 'TEXT':
+                cur.execute(f"SELECT {item[2]} FROM {item[1]}")
+                value_list = [item[0] for item in cur.fetchall()]
+                query_results = lsh(entity_list,value_list)
+                if query_results != {}:
+                    print(query_results)
+                    column = item[:5]
+                    value_list = []
+                    for key, values in query_results.items():
+                        embedding_list = get_embedding_list([key] + values)
+                        for idx, value in enumerate(values,start=1):
+                            if get_subsequence_similarity(key, value) > 0.8 \
+                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > 0.8:
+                                value_list.append(value)
+                    if len(value_list) != 0:
+                        tbl_name_set.add(item[1])
+                        if tuple(column) in column_set:
+                            column_set.remove(tuple(column))
+                        column.append(tuple(value_list))
+                        column_set.add(tuple(column))
+
+
+    def add_pfk_to_set(self, column_set, primary_keys, foreign_keys, tbl_name_set):
         for primary_key in primary_keys:
             if primary_key[1] in tbl_name_set:
                 column_set.add(tuple(primary_key))
@@ -176,75 +206,70 @@ class Filter(Agent_Base):
 
         foreign_keys.sort(key=lambda x: x[0][1])
 
-        # column_set = {(pk,tbl_name,col_name,col_type,comment),...}
-        return column_set, foreign_keys
-
-
-    # def get_related_value(self, entity_list: list, schema: list, column_set: set):
-    #     cur = self.conn.cursor()
-    #     for item in schema:
-    #         if item[3] == 'TEXT':
-    #             cur.execute(f"SELECT {item[2]} FROM {item[1]}")
-    #             value_list = [item[0] for item in cur.fetchall()]
-    #             query_results = lsh(entity_list,value_list)
-    #             if query_results != {}:
-    #                 for key, values in query_results.items():
-    #                     embedding_list = get_embedding_list(values.copy().insert(0,key))
-    #                     for idx, value in enumerate(values,start=1):
-    #                         if get_subsequence_similarity(key, value) > 0.8:
-    #                             if get_cos_similarity(embedding_list[0], embedding_list[idx]) > 0.8:
-    #                                 column_set.add(item[:5] + )
-    #             else:
-
-
-
     def get_related_entity(self, entity_list: list, schema: list, primary_keys, foreign_keys):
-        column_set, foreign_keys = self.get_related_column(entity_list, schema, primary_keys, foreign_keys)
-        # column_set = self.get_related_value(entity_list, schema, column_set)
+        column_set, tbl_name_set = self.get_related_column(entity_list, schema)
+        print('='*50,"get_related_column")
+        print(column_set)
+        print(tbl_name_set)
+        self.get_related_value(entity_list, schema, column_set, tbl_name_set)
+        print('=' * 50, "get_related_value")
+        print(column_set)
+        print(tbl_name_set)
+        self.add_pfk_to_set(column_set, primary_keys, foreign_keys, tbl_name_set)
+        print('=' * 50, "add_pfk_to_set")
+        print(column_set)
+        print(foreign_keys)
 
         column_list = sorted(list(column_set), key=lambda x: x[1])
         return column_list
 
-
-    def get_schema_str(self, column_list: list, foreign_keys: list):
-        tbl_name = column_list[0][1]
-        schema_str = "=====\n"
+    def add_tbl_to_schema_str(self, tbl_name, schema_str):
+        schema_str += "=====\n"
         schema_str += f"Table: {tbl_name}\nColumn: [\n"
-        idx = 0
+        return schema_str
 
-        for column in column_list:
-            if column[1] == tbl_name:
-                schema_str += "(" + column[2] + ", " + "Comment: "+ column[4] + ", Type: " + column[3]
-                if column[0] == 1:
-                    schema_str += ", Primary key"
-                schema_str +=  ")\n"
+    def add_col_to_schema_str(self, column, schema_str):
+        schema_str += "(" + column[2] + ", " + "Comment: " + column[4] + ", Type: " + column[3]
+        if len(column) == 6:
+            schema_str += ", Sample: " + ",".join(column[5])
+        if column[0] == 1:
+            schema_str += ", Primary key"
+        schema_str += ")\n"
+        return schema_str
 
-            else:
-                for i in range(idx, len(foreign_keys)):
-                    foreign_key = foreign_keys[i]
-                    if foreign_key[0][1] == tbl_name:
-                        schema_str += ("Foreign key: " + foreign_key[0][2] + " References " +
-                                       foreign_key[1][1] + "(" + foreign_key[1][2] + ")\n")
-                    else:
-                        idx = i
-                        break
-                tbl_name = column[1]
-                schema_str += "]\n"
-
-
-                schema_str += "=====\n"
-                schema_str += f"Table: {tbl_name}\nColumn: [\n"
-                schema_str += "(" + column[2] + ", " + "Comment: " + column[4] + ", Type: " + column[3]
-                if column[0] == 1:
-                    schema_str += ", Primary key"
-                schema_str +=  ")\n"
-
+    def add_fk_to_schema_str(self, idx, foreign_keys, tbl_name, schema_str):
         for i in range(idx, len(foreign_keys)):
             foreign_key = foreign_keys[i]
             if foreign_key[0][1] == tbl_name:
                 schema_str += ("Foreign key: " + foreign_key[0][2] + " References " +
                                foreign_key[1][1] + "(" + foreign_key[1][2] + ")\n")
+            else:
+                idx = i
+                return idx, schema_str
+        return schema_str
+
+    def get_schema_str(self, column_list: list, foreign_keys: list):
+
+        tbl_name = column_list[0][1]
+
+        schema_str = ""
+        schema_str = self.add_tbl_to_schema_str(tbl_name, schema_str)
+        idx = 0
+
+        for column in column_list:
+            if column[1] == tbl_name:
+                schema_str = self.add_col_to_schema_str(column, schema_str)
+
+            else:
+                schema_str += "]\n"
+                idx, schema_str = self.add_fk_to_schema_str(idx, foreign_keys, tbl_name, schema_str)
+                tbl_name = column[1]
+                schema_str = self.add_tbl_to_schema_str(tbl_name, schema_str)
+                schema_str = self.add_col_to_schema_str(column, schema_str)
+
         schema_str += "]\n"
+        schema_str = self.add_fk_to_schema_str(idx, foreign_keys, tbl_name, schema_str)
+
         return schema_str
 
     def create_filter_prompt(
@@ -253,17 +278,24 @@ class Filter(Agent_Base):
         question: str,
         vectordb: VectorDB,
     ) -> (str,str,str):
-        # print(entity_list)
         evidence_str, entity_list = self.get_evidence_str(entity_list, vectordb)
-        # print(entity_list)
+        print('='*50,"get_evidence_str")
+        for entity in entity_list:
+            print(entity)
         schema = self.get_schema()
-        # print(schema)
+        print('=' * 50, "get_schema")
+        print(schema)
         primary_keys, foreign_keys = self.get_pf_keys(schema)
-        # print(primary_keys, foreign_keys)
+        print('=' * 50, "get_pf_keys")
+        print(primary_keys)
+        print(foreign_keys)
         column_list = self.get_related_entity(entity_list, schema, primary_keys, foreign_keys)
-        # print(column_list, foreign_keys)
+        print('=' * 50, "get_related_entity")
+        print(column_list)
+        print(foreign_keys)
         schema_str = self.get_schema_str(column_list, foreign_keys)
         prompt = filter_template.format(schema_str, evidence_str, question)
+        print('=' * 50, "prompt")
         print(prompt)
         return prompt,schema_str,evidence_str
 
