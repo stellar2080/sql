@@ -6,6 +6,7 @@ from src.agent.extractor import Extractor
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
+from src.llm.llama import Llama
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
@@ -16,28 +17,27 @@ class Manager:
     def __init__(self,config=None):
         if config is None:
             config = {}
-        self.mode = config.get('mode',None)
-        if self.mode is None or self.mode == 'run':
-            print("running mode")
-            self.platform = config.get('platform',None)
-            if self.platform is None or self.platform == 'Qwen':
-                self.llm = Qwen(config)
-            self.extractor = Extractor()
-            self.filter = Filter(config)
-            self.decomposer = Decomposer()
-            self.reviser = Reviser(config)
-            self.message = {
-                "question": None,
-                "extract": None,
-                "sql": None,
-                "schema": None,
-                "evidence": None,
-                "message_to": None,
-                "sql_result": None
-            }
-        elif self.mode == 'train':
-            print("training mode")
+        self.platform = config.get('platform',None)
+        if self.platform is None:
+            raise Exception("Platform not provided.")
+        elif self.platform == 'Qwen':
+            self.llm = Qwen(config)
+        elif self.platform == 'Llama':
+            self.llm = Llama(config)
+        self.extractor = Extractor(config)
+        self.filter = Filter(config)
+        self.decomposer = Decomposer(config)
+        self.reviser = Reviser(config)
         self.vectordb = VectorDB(config)
+        self.message = {
+            "question": None,
+            "extract": None,
+            "sql": None,
+            "schema": None,
+            "evidence": None,
+            "message_to": None,
+            "sql_result": None
+        }
 
     def train_doc(self, path):
         if not os.path.exists(path):

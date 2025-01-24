@@ -1,13 +1,14 @@
 from src.llm.llm_base import LLM_Base
 from src.utils.const import EXTRACTOR, FILTER
 from src.utils.template import extractor_template
-from src.utils.utils import user_message, get_res_content, timeout, parse_list
+from src.utils.utils import user_message, get_response_content, timeout, parse_list
 from src.agent.agent_base import Agent_Base
 
 
 class Extractor(Agent_Base):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
+        self.platform = config['platform']
 
     def create_extractor_prompt(
         self,
@@ -25,7 +26,7 @@ class Extractor(Agent_Base):
     ) -> (dict, str):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
-        answer = get_res_content(response)
+        answer = get_response_content(response, self.platform)
         print(answer)
         return answer
 
@@ -43,3 +44,4 @@ class Extractor(Agent_Base):
             entity_list = parse_list(ans)
             message["extract"] = [entity.lower().replace('_',' ').replace('-',' ') for entity in entity_list]
             message["message_to"] = FILTER
+            return message

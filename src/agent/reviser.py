@@ -5,7 +5,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER, QUERY_MODE
 from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import reviser_template
-from src.utils.utils import parse_sql, user_message, get_res_content, timeout
+from src.utils.utils import parse_sql, user_message, get_response_content, timeout
 from src.agent.agent_base import Agent_Base
 
 
@@ -17,6 +17,7 @@ class Reviser(Agent_Base):
         url = config.get("db_path",'.')
         check_same_thread = config.get("check_same_thread", False)
         self.conn, self.dialect = connect_to_sqlite(url=url,check_same_thread=check_same_thread)
+        self.platform = config['platform']
 
     def create_reviser_prompt(
         self,
@@ -43,7 +44,7 @@ class Reviser(Agent_Base):
     ):
         llm_message = [user_message(prompt)]
         response = llm.call(llm_message)
-        answer = get_res_content(response)
+        answer = get_response_content(response, self.platform)
         print(answer)
         new_sql = parse_sql(answer)
         return new_sql

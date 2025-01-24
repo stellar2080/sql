@@ -1,10 +1,10 @@
 extractor_template = """
-[Background]
+[Task]
 You are an expert in the field of finance and database.
 Given a question, your task is to find any named entities from the question, such as organizations, financial terms, and other phrases that contain important aspects of the query.
 
 [Requirements]
-- Your output should be in a python list fat.
+- Your output should be in a python list format, don't output other text or code.
 
 ==========
 Here is a typical example:
@@ -22,7 +22,7 @@ Here is a new example, considering [Requirements], please start answering:
 
 
 filter_template = """
-[Background]
+[Task]
 You are an expert in the field of finance and database. 
 Given a question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
 Your task is to select relevant tables and columns based on user questions and evidence provided.
@@ -83,8 +83,8 @@ Here is a new example, considering [Requirements], please start answering:
 [Answer]
 """
 
-decompose_template = """
-[Background]
+decomposer_template = """
+[Task]
 You are an experienced financial database administrator.
 Given a database schema, an evidence and a question.
 Your task is to decompose the question into subquestions and use the SQLite dialect for text-to-SQL generation.
@@ -153,7 +153,7 @@ Decompose the question into sub questions, considering [Requirements] and [SQL C
 """
 
 reviser_template = """
-[Background]
+[Task]
 You are an experienced financial database administrator.
 When executing SQL below, some errors occurred, please fix up SQL and generate new SQL based on the information given.
 Solve the task step by step if you need to. When you find an answer, verify the answer carefully. 

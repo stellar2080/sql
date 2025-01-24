@@ -23,14 +23,11 @@ def user_message(message: str):
 def assistant_message(message: str):
     return {'role': 'assistant', 'content': message}
 
-def get_res_content(response):
-    return response.output.choices[0].message.content
-
-def get_res_finish_reason(response):
-    return response.output.choices[0].finish_reason
-
-def get_res_tool_calls(response):
-    return response.output.choices[0].message.tool_calls
+def get_response_content(response, platform):
+    if platform == "Qwen":
+        return response.output.choices[0].message.content
+    elif platform == "Llama":
+        return response.message.content
 
 def deterministic_uuid(content: Union[str, bytes]) -> str:
     if isinstance(content, str):

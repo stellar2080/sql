@@ -4,7 +4,7 @@ from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER
 from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import filter_template
-from src.utils.utils import parse_json, user_message, get_res_content, timeout, \
+from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
     get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
@@ -16,6 +16,7 @@ class Filter(Agent_Base):
         self.url = config.get("db_path", '.')
         self.check_same_thread = config.get("check_same_thread", False)
         self.conn, _ = connect_to_sqlite(self.url, self.check_same_thread)
+        self.platform = config['platform']
 
     def get_evidence_str(
         self,
@@ -307,7 +308,7 @@ class Filter(Agent_Base):
     ) -> (dict, str):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
-        answer = get_res_content(response)
+        answer = get_response_content(response, self.platform)
         print(answer)
         return answer
 

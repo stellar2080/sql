@@ -1,19 +1,20 @@
 from src.agent.agent_base import Agent_Base
 from src.llm.llm_base import LLM_Base
 from src.utils.const import DECOMPOSER, REVISER
-from src.utils.template import decompose_template
-from src.utils.utils import parse_sql, user_message, get_res_content, timeout
+from src.utils.template import decomposer_template
+from src.utils.utils import parse_sql, user_message, get_response_content, timeout
 
 
 class Decomposer(Agent_Base):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
+        self.platform = config['platform']
 
     def create_decomposer_prompt(
         self,
         message: dict
     ) -> str:
-        prompt = decompose_template.format(message["schema"],message["evidence"],message["question"])
+        prompt = decomposer_template.format(message["schema"],message["evidence"],message["question"])
         print(prompt)
         return prompt
 
@@ -25,7 +26,7 @@ class Decomposer(Agent_Base):
     ) -> str:
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
-        answer = get_res_content(response)
+        answer = get_response_content(response, self.platform)
         print(answer)
         sql = parse_sql(answer)
         return sql
