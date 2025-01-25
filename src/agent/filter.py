@@ -1,7 +1,7 @@
 from scipy.constants import electron_mass
 
 from src.llm.llm_base import LLM_Base
-from src.utils.const import FILTER, DECOMPOSER
+from src.utils.const import FILTER, DECOMPOSER, EVIDENCE_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD
 from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import filter_template
 from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
@@ -36,7 +36,7 @@ class Filter(Agent_Base):
             filtered_ids = [
                 metadata['doc_id'] for distance, metadata in sorted(
                     zip(distances, metadatas), key=lambda x: x[0]
-                ) if distance < 0.2
+                ) if distance < EVIDENCE_THRESHOLD
             ]
             # print(filtered_ids)
             if len(filtered_ids) != 0:
@@ -148,19 +148,19 @@ class Filter(Agent_Base):
             # print("="*30,"subsequence_similarity-col_name")
             for item in sorted(schema, key=lambda x: x[5][0], reverse=True)[:4]:
                 # print(item)
-                if item[5][0] > 0.6:
+                if item[5][0] > COL_THRESHOLD:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
             # print("=" * 30,"cos_similarity-col_name")
             for item in sorted(schema, key=lambda x: x[5][1], reverse=True)[:4]:
                 # print(item)
-                if item[5][1] > 0.6:
+                if item[5][1] > COL_THRESHOLD:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
             # print("=" * 30,"cos_similarity-comment")
             for item in sorted(schema, key=lambda x: x[5][2], reverse=True)[:4]:
                 # print(item)
-                if item[5][2] > 0.6:
+                if item[5][2] > COL_THRESHOLD:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
 
@@ -183,8 +183,8 @@ class Filter(Agent_Base):
                     for key, values in query_results.items():
                         embedding_list = get_embedding_list([key] + values)
                         for idx, value in enumerate(values,start=1):
-                            if get_subsequence_similarity(key, value) > 0.6 \
-                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > 0.6:
+                            if get_subsequence_similarity(key, value) > VAL_THRESHOLD \
+                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > VAL_THRESHOLD:
                                 value_list.append(value)
                     if len(value_list) != 0:
                         tbl_name_set.add(item[1])
@@ -202,14 +202,21 @@ class Filter(Agent_Base):
         i = 0
         while i < len(foreign_keys):
             foreign_key = foreign_keys[i]
-            if foreign_key[0][1] in tbl_name_set and foreign_key[1][1] in tbl_name_set:
-                column_set.add(tuple(foreign_key[0]))
-                column_set.add(tuple(foreign_key[1]))
-                i += 1
+            fk = foreign_key[0]
+            ref = foreign_key[1]
+
+            if fk[1] in tbl_name_set:
+                column_set.add(tuple(fk))
+                if ref[1] in tbl_name_set:
+                    column_set.add(tuple(ref))
+                    i += 1
+                else:
+                    foreign_keys.pop(i)
             else:
-                foreign_keys.remove(foreign_key)
+                foreign_keys.pop(i)
 
         foreign_keys.sort(key=lambda x: x[0][1])
+        print(foreign_keys)
 
     def get_related_entity(self, entity_list: list, schema: list, primary_keys, foreign_keys):
         column_set, tbl_name_set = self.get_related_column(entity_list, schema)
@@ -301,7 +308,7 @@ class Filter(Agent_Base):
         schema_str = self.get_schema_str(column_list, foreign_keys)
         prompt = filter_template.format(schema_str, evidence_str, question)
         # print('=' * 50, "prompt")
-        # print(prompt)
+        print(prompt)
         return prompt,schema_str,evidence_str
 
     @timeout(180)
