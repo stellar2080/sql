@@ -27,12 +27,16 @@ class Filter(Agent_Base):
         evidence_str = ""
         evidence_ids = vectordb.get_related_key(entity_list, extracts=['distances', 'metadatas'])
         for i in range(len(entity_list)):
-            distances = evidence_ids['distances'][i]
-            metadatas = evidence_ids['metadatas'][i]
+            if len(entity_list) == 1:
+                distances = evidence_ids['distances']
+                metadatas = evidence_ids['metadatas']
+            else:
+                distances = evidence_ids['distances'][i]
+                metadatas = evidence_ids['metadatas'][i]
             filtered_ids = [
                 metadata['doc_id'] for distance, metadata in sorted(
                     zip(distances, metadatas), key=lambda x: x[0]
-                ) if distance < 0.3
+                ) if distance < 0.2
             ]
             # print(filtered_ids)
             if len(filtered_ids) != 0:
@@ -139,24 +143,24 @@ class Filter(Agent_Base):
                 col[5] = (s_similarity,name_cos_similarity,comment_cos_similarity)
                 # print(entity, col_name, (s_similarity,name_cos_similarity,comment_cos_similarity))
 
-            print("=" * 20)
-            print(entity)
-            print("="*30,"subsequence_similarity-col_name")
+            # print("=" * 20)
+            # print(entity)
+            # print("="*30,"subsequence_similarity-col_name")
             for item in sorted(schema, key=lambda x: x[5][0], reverse=True)[:4]:
-                print(item)
-                if item[5][0] > 0.8:
+                # print(item)
+                if item[5][0] > 0.6:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
-            print("=" * 30,"cos_similarity-col_name")
+            # print("=" * 30,"cos_similarity-col_name")
             for item in sorted(schema, key=lambda x: x[5][1], reverse=True)[:4]:
-                print(item)
-                if item[5][1] > 0.8:
+                # print(item)
+                if item[5][1] > 0.6:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
-            print("=" * 30,"cos_similarity-comment")
+            # print("=" * 30,"cos_similarity-comment")
             for item in sorted(schema, key=lambda x: x[5][2], reverse=True)[:4]:
-                print(item)
-                if item[5][2] > 0.8:
+                # print(item)
+                if item[5][2] > 0.6:
                     tbl_name_set.add(item[1])
                     column_set.add(tuple(item[:5]))
 
@@ -173,14 +177,14 @@ class Filter(Agent_Base):
                 value_list = [item[0] for item in cur.fetchall()]
                 query_results = lsh(entity_list,value_list)
                 if query_results != {}:
-                    print(query_results)
+                    # print(query_results)
                     column = item[:5]
                     value_list = []
                     for key, values in query_results.items():
                         embedding_list = get_embedding_list([key] + values)
                         for idx, value in enumerate(values,start=1):
-                            if get_subsequence_similarity(key, value) > 0.8 \
-                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > 0.8:
+                            if get_subsequence_similarity(key, value) > 0.6 \
+                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > 0.6:
                                 value_list.append(value)
                     if len(value_list) != 0:
                         tbl_name_set.add(item[1])
@@ -209,17 +213,17 @@ class Filter(Agent_Base):
 
     def get_related_entity(self, entity_list: list, schema: list, primary_keys, foreign_keys):
         column_set, tbl_name_set = self.get_related_column(entity_list, schema)
-        print('='*50,"get_related_column")
-        print(column_set)
-        print(tbl_name_set)
+        # print('='*50,"get_related_column")
+        # print(column_set)
+        # print(tbl_name_set)
         self.get_related_value(entity_list, schema, column_set, tbl_name_set)
-        print('=' * 50, "get_related_value")
-        print(column_set)
-        print(tbl_name_set)
+        # print('=' * 50, "get_related_value")
+        # print(column_set)
+        # print(tbl_name_set)
         self.add_pfk_to_set(column_set, primary_keys, foreign_keys, tbl_name_set)
-        print('=' * 50, "add_pfk_to_set")
-        print(column_set)
-        print(foreign_keys)
+        # print('=' * 50, "add_pfk_to_set")
+        # print(column_set)
+        # print(foreign_keys)
 
         column_list = sorted(list(column_set), key=lambda x: x[1])
         return column_list
@@ -247,7 +251,7 @@ class Filter(Agent_Base):
             else:
                 idx = i
                 return idx, schema_str
-        return schema_str
+        return idx, schema_str
 
     def get_schema_str(self, column_list: list, foreign_keys: list):
 
@@ -269,7 +273,7 @@ class Filter(Agent_Base):
                 schema_str = self.add_col_to_schema_str(column, schema_str)
 
         schema_str += "]\n"
-        schema_str = self.add_fk_to_schema_str(idx, foreign_keys, tbl_name, schema_str)
+        _, schema_str = self.add_fk_to_schema_str(idx, foreign_keys, tbl_name, schema_str)
 
         return schema_str
 
@@ -280,24 +284,24 @@ class Filter(Agent_Base):
         vectordb: VectorDB,
     ) -> (str,str,str):
         evidence_str, entity_list = self.get_evidence_str(entity_list, vectordb)
-        print('='*50,"get_evidence_str")
-        for entity in entity_list:
-            print(entity)
+        # print('='*50,"get_evidence_str")
+        # for entity in entity_list:
+        #     print(entity)
         schema = self.get_schema()
-        print('=' * 50, "get_schema")
-        print(schema)
+        # print('=' * 50, "get_schema")
+        # print(schema)
         primary_keys, foreign_keys = self.get_pf_keys(schema)
-        print('=' * 50, "get_pf_keys")
-        print(primary_keys)
-        print(foreign_keys)
+        # print('=' * 50, "get_pf_keys")
+        # print(primary_keys)
+        # print(foreign_keys)
         column_list = self.get_related_entity(entity_list, schema, primary_keys, foreign_keys)
-        print('=' * 50, "get_related_entity")
-        print(column_list)
-        print(foreign_keys)
+        # print('=' * 50, "get_related_entity")
+        # print(column_list)
+        # print(foreign_keys)
         schema_str = self.get_schema_str(column_list, foreign_keys)
         prompt = filter_template.format(schema_str, evidence_str, question)
-        print('=' * 50, "prompt")
-        print(prompt)
+        # print('=' * 50, "prompt")
+        # print(prompt)
         return prompt,schema_str,evidence_str
 
     @timeout(180)

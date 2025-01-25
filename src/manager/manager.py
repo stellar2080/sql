@@ -6,7 +6,7 @@ from src.agent.extractor import Extractor
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
-from src.llm.llama import Llama
+from src.llm.ollama import Ollama
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
@@ -22,8 +22,8 @@ class Manager:
             raise Exception("Platform not provided.")
         elif self.platform == 'Qwen':
             self.llm = Qwen(config)
-        elif self.platform == 'Llama':
-            self.llm = Llama(config)
+        elif self.platform == 'Ollama':
+            self.llm = Ollama(config)
         self.extractor = Extractor(config)
         self.filter = Filter(config)
         self.decomposer = Decomposer(config)

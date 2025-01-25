@@ -15,7 +15,7 @@ class Extractor(Agent_Base):
         question: str,
     ) -> (str,str):
         prompt = extractor_template.format(question)
-        print(prompt)
+        # print(prompt)
         return prompt
 
     @timeout(180)
@@ -27,7 +27,7 @@ class Extractor(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response, self.platform)
-        print(answer)
+        # print(answer)
         return answer
 
     def chat(
@@ -38,7 +38,7 @@ class Extractor(Agent_Base):
         if message["message_to"] != EXTRACTOR:
             raise Exception("The message should not be processed by " + EXTRACTOR + ". It is sent to " + message["message_to"])
         else:
-            print("The message is being processed by " + EXTRACTOR + "...")
+            # print("The message is being processed by " + EXTRACTOR + "...")
             prompt = self.create_extractor_prompt(message["question"])
             ans = self.get_extractor_ans(prompt, llm)
             entity_list = parse_list(ans)

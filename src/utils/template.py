@@ -4,6 +4,7 @@ You are an expert in the field of finance and database.
 Given a question, your task is to find any named entities from the question, such as organizations, financial terms, and other phrases that contain important aspects of the query.
 
 [Requirements]
+- The entities you find should be exactly the same as the original text.
 - Your output should be in a python list format, don't output other text or code.
 
 ==========

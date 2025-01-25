@@ -5,7 +5,7 @@ from .llm_base import LLM_Base
 from ..utils.const import TEMPERATURE, MAX_TOKENS
 
 
-class Llama(LLM_Base):
+class Ollama(LLM_Base):
   def __init__(self, config):
     super().__init__()
     self.host = config.get('host', 'localhost')
