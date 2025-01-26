@@ -15,7 +15,7 @@ class Extractor(Agent_Base):
         question: str,
     ) -> (str,str):
         prompt = extractor_template.format(question)
-        # print(prompt)
+        print(prompt)
         return prompt
 
     @timeout(180)
@@ -27,7 +27,7 @@ class Extractor(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response, self.platform)
-        # print(answer)
+        print(answer)
         return answer
 
     def chat(

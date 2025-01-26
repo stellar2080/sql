@@ -69,7 +69,7 @@ class Filter(Agent_Base):
 
             cur.execute(f"PRAGMA table_info({tbl_name})")
             col_datas = cur.fetchall()
-            cols = [[col_data[5], tbl_name, col_data[1], col_data[2]] for col_data in col_datas]
+            cols = [[col_data[5], tbl_name.lower(), col_data[1].lower(), col_data[2].lower()] for col_data in col_datas]
 
             sql_str: str = sql_datas[enum][0]
             start = 0
@@ -90,7 +90,7 @@ class Filter(Agent_Base):
 
                     sub_str = sub_str.strip()
 
-                    cols[num].append(sub_str)
+                    cols[num].append(sub_str.lower())
                     cols[num].append(())
                     num += 1
             schema.extend(cols)
@@ -110,7 +110,7 @@ class Filter(Agent_Base):
             cur.execute(f"PRAGMA foreign_key_list({tbl_name})")
             foreign_col_datas = cur.fetchall()
             for foreign_col in foreign_col_datas:
-                foreign_keys.append([[tbl_name, foreign_col[4]], [foreign_col[2], foreign_col[3]]])
+                foreign_keys.append([[tbl_name.lower(), foreign_col[4].lower()], [foreign_col[2].lower(), foreign_col[3].lower()]])
 
         for item in schema:
             if item[0] == 1:
@@ -172,9 +172,10 @@ class Filter(Agent_Base):
     def get_related_value(self, entity_list: list, schema: list, column_set: set, tbl_name_set: set):
         cur = self.conn.cursor()
         for item in schema:
-            if item[3] == 'TEXT':
+            if item[3] == 'text':
                 cur.execute(f"SELECT {item[2]} FROM {item[1]}")
-                value_list = [item[0] for item in cur.fetchall()]
+                value_list = [item[0].lower() for item in cur.fetchall()]
+
                 query_results = lsh(entity_list,value_list)
                 if query_results != {}:
                     # print(query_results)
@@ -183,6 +184,7 @@ class Filter(Agent_Base):
                     for key, values in query_results.items():
                         embedding_list = get_embedding_list([key] + values)
                         for idx, value in enumerate(values,start=1):
+                            # print(key, value, get_subsequence_similarity(key, value), get_cos_similarity(embedding_list[0], embedding_list[idx]))
                             if get_subsequence_similarity(key, value) > VAL_THRESHOLD \
                             or get_cos_similarity(embedding_list[0], embedding_list[idx]) > VAL_THRESHOLD:
                                 value_list.append(value)
@@ -193,12 +195,12 @@ class Filter(Agent_Base):
                         column.append(tuple(value_list))
                         column_set.add(tuple(column))
 
-
-    def add_pfk_to_set(self, column_set, primary_keys, foreign_keys, tbl_name_set):
+    def add_pk_to_set(self, column_set, primary_keys, tbl_name_set):
         for primary_key in primary_keys:
             if primary_key[1] in tbl_name_set:
                 column_set.add(tuple(primary_key))
 
+    def add_fk_to_set(self, column_set, foreign_keys, tbl_name_set):
         i = 0
         while i < len(foreign_keys):
             foreign_key = foreign_keys[i]
@@ -216,24 +218,6 @@ class Filter(Agent_Base):
                 foreign_keys.pop(i)
 
         foreign_keys.sort(key=lambda x: x[0][1])
-        print(foreign_keys)
-
-    def get_related_entity(self, entity_list: list, schema: list, primary_keys, foreign_keys):
-        column_set, tbl_name_set = self.get_related_column(entity_list, schema)
-        # print('='*50,"get_related_column")
-        # print(column_set)
-        # print(tbl_name_set)
-        self.get_related_value(entity_list, schema, column_set, tbl_name_set)
-        # print('=' * 50, "get_related_value")
-        # print(column_set)
-        # print(tbl_name_set)
-        self.add_pfk_to_set(column_set, primary_keys, foreign_keys, tbl_name_set)
-        # print('=' * 50, "add_pfk_to_set")
-        # print(column_set)
-        # print(foreign_keys)
-
-        column_list = sorted(list(column_set), key=lambda x: x[1])
-        return column_list
 
     def add_tbl_to_schema_str(self, tbl_name, schema_str):
         schema_str += "=====\n"
@@ -291,23 +275,38 @@ class Filter(Agent_Base):
         vectordb: VectorDB,
     ) -> (str,str,str):
         evidence_str, entity_list = self.get_evidence_str(entity_list, vectordb)
-        # print('='*50,"get_evidence_str")
-        # for entity in entity_list:
-        #     print(entity)
+        print('='*50,"get_evidence_str")
+        for entity in entity_list:
+            print(entity)
         schema = self.get_schema()
-        # print('=' * 50, "get_schema")
-        # print(schema)
+        print('=' * 50, "get_schema")
+        print(schema)
+
         primary_keys, foreign_keys = self.get_pf_keys(schema)
-        # print('=' * 50, "get_pf_keys")
-        # print(primary_keys)
-        # print(foreign_keys)
-        column_list = self.get_related_entity(entity_list, schema, primary_keys, foreign_keys)
-        # print('=' * 50, "get_related_entity")
-        # print(column_list)
-        # print(foreign_keys)
+        print('=' * 50, "get_pf_keys")
+        print(primary_keys)
+        print(foreign_keys)
+
+        column_set, tbl_name_set = self.get_related_column(entity_list, schema)
+        print('='*50,"get_related_column")
+        print(column_set)
+        print(tbl_name_set)
+
+        self.get_related_value(entity_list, schema, column_set, tbl_name_set)
+        print('=' * 50, "get_related_value")
+        print(column_set)
+        print(tbl_name_set)
+
+        self.add_pk_to_set(column_set, primary_keys, tbl_name_set)
+        self.add_fk_to_set(column_set, foreign_keys, tbl_name_set)
+        print('=' * 50, "add_pk_to_set add_fk_to_set")
+        print(column_set)
+        print(foreign_keys)
+        column_list = sorted(list(column_set), key=lambda x: x[1])
+
         schema_str = self.get_schema_str(column_list, foreign_keys)
         prompt = filter_template.format(schema_str, evidence_str, question)
-        # print('=' * 50, "prompt")
+        print('=' * 50, "prompt")
         print(prompt)
         return prompt,schema_str,evidence_str
 

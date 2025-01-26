@@ -5,7 +5,7 @@ Given a question, your task is to find any named entities from the question, suc
 
 [Requirements]
 - The entities you find should be exactly the same as the original text.
-- Your output should be in a python list format, don't output other text or code.
+- Your final answer should be in the same python list format as the example given, without outputting any other text or code.
 
 ==========
 Here is a typical example:
@@ -21,7 +21,6 @@ Here is a new example, considering [Requirements], please start answering:
 [Answer]
 """
 
-
 filter_template = """
 [Task]
 You are an expert in the field of finance and database. 
@@ -32,7 +31,7 @@ Your task is to select relevant tables and columns based on user questions and e
 - If all columns of a table need to be kept, mark it as "keep".
 - If a table is completely irrelevant to the user question and evidence, mark it as "drop".
 - If not for the previous two cases, sort the columns in each relevant table in descending order of relevance, determine which columns need to be kept.
-- You don't need to give any explanation, just output the answer in JSON format.
+- Your final answer should be in the same JSON format as the example given, without outputting any other text or code.
 
 ==========
 Here is a typical example:
@@ -91,7 +90,6 @@ Given a database schema, an evidence and a question.
 Your task is to decompose the question into subquestions and use the SQLite dialect for text-to-SQL generation.
 
 [Requirements]
-- Keep your answer brief
 - When you have generated an SQL statement that already solves the problem, there is no need to generate more text
 
 [SQL Constraints]
@@ -157,7 +155,7 @@ reviser_template = """
 [Task]
 You are an experienced financial database administrator.
 When executing SQL below, some errors occurred, please fix up SQL and generate new SQL based on the information given.
-Solve the task step by step if you need to. When you find an answer, verify the answer carefully. 
+Solve the task step by step if you need. When you find an answer, verify the answer carefully. 
 
 [SQL Constraints]
 When generating SQL, we should always consider constraints:
