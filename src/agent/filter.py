@@ -1,5 +1,3 @@
-from scipy.constants import electron_mass
-
 from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER, EVIDENCE_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD
 from src.utils.database_utils import connect_to_sqlite
