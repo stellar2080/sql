@@ -6,7 +6,6 @@ from src.agent.extractor import Extractor
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
 from src.agent.reviser import Reviser
-from src.llm.ollama import Ollama
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid

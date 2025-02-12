@@ -1,18 +1,19 @@
 import json
 import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = os.path.dirname(current_dir)
+sys.path.append(ROOT_PATH)
 
 from src.manager.manager import Manager
 from src.utils.utils import user_message
 
-ROOT_PATH = os.path.abspath("../")
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 
 m = Manager(
     config={
-        # 'platform': 'Qwen',
-        # 'model': 'qwen-max',
-        'platform': 'Ollama',
-        'model': 'llama3.1:8b',
+        'platform': 'Qwen',
+        'model': 'qwen-max',
         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
         'vectordb_path': os.path.join(ROOT_PATH, 'vectordb'),
         'vectordb_client': 'http',
@@ -22,7 +23,8 @@ m = Manager(
 )
 
 # m.clear_doc()
-# m.train_doc(path="../rag/formulas.txt")
+# m.train_doc(path=os.path.join(ROOT_PATH,"rag/formulas.txt"))
+
 # with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_train_text2sql.json')) as f:
 #     data = json.load(f)
 #     for item in data:
@@ -74,16 +76,16 @@ m = Manager(
 #             finally:
 #                 count += 1
 
-message = {
-    "question": "I want to know Prec_Metals, Net_Inc_Borrowings_CB and Fee_Com_Net_Inc of china merchants bank",
-    "extract": None,
-    "sql": None,
-    "schema": None,
-    "evidence": None,
-    "message_to": "extractor",
-    "response": None,
-    "sql_result": None
-}
+# message = {
+#     "question": "I want to know Prec_Metals, Net_Inc_Borrowings_CB and Fee_Com_Net_Inc of china merchants bank",
+#     "extract": None,
+#     "sql": None,
+#     "schema": None,
+#     "evidence": None,
+#     "message_to": "extractor",
+#     "response": None,
+#     "sql_result": None
+# }
 
-message = m.extractor.chat(message, m.llm)
-m.filter.create_filter_prompt(message['extract'],message['question'],m.vectordb)
+# message = m.extractor.chat(message, m.llm)
+# m.filter.create_filter_prompt(message['extract'],message['question'],m.vectordb)
