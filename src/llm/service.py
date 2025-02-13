@@ -21,19 +21,6 @@ def torch_gc():
         with torch.cuda.device(CUDA_DEVICE):  # 指定CUDA设备
             torch.cuda.empty_cache()  # 清空CUDA缓存
             torch.cuda.ipc_collect()  # 收集CUDA内存碎片
-# 文本分割函数
-def split_text(text):
-    pattern = re.compile(r'<think>(.*?)</think>(.*)', re.DOTALL) # 定义正则表达式模式
-    match = pattern.search(text) # 匹配 <think>思考过程</think>回答
-  
-    if match: # 如果匹配到思考过程
-        think_content = match.group(1).strip() # 获取思考过程
-        answer_content = match.group(2).strip() # 获取回答
-    else:
-        think_content = "" # 如果没有匹配到思考过程，则设置为空字符串
-        answer_content = text.strip() # 直接返回回答
-  
-    return think_content, answer_content
 
 # 创建FastAPI应用
 app = FastAPI()
@@ -59,19 +46,16 @@ async def create_item(request: Request):
         output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
     ]
     response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    think_content, answer_content = split_text(response) # 调用split_text函数，分割思考过程和回答
     now = datetime.datetime.now()  # 获取当前时间
     time = now.strftime("%Y-%m-%d %H:%M:%S")  # 格式化时间为字符串
     # 构建响应JSON
     answer = {
         "response": response,
-        "think": think_content,
-        "answer": answer_content,
         "status": 200,
         "time": time
     }
     # 构建日志信息
-    log = f"[{time}], prompt:\"{prompt}\", response:\"{repr(response)}\", think:\"{think_content}\", answer:\"{answer_content}\""
+    log = f"[{time}], prompt:\"{prompt}\", response:\"{repr(response)}\""
     print(log)  # 打印日志
     torch_gc()  # 执行GPU内存清理
     return answer  # 返回响应
