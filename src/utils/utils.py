@@ -28,6 +28,8 @@ def get_response_content(response, platform):
         return response.output.choices[0].message.content
     elif platform == "Ollama":
         return response.message.content
+    elif platform == "Api":
+        return response.response
 
 def deterministic_uuid(content: Union[str, bytes]) -> str:
     if isinstance(content, str):

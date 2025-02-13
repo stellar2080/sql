@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.path.dirname(current_dir)
 sys.path.append(ROOT_PATH)
@@ -12,8 +13,7 @@ os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 
 m = Manager(
     config={
-        'platform': 'Qwen',
-        'model': 'qwen-max',
+        'platform': 'Api',
         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
         'vectordb_path': os.path.join(ROOT_PATH, 'vectordb'),
         'vectordb_client': 'http',
@@ -87,5 +87,4 @@ m = Manager(
 #     "sql_result": None
 # }
 
-# message = m.extractor.chat(message, m.llm)
-# m.filter.create_filter_prompt(message['extract'],message['question'],m.vectordb)
+print(m.llm.call([user_message('hello')]))

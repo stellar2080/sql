@@ -2,6 +2,7 @@ import os
 
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums, Suppress
 
+from src.llm.api import Api
 from src.agent.extractor import Extractor
 from src.agent.filter import Filter
 from src.agent.decomposer import Decomposer
@@ -18,11 +19,14 @@ class Manager:
             config = {}
         self.platform = config.get('platform',None)
         if self.platform is None:
-            raise Exception("Platform not provided.")
+            raise Exception('Plz provide platform.')
+        elif self.platform == 'Api':
+            self.llm = Api(config)
         elif self.platform == 'Qwen':
             self.llm = Qwen(config)
         elif self.platform == 'Ollama':
             self.llm = Ollama(config)
+        
         self.extractor = Extractor(config)
         self.filter = Filter(config)
         self.decomposer = Decomposer(config)

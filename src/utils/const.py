@@ -23,3 +23,6 @@ COL_THRESHOLD = 0.8
 VAL_THRESHOLD = 0.6
 
 QUERY_MODE = 'pd'
+
+LLM_HOST = 'localhost'
+LLM_PORT = 6006
