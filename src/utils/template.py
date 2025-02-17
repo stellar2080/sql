@@ -1,11 +1,12 @@
 extractor_template = """
 [Task]
 You are an expert in the field of finance and database.
-Given a question, your task is to find any named entities from the question, such as organizations, financial terms, and other phrases that contain important aspects of the query.
+Given a question, your task is to find any named entities from the question, such as organizations, financial terms, and other important phrases that help with database queries.
 
 [Requirements]
-- The entities you find should be exactly the same as the original text.
-- Your final answer should be in the same python list format as the example given, without outputting any other text or code.
+- The entities you find should be exactly the same as the original text in the question.
+- Your final answer should be in the same python list format as the example given.
+- Don't output code.
 
 ==========
 Here is a typical example:
@@ -17,6 +18,9 @@ I want to know the working capital and current ratio of China Construction Bank.
 ==========
 Here is a new example, considering [Requirements], please start answering:
 [Question]
+{}
+[Evidence]
+You can refer to the following entities that may be relevant to the question:
 {}
 [Answer]
 """

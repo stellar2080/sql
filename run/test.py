@@ -7,7 +7,7 @@ ROOT_PATH = os.path.dirname(current_dir)
 sys.path.append(ROOT_PATH)
 
 from src.manager.manager import Manager
-from src.utils.utils import user_message
+from src.utils.utils import get_response_content, user_message
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 
@@ -76,15 +76,15 @@ m = Manager(
 #             finally:
 #                 count += 1
 
-# message = {
-#     "question": "I want to know Prec_Metals, Net_Inc_Borrowings_CB and Fee_Com_Net_Inc of china merchants bank",
-#     "extract": None,
-#     "sql": None,
-#     "schema": None,
-#     "evidence": None,
-#     "message_to": "extractor",
-#     "response": None,
-#     "sql_result": None
-# }
+message = {
+    "question": "What is the Current Ratio and the Loss on disposal of non current assets of China Construction Bank in millions of yuan?",
+    "extract": None,
+    "sql": None,
+    "schema": None,
+    "evidence": None,
+    "message_to": "extractor",
+    "response": None,
+    "sql_result": None
+}
 
-print(m.llm.call([user_message('hello')]))
+m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)

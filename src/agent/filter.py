@@ -170,7 +170,7 @@ class Filter(Agent_Base):
     def get_related_value(self, entity_list: list, schema: list, column_set: set, tbl_name_set: set):
         cur = self.conn.cursor()
         for item in schema:
-            if item[3] == 'text':
+            if item[3].lower() == 'text':
                 cur.execute(f"SELECT {item[2]} FROM {item[1]}")
                 value_list = [item[0].lower() for item in cur.fetchall()]
 
