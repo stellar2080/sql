@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import COL_THRESHOLD, EVIDENCE_THRESHOLD, EXTRACTOR, EXTRACTOR_COL_THRESHOLD, EXTRACTOR_VAL_THRESHOLD, FILTER, VAL_THRESHOLD
+from src.utils.const import EVIDENCE_THRESHOLD, EXTRACTOR_COL_THRESHOLD, EXTRACTOR_VAL_THRESHOLD, EXTRACTOR, FILTER
 from src.utils.template import extractor_template
 from src.utils.utils import get_cos_similarity, get_embedding_list, get_subsequence_similarity, lsh, user_message, get_response_content, timeout, parse_list
 from src.agent.agent_base import Agent_Base
@@ -8,7 +8,6 @@ from src.vectordb.vectordb import VectorDB
 from src.utils.database_utils import connect_to_sqlite
 
 import spacy
-
 
 class Extractor(Agent_Base):
     def __init__(
@@ -35,7 +34,7 @@ class Extractor(Agent_Base):
         noun_chunks: list,
         vectordb: VectorDB,
     ):
-        return_list = []
+        evidence_key_list = []
 
         evidence_keys = vectordb.get_related_key(noun_chunks, extracts=['distances', 'documents'])
         for i in range(len(noun_chunks)):
@@ -52,9 +51,9 @@ class Extractor(Agent_Base):
             ]
             # print(filtered_keys)
             if len(filtered_keys) != 0:
-                return_list.extend(filtered_keys)
+                evidence_key_list.extend(filtered_keys)
 
-        return set(return_list)
+        return set(evidence_key_list)
 
     def get_schema(
         self
@@ -98,7 +97,7 @@ class Extractor(Agent_Base):
                     num += 1
             schema.extend(cols)
 
-        # schema = [[tbl_name,col_name,col_type,comment,similarity],...]
+        # schema = [[0 tbl_name,1 col_name,2 col_type,3 comment,4 similarity],...]
         return schema
 
     def get_related_column(
@@ -108,19 +107,25 @@ class Extractor(Agent_Base):
     ):
         col_set = set()
 
-        name_embeddings = get_embedding_list([col[1].lower().replace('_',' ').replace('-',' ') for col in schema])
-        comment_embeddings = get_embedding_list([col[3].lower().replace('_',' ').replace('-',' ') for col in schema])
-        noun_chunk_embeddings = get_embedding_list([noun_chunk.lower().replace('_',' ').replace('-',' ') for noun_chunk in noun_chunks])
+        name_list = []
+        comment_list = []
+        for col in schema:
+            name_list.append(col[1])
+            comment_list.append(col[3])
+
+        name_embeddings = get_embedding_list(name_list)
+        comment_embeddings = get_embedding_list(comment_list)
+        noun_chunk_embeddings = get_embedding_list(noun_chunks)
 
         for e_idx, noun_chunk in enumerate(noun_chunks, start=0):
             noun_chunk_embedding = noun_chunk_embeddings[e_idx]
             for c_idx, col in enumerate(schema, start=0):
                 col_name = col[1]
-                s_similarity = get_subsequence_similarity(noun_chunk, col_name)
+                name_sub_similarity = get_subsequence_similarity(noun_chunk, col_name)
                 name_cos_similarity = get_cos_similarity(noun_chunk_embedding, name_embeddings[c_idx])
                 comment_cos_similarity = get_cos_similarity(noun_chunk_embedding, comment_embeddings[c_idx])
-                col[4] = (s_similarity,name_cos_similarity,comment_cos_similarity)
-                # print(noun_chunk, col_name, (s_similarity,name_cos_similarity,comment_cos_similarity))
+                col[4] = (name_sub_similarity,name_cos_similarity,comment_cos_similarity)
+                # print(noun_chunk, col_name, (name_sub_similarity,name_cos_similarity,comment_cos_similarity))
 
             # print("=" * 20)
             # print(noun_chunk)
@@ -149,9 +154,9 @@ class Extractor(Agent_Base):
     ):
         value_set = set()
         cur = self.conn.cursor()
-        for item in schema:
-            if item[2].lower() == 'text':
-                cur.execute(f"SELECT {item[1]} FROM {item[0]}")
+        for col in schema:
+            if col[2].lower() == 'text':
+                cur.execute(f"SELECT {col[1]} FROM {col[0]}")
                 value_list = [item[0] for item in cur.fetchall()]
 
                 query_results = lsh(noun_chunks,value_list)
@@ -199,16 +204,17 @@ class Extractor(Agent_Base):
         else:
             # print("The message is being processed by " + EXTRACTOR + "...")
             noun_chunks = self.noun_chunking(message['question'])
-            evidence_set = self.get_rela_evidence_keys(noun_chunks=noun_chunks, vectordb=vectordb)
             schema = self.get_schema()
+
+            evidence_set = self.get_rela_evidence_keys(noun_chunks=noun_chunks, vectordb=vectordb)
             col_set = self.get_related_column(noun_chunks=noun_chunks,schema=schema)
             value_set = self.get_related_value(noun_chunks=noun_chunks, schema=schema)
-            entity_set = col_set | value_set | evidence_set
-            prompt = self.create_extractor_prompt(message["question"], entity_set)
+            entity_set = evidence_set | col_set | value_set
 
+            prompt = self.create_extractor_prompt(message["question"], entity_set)
             ans = self.get_extractor_ans(prompt, llm)
             entity_list = parse_list(ans)
 
-            message["extract"] = [entity.lower().replace('_',' ').replace('-',' ') for entity in entity_list]
+            message["entity"] = entity_list
             message["message_to"] = FILTER
             return message

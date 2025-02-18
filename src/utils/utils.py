@@ -46,41 +46,17 @@ def deterministic_uuid(content: Union[str, bytes]) -> str:
     return content_uuid
 
 def parse_json(text: str):
-    start = text.rfind("```json")
-    end = text.rfind("```", start + 7)
-
-    if start != -1 and end != -1:
-        json_string = text[start + 7: end]
-
-        try:
+    try:
+        start = text.rfind("{")
+        end = text.rfind("}")
+        if start != -1 and end != -1:
+            json_string = text[start: end+1]
             json_data = json.loads(json_string)
-            valid = check_filter_response(json_data)
-            if valid:
-                return json_data
-            else:
-                return text
-        except:
-            print(f"parse json error!\n")
-            print(f"json_string: {json_string}\n\n")
-            pass
-
-    return text
-
-def check_filter_response(json_data: Dict) -> bool:
-    FLAGS = ['keep', 'drop']
-    for k, v in json_data.items():
-        if isinstance(v, str):
-            if v not in FLAGS:
-                print(f"invalid table flag: {v}\n")
-                print(f"json_data: {json_data}\n\n")
-                return False
-        elif isinstance(v, list):
-            pass
+            return json_data
         else:
-            print(f"invalid flag type: {v}\n")
-            print(f"json_data: {json_data}\n\n")
-            return False
-    return True
+            raise Exception('parse json error!\n')
+    except Exception as e:
+        print(e)
 
 def parse_sql(text: str) -> str:
     try:
@@ -91,11 +67,20 @@ def parse_sql(text: str) -> str:
             sql_string = text[start + 7: end]
             return sql_string
         else:
-            print(f"parse sql error!\n")
-            return ""
+            raise Exception("parse sql error!\n")
     except Exception as e:
         print(e)
-        pass
+
+def parse_list(text):
+    try:
+        start = text.rfind('[')
+        end = text.rfind(']')
+        if start != -1 and end != -1:
+            return ast.literal_eval(text[start:end+1])
+        else:
+            raise Exception("parse list error!\n")
+    except Exception as e:
+        print(e)
 
 def show_perf(func):
     def wrapper(*args, **kwargs):
@@ -129,17 +114,6 @@ def timeout(time_args):
             return result
         return wrapper
     return _timeout
-
-
-def parse_list(string):
-    try:
-        start = string.rfind('[')
-        end = string.rfind(']')
-        if start != -1 and end != -1:
-            return ast.literal_eval(string[start:end+1])
-    except Exception as e:
-        print(e)
-
 
 def lsh(query_list: list, target_list: list) -> dict:
 
@@ -185,4 +159,4 @@ def get_cos_similarity(vec1, vec2):
 
 def get_embedding_list(_list: list):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()
-    return embedding_func(_list)
+    return embedding_func([item.lower().replace('_',' ').replace('-',' ') for item in _list])

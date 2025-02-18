@@ -7,7 +7,6 @@ ROOT_PATH = os.path.dirname(current_dir)
 sys.path.append(ROOT_PATH)
 
 from src.manager.manager import Manager
-from src.utils.utils import get_response_content, user_message
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 
@@ -52,12 +51,12 @@ m = Manager(
 #                 }
 #
 #                 message = m.extractor.chat(message, m.llm)
-#                 _, schema_str, evidence_str = m.filter.create_filter_prompt(message["extract"], "1", m.vectordb)
+#                 _, schema_str, evidence_str = m.filter.create_filter_prompt(message["entity"], "1", m.vectordb)
 #
 #                 print(
 #                     "=" * 50 +
 #                     "\nQuestion " + str(count) + ": " + str(message['question']) +
-#                     "\nextract: " + str(message['extract']) +
+#                     "\nextract: " + str(message['entity']) +
 #                     "\n" + "=" * 30 + "SCHEMA: \n" + schema_str +
 #                     "\n" + "=" * 30 + "EVIDENCE: " + evidence_str +
 #                     "\n\n",
@@ -65,7 +64,7 @@ m = Manager(
 #                 print(
 #                   "=" * 50 +
 #                     "\nQuestion " + str(count) + ": " + str(message['question']) +
-#                     "\nextract: " + str(message['extract']) +
+#                     "\nextract: " + str(message['entity']) +
 #                     "\n" + "=" * 30 + "SCHEMA: \n" + schema_str +
 #                     "\n" + "=" * 30 + "EVIDENCE: " + evidence_str +
 #                     "\n\n",
@@ -77,7 +76,7 @@ m = Manager(
 #                 count += 1
 
 message = {
-    "question": "What is the Current Ratio and the Loss on disposal of non current assets of China Construction Bank in millions of yuan?",
+    "question": "What is the current ratio of China Construction Bank in millions of yuan?",
     "extract": None,
     "sql": None,
     "schema": None,
@@ -87,4 +86,8 @@ message = {
     "sql_result": None
 }
 
-m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+for k,v in message.items():
+    print(k)
+    print(v)

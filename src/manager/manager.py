@@ -34,7 +34,7 @@ class Manager:
         self.vectordb = VectorDB(config)
         self.message = {
             "question": None,
-            "extract": None,
+            "entity": None,
             "sql": None,
             "schema": None,
             "evidence": None,
