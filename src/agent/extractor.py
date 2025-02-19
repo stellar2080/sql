@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import EVIDENCE_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD, EXTRACTOR, FILTER
+from src.utils.const import HINT_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD, EXTRACTOR, FILTER
 from src.utils.template import extractor_template
 from src.utils.utils import get_cos_similarity, get_embedding_list, get_subsequence_similarity, lsh, user_message, get_response_content, timeout, parse_list
 from src.agent.agent_base import Agent_Base
@@ -34,31 +34,31 @@ class Extractor(Agent_Base):
                 noun_chunks.append(text)
         return noun_chunks
 
-    def get_rela_evidence_keys(
+    def get_rela_hint_keys(
         self,
         noun_chunks: list,
         vectordb: VectorDB,
     ):
-        evidence_key_list = []
+        hint_key_list = []
 
-        evidence_keys = vectordb.get_related_key(noun_chunks, extracts=['distances', 'documents'])
+        hint_keys = vectordb.get_related_key(noun_chunks, extracts=['distances', 'documents'])
         for i in range(len(noun_chunks)):
             if len(noun_chunks) == 1:
-                distances = evidence_keys['distances']
-                documents = evidence_keys['documents']
+                distances = hint_keys['distances']
+                documents = hint_keys['documents']
             else:
-                distances = evidence_keys['distances'][i]
-                documents = evidence_keys['documents'][i]
+                distances = hint_keys['distances'][i]
+                documents = hint_keys['documents'][i]
             filtered_keys = [
                 document for distance, document in sorted(
                     zip(distances, documents), key=lambda x: x[0]
-                ) if distance < EVIDENCE_THRESHOLD
+                ) if distance < HINT_THRESHOLD
             ]
             # print(filtered_keys)
             if len(filtered_keys) != 0:
-                evidence_key_list.extend(filtered_keys)
+                hint_key_list.extend(filtered_keys)
 
-        return set(evidence_key_list)
+        return set(hint_key_list)
 
     def get_schema(
         self
@@ -214,10 +214,10 @@ class Extractor(Agent_Base):
             print(noun_chunks)
             
             schema = self.get_schema()
-            evidence_set = self.get_rela_evidence_keys(noun_chunks=noun_chunks, vectordb=vectordb)
+            hint_set = self.get_rela_hint_keys(noun_chunks=noun_chunks, vectordb=vectordb)
             col_set = self.get_related_column(noun_chunks=noun_chunks,schema=schema)
             value_set = self.get_related_value(noun_chunks=noun_chunks, schema=schema)
-            entity_set = evidence_set | col_set | value_set
+            entity_set = hint_set | col_set | value_set
 
             prompt = self.create_extractor_prompt(message["question"], entity_set)
             ans = self.get_extractor_ans(prompt, llm)

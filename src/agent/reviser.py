@@ -27,7 +27,7 @@ class Reviser(Agent_Base):
     ) -> str:
         prompt = reviser_template.format(
             message["schema"],
-            message["evidence"],
+            message["hint"],
             message["question"],
             message["sql"],
             sqlite_error,

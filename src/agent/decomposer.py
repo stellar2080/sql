@@ -14,7 +14,7 @@ class Decomposer(Agent_Base):
         self,
         message: dict
     ) -> str:
-        prompt = decomposer_template.format(message["schema"],message["evidence"],message["question"])
+        prompt = decomposer_template.format(message["schema"],message["hint"],message["question"])
         print(prompt)
         return prompt
 

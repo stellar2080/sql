@@ -37,7 +37,7 @@ class Manager:
             "entity": None,
             "sql": None,
             "schema": None,
-            "evidence": None,
+            "hint": None,
             "message_to": None,
             "sql_result": None
         }

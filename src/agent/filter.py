@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import FILTER, DECOMPOSER, EVIDENCE_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD
+from src.utils.const import FILTER, DECOMPOSER, HINT_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD
 from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import filter_template
 from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
@@ -16,49 +16,49 @@ class Filter(Agent_Base):
         self.conn, _ = connect_to_sqlite(self.url, self.check_same_thread)
         self.platform = config['platform']
 
-    def get_related_evidence_list(
+    def get_related_hint_list(
         self,
         entity_list: list,
         vectordb: VectorDB,
     ):
-        evidence_list = []
-        evidence_ids = vectordb.get_related_key(entity_list, extracts=['distances', 'metadatas'])
+        hint_list = []
+        hint_ids = vectordb.get_related_key(entity_list, extracts=['distances', 'metadatas'])
         for i in range(len(entity_list)):
             if len(entity_list) == 1:
-                distances = evidence_ids['distances']
-                metadatas = evidence_ids['metadatas']
+                distances = hint_ids['distances']
+                metadatas = hint_ids['metadatas']
             else:
-                distances = evidence_ids['distances'][i]
-                metadatas = evidence_ids['metadatas'][i]
+                distances = hint_ids['distances'][i]
+                metadatas = hint_ids['metadatas'][i]
             filtered_ids = [
                 metadata['doc_id'] for distance, metadata in sorted(
                     zip(distances, metadatas), key=lambda x: x[0]
-                ) if distance < EVIDENCE_THRESHOLD
+                ) if distance < HINT_THRESHOLD
             ]
             # print(filtered_ids)
             if len(filtered_ids) != 0:
-                evidence_list.extend(vectordb.get_doc_by_id(filtered_ids))
+                hint_list.extend(vectordb.get_doc_by_id(filtered_ids))
 
-        # print(evidence_list)
-        return list(dict.fromkeys(evidence_list))
+        # print(hint_list)
+        return list(dict.fromkeys(hint_list))
 
-    def process_evidence_list(
+    def process_hint_list(
         self,
-        evidence_list: list,
+        hint_list: list,
         entity_list: list,
     ):
-        evidence_str = ""
-        for enum, evidence in enumerate(evidence_list,start=1):
-            express_list = parse_list(evidence)
+        hint_str = ""
+        for enum, hint in enumerate(hint_list,start=1):
+            express_list = parse_list(hint)
 
-            evidence_str += f"[{enum}] " + " ".join(express_list) + "\n"
+            hint_str += f"[{enum}] " + " ".join(express_list) + "\n"
 
             for i in range(0,len(express_list)):
                 entity = express_list[i]
                 if len(entity) > 1:
                     entity_list.append(entity)
             
-        return evidence_str, entity_list
+        return hint_str, entity_list
 
     def get_schema(self):
         cur = self.conn.cursor()
@@ -226,10 +226,10 @@ class Filter(Agent_Base):
     def create_filter_prompt(
         self,
         schema_str: str,
-        evidence_str: str,
+        hint_str: str,
         question: str,
     ) -> str:
-        prompt = filter_template.format(schema_str, evidence_str, question)
+        prompt = filter_template.format(schema_str, hint_str, question)
         print(prompt)
         return prompt
 
@@ -274,22 +274,22 @@ class Filter(Agent_Base):
         else:
             # print("The message is being processed by " + FILTER + "...")
             tbl_name_selected = set()
-            evidence_list = self.get_related_evidence_list(entity_list=message['entity'],vectordb=vectordb)
-            evidence_str, entity_list = self.process_evidence_list(
-                evidence_list=evidence_list, entity_list=message['entity'])
+            hint_list = self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
+            hint_str, entity_list = self.process_hint_list(
+                hint_list=hint_list, entity_list=message['entity'])
             schema = self.get_schema()
             self.add_fk_to_schema(schema=schema)
             self.get_related_column(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
             self.get_related_value(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
-            prompt = self.create_filter_prompt(schema_str=schema_str, evidence_str=evidence_str, question=message['question'])
+            prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])
             ans = self.get_filter_ans(prompt=prompt, llm=llm)
             ans_json = parse_json(ans)
             self.prune_schema(json_ans=ans_json, schema=schema, tbl_name_selected=tbl_name_selected)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
             message["schema"] = new_schema_str
-            message["evidence"] = evidence_str
+            message["hint"] = hint_str
             message["message_to"] = DECOMPOSER
             return message

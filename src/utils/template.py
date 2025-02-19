@@ -19,7 +19,7 @@ I want to know the working capital and current ratio of Huaxia Bank.
 Here is a new example, please start answering:
 [Text]
 {}
-[Evidence]
+[Hint]
 Here provide some entity names for reference:
 {}
 [Answer]
@@ -29,7 +29,7 @@ filter_template = """
 [Task]
 You are an expert in the field of finance and database. 
 Given a user question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
-Your task is to select relevant tables and columns based on user question and evidence provided.
+Your task is to select relevant tables and columns based on user question and hint provided.
 
 [Requirements]
 - Your final answer should be in the same JSON format as the example given
@@ -67,7 +67,7 @@ What is the fee and commission income of Huaxia Bank?
 Here is a new example, please start answering:
 [Schema]
 {}
-[Evidence]
+[Hint]
 You can refer to following information to solve the problem:
 {}
 [Question]
@@ -78,7 +78,7 @@ You can refer to following information to solve the problem:
 decomposer_template = """
 [Task]
 You are an experienced financial database administrator.
-Given a database schema, an evidence and a question.
+Given a database schema, a hint and a question.
 Your task is to decompose the question into subquestions and use the SQLite dialect for text-to-SQL generation.
 
 [Requirements]
@@ -132,7 +132,7 @@ Here is a new example, please start answering:
 
 [Schema]
 {}
-[Evidence]
+[Hint]
 {}
 [Question]
 {}
@@ -156,7 +156,7 @@ When generating SQL, we should always consider constraints:
 
 [Schema]
 {}
-[Evidence]
+[Hint]
 {}
 [Question]
 {}

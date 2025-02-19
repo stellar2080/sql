@@ -22,11 +22,11 @@ m = Manager(
 )
 
 message = {
-    "question": "What is the net income from fees and commissions of China Construction Bank?",
+    "question": "What are the business and management fees and impairment losses on assets of China Construction Bank?",
     "extract": None,
     "sql": None,
     "schema": None,
-    "evidence": None,
+    "hint": None,
     "message_to": "extractor",
     "response": None,
     "sql_result": None
@@ -48,21 +48,21 @@ message = {
 #                     "extract": None,
 #                     "sql": None,
 #                     "schema": None,
-#                     "evidence": None,
+#                     "hint": None,
 #                     "message_to": "extractor",
 #                     "response": None,
 #                     "sql_result": None
 #                 }
 #
 #                 message = m.extractor.chat(message, m.llm)
-#                 _, schema_str, evidence_str = m.filter.create_filter_prompt(message["entity"], "1", m.vectordb)
+#                 _, schema_str, hint_str = m.filter.create_filter_prompt(message["entity"], "1", m.vectordb)
 #
 #                 print(
 #                     "=" * 50 +
 #                     "\nQuestion " + str(count) + ": " + str(message['question']) +
 #                     "\nextract: " + str(message['entity']) +
 #                     "\n" + "=" * 30 + "SCHEMA: \n" + schema_str +
-#                     "\n" + "=" * 30 + "EVIDENCE: " + evidence_str +
+#                     "\n" + "=" * 30 + "HINT: " + hint_str +
 #                     "\n\n",
 #                 )
 #                 print(
@@ -70,7 +70,7 @@ message = {
 #                     "\nQuestion " + str(count) + ": " + str(message['question']) +
 #                     "\nextract: " + str(message['entity']) +
 #                     "\n" + "=" * 30 + "SCHEMA: \n" + schema_str +
-#                     "\n" + "=" * 30 + "EVIDENCE: " + evidence_str +
+#                     "\n" + "=" * 30 + "HINT: " + hint_str +
 #                     "\n\n",
 #                   file=txt_file
 #                 )
@@ -80,6 +80,7 @@ message = {
 #                 count += 1
 
 if __name__ == '__main__':
-    message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-    message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-    
+    # message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+    # message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+    str1 = "What are the business and management fees and impairment losses on assets of China Construction Bank?"
+    str2 = ""
