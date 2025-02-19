@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import EVIDENCE_THRESHOLD, EXTRACTOR_COL_THRESHOLD, EXTRACTOR_VAL_THRESHOLD, EXTRACTOR, FILTER
+from src.utils.const import EVIDENCE_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD, EXTRACTOR, FILTER
 from src.utils.template import extractor_template
 from src.utils.utils import get_cos_similarity, get_embedding_list, get_subsequence_similarity, lsh, user_message, get_response_content, timeout, parse_list
 from src.agent.agent_base import Agent_Base
@@ -24,9 +24,14 @@ class Extractor(Agent_Base):
         self,
         question: str,
     ):
+        ignore_texts = ['what','i']
         nlp = spacy.load('en_core_web_trf')
         doc = nlp(question)
-        noun_chunks = [chunk.text for chunk in doc.noun_chunks]
+        noun_chunks = []
+        for chunk in doc.noun_chunks:
+            text = chunk.text
+            if text.lower() not in ignore_texts:
+                noun_chunks.append(text)
         return noun_chunks
 
     def get_rela_evidence_keys(
@@ -132,17 +137,17 @@ class Extractor(Agent_Base):
             # print("="*30,"subsequence_similarity-col_name")
             for item in sorted(schema, key=lambda x: x[4][0], reverse=True)[:4]:
                 # print(item)
-                if item[4][0] > EXTRACTOR_COL_THRESHOLD:
+                if item[4][0] > COL_THRESHOLD:
                     col_set.add(item[1])
             # print("=" * 30,"cos_similarity-col_name")
             for item in sorted(schema, key=lambda x: x[4][1], reverse=True)[:4]:
                 # print(item)
-                if item[4][1] > EXTRACTOR_COL_THRESHOLD:
+                if item[4][1] > COL_THRESHOLD:
                     col_set.add(item[1])
             # print("=" * 30,"cos_similarity-comment")
             for item in sorted(schema, key=lambda x: x[4][2], reverse=True)[:4]:
                 # print(item)
-                if item[4][2] > EXTRACTOR_COL_THRESHOLD:
+                if item[4][2] > COL_THRESHOLD:
                     col_set.add(item[3])
 
         return col_set
@@ -166,8 +171,8 @@ class Extractor(Agent_Base):
                         embedding_list = get_embedding_list([key] + values)
                         for idx, value in enumerate(values,start=1):
                             # print(key, value, get_subsequence_similarity(key, value), get_cos_similarity(embedding_list[0], embedding_list[idx]))
-                            if get_subsequence_similarity(key, value) > EXTRACTOR_VAL_THRESHOLD \
-                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > EXTRACTOR_VAL_THRESHOLD:
+                            if get_subsequence_similarity(key, value) > VAL_THRESHOLD \
+                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > VAL_THRESHOLD:
                                 value_set.add(value)
 
         return value_set
@@ -178,6 +183,7 @@ class Extractor(Agent_Base):
         entity_set: set
     ) -> (str,str):
         prompt = extractor_template.format(question, entity_set)
+        print("="*10,"PROMPT","="*10)
         print(prompt)
         return prompt
 
@@ -190,6 +196,7 @@ class Extractor(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response, self.platform)
+        print("="*10,"ANSWER","="*10)
         print(answer)
         return answer
 
@@ -204,8 +211,9 @@ class Extractor(Agent_Base):
         else:
             # print("The message is being processed by " + EXTRACTOR + "...")
             noun_chunks = self.noun_chunking(message['question'])
+            print(noun_chunks)
+            
             schema = self.get_schema()
-
             evidence_set = self.get_rela_evidence_keys(noun_chunks=noun_chunks, vectordb=vectordb)
             col_set = self.get_related_column(noun_chunks=noun_chunks,schema=schema)
             value_set = self.get_related_value(noun_chunks=noun_chunks, schema=schema)
@@ -213,8 +221,12 @@ class Extractor(Agent_Base):
 
             prompt = self.create_extractor_prompt(message["question"], entity_set)
             ans = self.get_extractor_ans(prompt, llm)
-            entity_list = parse_list(ans)
-
+            ans_list = parse_list(ans)
+            
+            entity_set.update(noun_chunks)
+            entity_set.update(ans_list)
+            entity_list = list(entity_set)
+            print(entity_list)
             message["entity"] = entity_list
             message["message_to"] = FILTER
             return message

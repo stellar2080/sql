@@ -21,15 +21,19 @@ m = Manager(
     },
 )
 
+message = {
+    "question": "What is the net income from fees and commissions of China Construction Bank?",
+    "extract": None,
+    "sql": None,
+    "schema": None,
+    "evidence": None,
+    "message_to": "extractor",
+    "response": None,
+    "sql_result": None
+}
+
 # m.clear_doc()
 # m.train_doc(path=os.path.join(ROOT_PATH,"rag/formulas.txt"))
-
-# with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_train_text2sql.json')) as f:
-#     data = json.load(f)
-#     for item in data:
-#         print("question: ", item["question"],
-#               "\nsql: ", item["sql"],)
-#         m.train(item["question"],item["sql"])
 
 # with open(os.path.join("llama3.1_8b.txt"), "w") as txt_file:
 #     with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_dev_text2sql.json')) as f:
@@ -75,19 +79,7 @@ m = Manager(
 #             finally:
 #                 count += 1
 
-message = {
-    "question": "What is the current ratio of China Construction Bank in millions of yuan?",
-    "extract": None,
-    "sql": None,
-    "schema": None,
-    "evidence": None,
-    "message_to": "extractor",
-    "response": None,
-    "sql_result": None
-}
-
-message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-for k,v in message.items():
-    print(k)
-    print(v)
+if __name__ == '__main__':
+    message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+    message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+    

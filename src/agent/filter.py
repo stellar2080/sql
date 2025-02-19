@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import FILTER, DECOMPOSER, EVIDENCE_THRESHOLD, FILTER_COL_THRESHOLD, FILTER_VAL_THRESHOLD
+from src.utils.const import FILTER, DECOMPOSER, EVIDENCE_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD
 from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import filter_template
 from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
@@ -144,17 +144,17 @@ class Filter(Agent_Base):
             col_num_set = set()
             for col in sorted(schema, key=lambda x: x[8][0], reverse=True)[:4]:
                 # print(col)
-                if col[8][0] > FILTER_COL_THRESHOLD:
+                if col[8][0] > COL_THRESHOLD:
                     col_num_set.add(col[0])
             # print("=" * 30,"cos_similarity-col_name")
             for col in sorted(schema, key=lambda x: x[8][1], reverse=True)[:4]:
                 # print(col)
-                if col[8][1] > FILTER_COL_THRESHOLD:
+                if col[8][1] > COL_THRESHOLD:
                     col_num_set.add(col[0])
             # print("=" * 30,"cos_similarity-comment")
             for col in sorted(schema, key=lambda x: x[8][2], reverse=True)[:4]:
                 # print(col)
-                if col[8][2] > FILTER_COL_THRESHOLD:
+                if col[8][2] > COL_THRESHOLD:
                     col_num_set.add(col[0])
 
             for enum, col in enumerate(schema,start=0):
@@ -178,8 +178,8 @@ class Filter(Agent_Base):
                         embedding_list = get_embedding_list([key] + values)
                         for enum, value in enumerate(values,start=1):
                             # print(key, value, get_subsequence_similarity(key, value), get_cos_similarity(embedding_list[0], embedding_list[idx]))
-                            if get_subsequence_similarity(key, value) > FILTER_VAL_THRESHOLD \
-                            or get_cos_similarity(embedding_list[0], embedding_list[enum]) > FILTER_VAL_THRESHOLD:
+                            if get_subsequence_similarity(key, value) > VAL_THRESHOLD \
+                            or get_cos_similarity(embedding_list[0], embedding_list[enum]) > VAL_THRESHOLD:
                                 value_list.append(value)
                                 
                     if len(value_list) != 0:
@@ -285,8 +285,8 @@ class Filter(Agent_Base):
             schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
             prompt = self.create_filter_prompt(schema_str=schema_str, evidence_str=evidence_str, question=message['question'])
             ans = self.get_filter_ans(prompt=prompt, llm=llm)
-            json_ans = parse_json(ans)
-            self.prune_schema(json_ans=json_ans, schema=schema, tbl_name_selected=tbl_name_selected)
+            ans_json = parse_json(ans)
+            self.prune_schema(json_ans=ans_json, schema=schema, tbl_name_selected=tbl_name_selected)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
             message["schema"] = new_schema_str

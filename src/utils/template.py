@@ -1,7 +1,7 @@
 extractor_template = """
 [Task]
 You are an expert in the field of finance and database.
-Given a question, your task is to find any named entities from the question, such as organizations, financial terms, and other important phrases that help with database queries.
+Given a text, your task is to extract any key phrases and terms from the text that can help with financial database queries
 
 [Requirements]
 - Your final answer should be in the same python list format as the example given
@@ -10,17 +10,17 @@ Given a question, your task is to find any named entities from the question, suc
 
 ==========
 Here is a typical example:
-[Question]
+[Text]
 I want to know the working capital and current ratio of Huaxia Bank.
 [Answer]
 ['working capital','current ratio','Huaxia Bank']
 
 ==========
 Here is a new example, please start answering:
-[Question]
+[Text]
 {}
 [Evidence]
-You can refer to the following entity names that may be relevant to the question:
+Here provide some entity names for reference:
 {}
 [Answer]
 """
@@ -28,8 +28,8 @@ You can refer to the following entity names that may be relevant to the question
 filter_template = """
 [Task]
 You are an expert in the field of finance and database. 
-Given a question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
-Your task is to select relevant tables and columns based on user questions and evidence provided.
+Given a user question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
+Your task is to select relevant tables and columns based on user question and evidence provided.
 
 [Requirements]
 - Your final answer should be in the same JSON format as the example given
@@ -38,7 +38,6 @@ Your task is to select relevant tables and columns based on user questions and e
 
 ==========
 Here is a typical example:
-
 [Schema]
 =====
 Table: basic_info
@@ -49,17 +48,14 @@ Column:
 Table: balance_sheet
 Column:
 (Stk_code, Comment: Securities code, Type: TEXT, Foreign key: references Basic_Info(Stk_Code))
-(Prec_metals, Comment: Noble metal, Type: REAL)
 =====
 Table: income_statement
 Column:
 (Stk_code, Comment: Securities code, Type: TEXT, Foreign key: references Basic_Info(Stk_Code))
 (Fee_com_inc, Comment: Fee and commission income, Type: REAL)
 (Fee_com_exp, Comment: Handling fees and commission expenses, Type: REAL)
-
 [Question]
 What is the fee and commission income of Huaxia Bank?
-
 [Answer]
 {{
   "basic_info": ["Stk_code","Stk_name"],
@@ -69,7 +65,6 @@ What is the fee and commission income of Huaxia Bank?
 
 ==========
 Here is a new example, please start answering:
-
 [Schema]
 {}
 [Evidence]
