@@ -1,7 +1,7 @@
 from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER, HINT_THRESHOLD, COL_THRESHOLD, VAL_THRESHOLD
 from src.utils.database_utils import connect_to_sqlite
-from src.utils.template import filter_template
+from src.utils.template import filter_template, filter_hint_template
 from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
     get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
 from src.agent.agent_base import Agent_Base
@@ -48,15 +48,16 @@ class Filter(Agent_Base):
         entity_list: list,
     ):
         hint_str = ""
-        for enum, hint in enumerate(hint_list,start=1):
-            express_list = parse_list(hint)
+        if len(hint_list) != 0:
+            for enum, hint in enumerate(hint_list,start=1):
+                express_list = parse_list(hint)
 
-            hint_str += f"[{enum}] " + " ".join(express_list) + "\n"
+                hint_str += f"[{enum}] " + " ".join(express_list) + "\n"
 
-            for i in range(0,len(express_list)):
-                entity = express_list[i]
-                if len(entity) > 1:
-                    entity_list.append(entity)
+                for i in range(0,len(express_list)):
+                    entity = express_list[i]
+                    if len(entity) > 1:
+                        entity_list.append(entity)
             
         return hint_str, entity_list
 
@@ -229,7 +230,10 @@ class Filter(Agent_Base):
         hint_str: str,
         question: str,
     ) -> str:
-        prompt = filter_template.format(schema_str, hint_str, question)
+        if hint_str == "":
+            prompt = filter_template.format(schema_str, question)
+        else:
+            prompt = filter_template.format(schema_str, question) + filter_hint_template.format(hint_str)
         print(prompt)
         return prompt
 

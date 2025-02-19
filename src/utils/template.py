@@ -1,28 +1,27 @@
 extractor_template = """
 [Task]
 You are an expert in the field of finance and database.
-Given a text, your task is to extract any key phrases and terms from the text that can help with financial database queries
+Your task is to identify and extract any key entities from the text that can help with financial database queries.
 
 [Requirements]
-- Your final answer should be in the same python list format as the example given
-- Solve the task step by step
-- Don't use code
+Solve the task step by step:
+1. Carefully check each entity in the hint, identify and extract entities similar to it in the text
+2. Identify and extract remaining entities that help with the query
+3. Format the answer in the same Python list format as the [Answer] part of the example
 
-==========
-Here is a typical example:
+Example:
 [Text]
 I want to know the working capital and current ratio of Huaxia Bank.
+[Hint]
+{{'Total Assets', 'working capital', 'current ratio', 'current assets', 'return on assets'}}
 [Answer]
 ['working capital','current ratio','Huaxia Bank']
 
-==========
-Here is a new example, please start answering:
+Here is a task, please start answering:
 [Text]
 {}
 [Hint]
-Here provide some entity names for reference:
 {}
-[Answer]
 """
 
 filter_template = """
@@ -36,7 +35,6 @@ Your task is to select relevant tables and columns based on user question and hi
 - Solve the task step by step
 - Don't use code
 
-==========
 Here is a typical example:
 [Schema]
 =====
@@ -63,17 +61,18 @@ What is the fee and commission income of Huaxia Bank?
   "income_statement": ["Stk_code","Fee_com_inc"],
 }}
 
-==========
 Here is a new example, please start answering:
 [Schema]
 {}
-[Hint]
-You can refer to following information to solve the problem:
-{}
 [Question]
 {}
-[Answer]
 """
+
+filter_hint_template = """[Hint]
+You can refer to following information to solve the task:
+{}
+"""
+
 
 decomposer_template = """
 [Task]

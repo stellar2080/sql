@@ -21,66 +21,57 @@ m = Manager(
     },
 )
 
-message = {
-    "question": "What are the business and management fees and impairment losses on assets of China Construction Bank?",
-    "extract": None,
-    "sql": None,
-    "schema": None,
-    "hint": None,
-    "message_to": "extractor",
-    "response": None,
-    "sql_result": None
-}
+with open(os.path.join("output.txt"), "w") as txt_file:
+    with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev.json')) as f:
+        data = json.load(f)
+        count = 1
+        for item in data:
+            if count == 10:
+                break
+            try:
+                message = {
+                    "question": item["question"],
+                    "extract": None,
+                    "sql": None,
+                    "schema": None,
+                    "hint": None,
+                    "message_to": "extractor",
+                    "response": None,
+                    "sql_result": None
+                }
 
-# m.clear_doc()
-# m.train_doc(path=os.path.join(ROOT_PATH,"rag/formulas.txt"))
+                message = m.extractor.chat(message, m.llm, m.vectordb)
+                # _, schema_str, hint_str = m.filter.create_filter_prompt(message["entity"], "1", m.vectordb)
 
-# with open(os.path.join("llama3.1_8b.txt"), "w") as txt_file:
-#     with open(os.path.join(ROOT_PATH,'dataset','sft_bank_financials_dev_text2sql.json')) as f:
-#         data = json.load(f)
-#         count = 1
-#         for item in data:
-#             if count == 30:
-#                 break
-#             try:
-#                 message = {
-#                     "question": item["question"],
-#                     "extract": None,
-#                     "sql": None,
-#                     "schema": None,
-#                     "hint": None,
-#                     "message_to": "extractor",
-#                     "response": None,
-#                     "sql_result": None
-#                 }
-#
-#                 message = m.extractor.chat(message, m.llm)
-#                 _, schema_str, hint_str = m.filter.create_filter_prompt(message["entity"], "1", m.vectordb)
-#
-#                 print(
-#                     "=" * 50 +
-#                     "\nQuestion " + str(count) + ": " + str(message['question']) +
-#                     "\nextract: " + str(message['entity']) +
-#                     "\n" + "=" * 30 + "SCHEMA: \n" + schema_str +
-#                     "\n" + "=" * 30 + "HINT: " + hint_str +
-#                     "\n\n",
-#                 )
-#                 print(
-#                   "=" * 50 +
-#                     "\nQuestion " + str(count) + ": " + str(message['question']) +
-#                     "\nextract: " + str(message['entity']) +
-#                     "\n" + "=" * 30 + "SCHEMA: \n" + schema_str +
-#                     "\n" + "=" * 30 + "HINT: " + hint_str +
-#                     "\n\n",
-#                   file=txt_file
-#                 )
-#             except Exception as e:
-#                 print(e)
-#             finally:
-#                 count += 1
+                print(
+                    "=" * 50 +
+                    "\nQuestion " + str(count) + ": " + str(message['question']) +
+                    "\nextract: " + str(message['entity']) +
+                    "\n\n",
+                )
+                print(
+                  "=" * 50 +
+                    "\nQuestion " + str(count) + ": " + str(message['question']) +
+                    "\nextract: " + str(message['entity']) +
+                    "\n\n",
+                  file=txt_file
+                )
+            except Exception as e:
+                print(e)
+            finally:
+                count += 1
 
-if __name__ == '__main__':
-    # message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-    # message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-    str1 = "What are the business and management fees and impairment losses on assets of China Construction Bank?"
-    str2 = ""
+# message = {
+#     "question": None,
+#     "extract": None,
+#     "sql": None,
+#     "schema": None,
+#     "hint": None,
+#     "message_to": "extractor",
+#     "response": None,
+#     "sql_result": None
+# }
+
+# if __name__ == '__main__':
+#     message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+#     # message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
