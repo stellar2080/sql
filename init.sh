@@ -1,6 +1,6 @@
 chroma run --path vectordb &
 CHROMA_PID=$!
-python src/llm/service.py &
+python src/service.py &
 LLM_PID=$!
 
 wait $CHROMA_PID $LLM_PID

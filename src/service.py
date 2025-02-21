@@ -1,15 +1,14 @@
 import os
 import sys
 from fastapi import FastAPI, Request
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
 import uvicorn
 import json
-import datetime
 import torch
 current_dir = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.path.dirname(os.path.dirname(current_dir))
+ROOT_PATH = os.path.dirname(current_dir)
 sys.path.append(ROOT_PATH)
-from src.utils.const import MAX_TOKENS
+from src.utils.const import MAX_TOKENS, TEMPERATURE, LLM_HOST, LLM_PORT
 
 # from modelscope import snapshot_download
 # model_dir = snapshot_download('Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4', cache_dir='/home/stellar/model', revision='master') 
@@ -28,22 +27,18 @@ def torch_gc():
 
 # 创建FastAPI应用
 app = FastAPI()
-
-# 处理POST请求的端点
 @app.post("/")
 async def create_item(request: Request):
     global model, tokenizer  # 声明全局变量以便在函数内部使用模型和分词器
     json_post_raw = await request.json()  # 获取POST请求的JSON数据
     json_post = json.dumps(json_post_raw)  # 将JSON数据转换为字符串
     json_post_list = json.loads(json_post)  # 将字符串转换为Python对象
-    print(json_post_list)
     messages = json_post_list.get('messages')  # 获取请求中的提示
-    print(messages)
 
     # 调用模型进行对话生成
-    input_ids = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
-    model_inputs = tokenizer([input_ids], return_tensors="pt").to(model.device)
-    generated_ids = model.generate(model_inputs.input_ids,max_new_tokens=MAX_TOKENS) # 思考需要输出更多的Token数，设为8K
+    text = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
+    model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
+    generated_ids = model.generate(model_inputs.input_ids,temperature=TEMPERATURE,max_new_tokens=MAX_TOKENS) # 思考需要输出更多的Token数，设为8K
     generated_ids = [
         output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
     ]
@@ -59,10 +54,8 @@ async def create_item(request: Request):
 # 主函数入口
 if __name__ == '__main__':
     # 加载预训练的分词器和模型
-    model_name_or_path = '/home/stellar/model/LLM-Research/Meta-Llama-3.1-8B-Instruct-bnb-4bit'
-    tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, use_fast=True)
-    model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map=CUDA_DEVICE, torch_dtype='auto')
-
-    # 启动FastAPI应用
-    # 用6006端口可以将autodl的端口映射到本地，从而在本地使用api
-    uvicorn.run(app, host='0.0.0.0', port=6006, workers=1)  # 在指定端口和主机上启动应用
+    model_path = '/home/stellar/model/LLM-Research/Meta-Llama-3.1-8B-Instruct-bnb-4bit'
+    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_path, device_map=CUDA_DEVICE, torch_dtype="auto", trust_remote_code=True).eval()
+    uvicorn.run(app, host=LLM_HOST, port=LLM_PORT, workers=1)
