@@ -7,12 +7,12 @@ import time
 import uuid
 from typing import Union
 import json
-from typing import Dict
 from datasketch import MinHash, MinHashLSH
 import ast
-
 import numpy as np
 from chromadb.utils import embedding_functions
+
+from src.utils.const import LSH_THRESHOLD
 
 def system_message(message: str):
     return {'role': 'system', 'content': message}
@@ -119,7 +119,7 @@ def lsh(query_list: list, target_list: list) -> dict:
 
     query_results = {}
 
-    lsh = MinHashLSH(threshold=0.6, num_perm=128)
+    lsh = MinHashLSH(threshold=LSH_THRESHOLD, num_perm=128)
     n_gram = 3
 
     for i, target in enumerate(target_list):

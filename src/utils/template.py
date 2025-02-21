@@ -1,26 +1,23 @@
 extractor_template = """
-[Task]
 You are an expert in the field of finance and database.
-Your task is to identify and extract any key entities from the text that can help with financial database queries.
-
-[Requirements]
-Solve the task step by step:
-1. Carefully check each entity in the hint, identify and extract entities similar to it in the text
-2. Identify and extract remaining entities that help with the query
-3. Format the answer in the same Python list format as the [Answer] part of the example
+You need to follow the instructions below to solve the problem step by step:
+1. Identify and extract any key entities from the text that can help with financial database queries
+2. Format the answer in the same Python list format as the [Answer] part of the example
 
 Example:
 [Text]
 I want to know the working capital and current ratio of Huaxia Bank.
 [Hint]
+Here are some entity names for reference:
 {{'Total Assets', 'working capital', 'current ratio', 'current assets', 'return on assets'}}
 [Answer]
 ['working capital','current ratio','Huaxia Bank']
 
-Here is a task, please start answering:
+Please don't use code and start solving the problem:
 [Text]
 {}
 [Hint]
+Here are some entity names for reference:
 {}
 """
 

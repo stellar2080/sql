@@ -9,6 +9,6 @@ class Api(LLM_Base):
 
     def call(self,messages):
         headers = {'Content-Type': 'application/json'}
-        data = {"prompt": messages}
+        data = {"messages": messages}
         response = requests.post(url=f'http://{LLM_HOST}:{LLM_PORT}', headers=headers, data=json.dumps(data))
         return response.json()

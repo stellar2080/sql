@@ -36,14 +36,14 @@ class Extractor(Agent_Base):
 
     def get_rela_hint_keys(
         self,
-        noun_chunks: list,
+        entity_list: list,
         vectordb: VectorDB,
     ):
         hint_key_list = []
 
-        hint_keys = vectordb.get_related_key(noun_chunks, extracts=['distances', 'documents'])
-        for i in range(len(noun_chunks)):
-            if len(noun_chunks) == 1:
+        hint_keys = vectordb.get_related_key(entity_list, extracts=['distances', 'documents'])
+        for i in range(len(entity_list)):
+            if len(entity_list) == 1:
                 distances = hint_keys['distances']
                 documents = hint_keys['documents']
             else:
@@ -107,7 +107,7 @@ class Extractor(Agent_Base):
 
     def get_related_column(
         self,
-        noun_chunks: list,
+        entity_list: list,
         schema
     ):
         col_set = set()
@@ -120,9 +120,9 @@ class Extractor(Agent_Base):
 
         name_embeddings = get_embedding_list(name_list)
         comment_embeddings = get_embedding_list(comment_list)
-        noun_chunk_embeddings = get_embedding_list(noun_chunks)
+        noun_chunk_embeddings = get_embedding_list(entity_list)
 
-        for e_idx, noun_chunk in enumerate(noun_chunks, start=0):
+        for e_idx, noun_chunk in enumerate(entity_list, start=0):
             noun_chunk_embedding = noun_chunk_embeddings[e_idx]
             for c_idx, col in enumerate(schema, start=0):
                 col_name = col[1]
@@ -154,8 +154,9 @@ class Extractor(Agent_Base):
 
     def get_related_value(
         self, 
-        noun_chunks: list,
-        schema: list
+        entity_list: list,
+        schema: list,
+        use_lsh: bool = True
     ):
         value_set = set()
         cur = self.conn.cursor()
@@ -164,16 +165,25 @@ class Extractor(Agent_Base):
                 cur.execute(f"SELECT {col[1]} FROM {col[0]}")
                 value_list = [item[0] for item in cur.fetchall()]
 
-                query_results = lsh(noun_chunks,value_list)
-                if query_results != {}:
-                    # print(query_results)
-                    for key, values in query_results.items():
-                        embedding_list = get_embedding_list([key] + values)
-                        for idx, value in enumerate(values,start=1):
-                            # print(key, value, get_subsequence_similarity(key, value), get_cos_similarity(embedding_list[0], embedding_list[idx]))
-                            if get_subsequence_similarity(key, value) > VAL_THRESHOLD \
-                            or get_cos_similarity(embedding_list[0], embedding_list[idx]) > VAL_THRESHOLD:
-                                value_set.add(value)
+                if use_lsh:
+                    query_results = lsh(entity_list,value_list)
+                    if query_results != {}:
+                        # print(query_results)
+                        for key, values in query_results.items():
+                            embedding_list = get_embedding_list([key] + values)
+                            for vnum, value in enumerate(values,start=1):
+                                # print(key, value, get_subsequence_similarity(key, value), get_cos_similarity(embedding_list[0], embedding_list[idx]))
+                                if get_subsequence_similarity(key, value) > VAL_THRESHOLD \
+                                or get_cos_similarity(embedding_list[0], embedding_list[vnum]) > VAL_THRESHOLD:
+                                    value_set.add(value)
+                else:
+                    eneity_embeddings = get_embedding_list(entity_list)
+                    value_embeddings = get_embedding_list(value_list)
+                    for enum, entity in enumerate(entity_list, start=0):
+                        for vnum, value in enumerate(value_list, start=0):
+                            if get_subsequence_similarity(entity, value) > VAL_THRESHOLD \
+                                or get_cos_similarity(eneity_embeddings[enum], value_embeddings[vnum]) > VAL_THRESHOLD:
+                                    value_set.add(value)
 
         return value_set
 
@@ -211,13 +221,17 @@ class Extractor(Agent_Base):
         else:
             # print("The message is being processed by " + EXTRACTOR + "...")
             noun_chunks = self.noun_chunking(message['question'])
+            print("="*10,"noun_chunks")
             print(noun_chunks)
             
             schema = self.get_schema()
-            hint_set = self.get_rela_hint_keys(noun_chunks=noun_chunks, vectordb=vectordb)
-            col_set = self.get_related_column(noun_chunks=noun_chunks,schema=schema)
-            value_set = self.get_related_value(noun_chunks=noun_chunks, schema=schema)
-            entity_set = hint_set | col_set | value_set
+            hint_set = self.get_rela_hint_keys(entity_list=noun_chunks + [message['question']], vectordb=vectordb)
+            col_set = self.get_related_column(entity_list=noun_chunks + [message['question']],schema=schema)
+            value_set = self.get_related_value(entity_list=noun_chunks, schema=schema, use_lsh=True)
+            value_set_2 = self.get_related_value(entity_list=[message['question']], schema=schema, use_lsh=False)
+            entity_set = hint_set | col_set | value_set | value_set_2
+            print("="*10,"entity_set")
+            print(entity_set)
 
             prompt = self.create_extractor_prompt(message["question"], entity_set)
             ans = self.get_extractor_ans(prompt, llm)
@@ -226,6 +240,7 @@ class Extractor(Agent_Base):
             entity_set.update(noun_chunks)
             entity_set.update(ans_list)
             entity_list = list(entity_set)
+            print("="*10,"entity_list")
             print(entity_list)
             message["entity"] = entity_list
             message["message_to"] = FILTER

@@ -1,14 +1,18 @@
+import os
+import sys
 from fastapi import FastAPI, Request
-from transformers import AutoTokenizer, AutoModelForCausalLM, LlamaTokenizer
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import uvicorn
 import json
 import datetime
 import torch
-import re
+current_dir = os.path.dirname(os.path.abspath(__file__))
+ROOT_PATH = os.path.dirname(os.path.dirname(current_dir))
+sys.path.append(ROOT_PATH)
+from src.utils.const import MAX_TOKENS
 
 # from modelscope import snapshot_download
-
-# model_dir = snapshot_download('LLM-Research/Meta-Llama-3.1-8B-Instruct-bnb-4bit', cache_dir='/home/stellar/model', revision='master') 
+# model_dir = snapshot_download('Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4', cache_dir='/home/stellar/model', revision='master') 
 
 # 设置设备参数
 DEVICE = "cuda"  # 使用CUDA
@@ -32,31 +36,23 @@ async def create_item(request: Request):
     json_post_raw = await request.json()  # 获取POST请求的JSON数据
     json_post = json.dumps(json_post_raw)  # 将JSON数据转换为字符串
     json_post_list = json.loads(json_post)  # 将字符串转换为Python对象
-    prompt = json_post_list.get('prompt')  # 获取请求中的提示
-
-    messages = [
-            {"role": "user", "content": prompt}
-    ]
+    print(json_post_list)
+    messages = json_post_list.get('messages')  # 获取请求中的提示
+    print(messages)
 
     # 调用模型进行对话生成
     input_ids = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
     model_inputs = tokenizer([input_ids], return_tensors="pt").to(model.device)
-    generated_ids = model.generate(model_inputs.input_ids,max_new_tokens=8192) # 思考需要输出更多的Token数，设为8K
+    generated_ids = model.generate(model_inputs.input_ids,max_new_tokens=MAX_TOKENS) # 思考需要输出更多的Token数，设为8K
     generated_ids = [
         output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
     ]
     response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-    now = datetime.datetime.now()  # 获取当前时间
-    time = now.strftime("%Y-%m-%d %H:%M:%S")  # 格式化时间为字符串
     # 构建响应JSON
     answer = {
         "response": response,
-        "status": 200,
-        "time": time
+        "status": 200
     }
-    # 构建日志信息
-    log = f"[{time}], prompt:\"{prompt}\", response:\"{repr(response)}\""
-    print(log)  # 打印日志
     torch_gc()  # 执行GPU内存清理
     return answer  # 返回响应
 
@@ -65,7 +61,7 @@ if __name__ == '__main__':
     # 加载预训练的分词器和模型
     model_name_or_path = '/home/stellar/model/LLM-Research/Meta-Llama-3.1-8B-Instruct-bnb-4bit'
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, use_fast=True)
-    model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map=CUDA_DEVICE, torch_dtype=torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(model_name_or_path, device_map=CUDA_DEVICE, torch_dtype='auto')
 
     # 启动FastAPI应用
     # 用6006端口可以将autodl的端口映射到本地，从而在本地使用api
