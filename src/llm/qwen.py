@@ -19,7 +19,6 @@ class Qwen(LLM_Base):
       api_key=self.api_key,
       messages=messages,
       temperature=TEMPERATURE,
-      seed=random.randint(1,10000),
       result_format='message',
       max_tokens=MAX_TOKENS,
     )

@@ -1,6 +1,6 @@
 from src.llm.llm_base import LLM_Base
 from src.utils.const import E_HINT_THRESHOLD, E_COL_THRESHOLD, E_VAL_THRESHOLD, EXTRACTOR, FILTER
-from src.utils.template import extractor_template
+from src.utils.template import extractor_template, extractor_hint_template
 from src.utils.utils import get_cos_similarity, get_embedding, get_embedding_list, user_message, get_response_content, timeout, parse_list
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
@@ -102,8 +102,6 @@ class Extractor(Agent_Base):
             col[4] = (name_cos_similarity,comment_cos_similarity)
             # print(col[1], (name_cos_similarity,comment_cos_similarity))
 
-        # print("=" * 20)
-        # print(noun_chunk)
         # print("=" * 30,"cos_similarity-col_name")
         for item in sorted(schema, key=lambda x: x[4][0], reverse=True)[:10]:
             # print(item)
@@ -141,8 +139,11 @@ class Extractor(Agent_Base):
         self,
         question: str,
         entity_set: set
-    ) -> (str,str):
-        prompt = extractor_template.format(question, entity_set)
+    ) -> str:
+        if len(entity_set) == 0:
+            prompt = extractor_template.format(question)
+        else:
+            prompt = extractor_template.format(question) + extractor_hint_template.format(entity_set)
         print("="*10,"PROMPT","="*10)
         print(prompt)
         return prompt
@@ -152,7 +153,7 @@ class Extractor(Agent_Base):
         self,
         prompt: str,
         llm: LLM_Base
-    ) -> (dict, str):
+    ) -> str:
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response, self.platform)

@@ -33,7 +33,7 @@ class Filter(Agent_Base):
             filtered_ids = [
                 metadata['doc_id'] for distance, metadata in sorted(
                     zip(distances, metadatas), key=lambda x: x[0]
-                ) if 1 - distance > HINT_THRESHOLD
+                ) if 1 - distance > F_HINT_THRESHOLD
             ]
             # print(filtered_ids)
             if len(filtered_ids) != 0:
@@ -203,7 +203,7 @@ class Filter(Agent_Base):
             return schema_str
 
         def add_col_to_schema_str(column, schema_str):
-            schema_str += "(" + column[3] + ", " + "Comment: " + column[5] + ", Type: " + column[4]
+            schema_str += "(" + column[3] + ", " + "Comment: " + column[5]
             if column[6] is not None:
                 schema_str += ", Sample: " + ",".join(column[6])
             if column[1] == 1:
@@ -234,6 +234,7 @@ class Filter(Agent_Base):
             prompt = filter_template.format(schema_str, question)
         else:
             prompt = filter_template.format(schema_str, question) + filter_hint_template.format(hint_str)
+        print("="*10,"PROMPT","="*10)
         print(prompt)
         return prompt
 
@@ -242,16 +243,17 @@ class Filter(Agent_Base):
         self,
         prompt: str,
         llm: LLM_Base
-    ) -> (dict, str):
+    ) -> str:
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response, self.platform)
+        print("="*10,"ANSWER","="*10)
         print(answer)
         return answer
 
     def prune_schema(
         self,
-        json_ans: dict,
+        ans_json: dict,
         schema: list,
         tbl_name_selected: set
     ):
@@ -259,7 +261,7 @@ class Filter(Agent_Base):
             col[9] = False
         tbl_name_selected.clear()
 
-        for key, col_list in json_ans.items():
+        for key, col_list in ans_json.items():
             if len(col_list) != 0:
                 tbl_name_selected.add(key)
                 for col in schema:
@@ -290,9 +292,10 @@ class Filter(Agent_Base):
             prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])
             ans = self.get_filter_ans(prompt=prompt, llm=llm)
             ans_json = parse_json(ans)
-            self.prune_schema(json_ans=ans_json, schema=schema, tbl_name_selected=tbl_name_selected)
+            self.prune_schema(ans_json=ans_json, schema=schema, tbl_name_selected=tbl_name_selected)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
+            print(new_schema_str)
             message["schema"] = new_schema_str
             message["hint"] = hint_str
             message["message_to"] = DECOMPOSER

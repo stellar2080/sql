@@ -4,6 +4,9 @@ You need to follow the instructions below to solve the problem step by step:
 1. Identify and extract any key entities from the text that can help with financial database queries
 2. Format the answer in the same Python list format as the [Answer] part of the example
 
+Requirements:
+When you have generated a list which already solves the problem, there is no need to generate more text
+
 Example:
 [Text]
 I want to know the working capital and current ratio of Huaxia Bank.
@@ -12,53 +15,56 @@ Here are some entity names for reference:
 {{'Total Assets', 'Working capital', 'Current ratio', 'current assets', 'return on assets'}}
 [Answer]
 ['working capital','current ratio','Huaxia Bank']
+This list already solves the problem, so there is no need to continue generating text.
 
 Please start solving the problem:
 [Text]
 {}
-[Hint]
+"""
+
+extractor_hint_template = """[Hint]
 Here are some entity names for reference:
 {}
 """
 
 filter_template = """
-[Task]
 You are an expert in the field of finance and database. 
-Given a user question and a database schema consisting of table descriptions, each table contains multiple column descriptions.
-Your task is to select relevant tables and columns based on user question and hint provided.
+You need to follow the instructions below to solve the problem step by step:
+1. Select the tables and columns relevant to the question from the database schema
+2. Format the answer in the same JSON format as the [Answer] part of the example
 
-[Requirements]
-- Your final answer should be in the same JSON format as the example given
-- Solve the task step by step
-- Don't use code
+Requirements:
+1. When there is column related to the organization name in the schema, select it
+2. When you have generated a JSON statement which already solves the problem, there is no need to generate more text
 
-Here is a typical example:
+Example:
 [Schema]
 =====
-Table: basic_info
+Table: Basic_Info
 Column:
-(Stk_code, Comment: Securities code, Type: TEXT, Primary key)
-(Stk_name, Comment: Securities name, Type: TEXT, Sample: Huaxia Bank)
+(Stk_code, Comment: Securities code, Primary key)
+(Stk_name, Comment: Securities name, Sample: Huaxia Bank)
 =====
-Table: balance_sheet
+Table: Balance_Sheet
 Column:
-(Stk_code, Comment: Securities code, Type: TEXT, Foreign key: references Basic_Info(Stk_Code))
+(Stk_code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
 =====
-Table: income_statement
+Table: Income_Statement
 Column:
-(Stk_code, Comment: Securities code, Type: TEXT, Foreign key: references Basic_Info(Stk_Code))
-(Fee_com_inc, Comment: Fee and commission income, Type: REAL)
-(Fee_com_exp, Comment: Handling fees and commission expenses, Type: REAL)
+(Stk_code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
+(Fee_com_inc, Comment: Fee and commission income)
+(Fee_com_exp, Comment: Handling fees and commission expenses)
 [Question]
 What is the fee and commission income of Huaxia Bank?
 [Answer]
 {{
-  "basic_info": ["Stk_code","Stk_name"],
-  "balance_sheet": [],
-  "income_statement": ["Stk_code","Fee_com_inc"],
+  "Basic_Info": ["Stk_code","Stk_name"],
+  "Balance_Sheet": [],
+  "Income_Statement": ["Stk_code","Fee_com_inc"]
 }}
+This JSON statement already solves the problem, so there is no need to continue generating text.
 
-Here is a new example, please start answering:
+Please start solving the problem:
 [Schema]
 {}
 [Question]
@@ -66,7 +72,7 @@ Here is a new example, please start answering:
 """
 
 filter_hint_template = """[Hint]
-You can refer to following information to solve the task:
+You can refer to following information:
 {}
 """
 
@@ -103,7 +109,6 @@ Column:
 (Cash_cb, Comment: Cash and deposits with central bank, Type: REAL)
 [Question]
 List securities codes and securities names with cash and deposits with central bank over the average.
-
 Decompose the question into sub questions, considering [Requirements] and [SQL Constraints], and generate the SQL after thinking step by step:
 [Answer]
 Sub question 1: Get the average value of cash and deposits with central bank.
@@ -111,7 +116,6 @@ SQL
 ```sql
 SELECT AVG(cash_cb) FROM balance_sheet
 ```
-
 Sub question 2: List securities codes and securities names with cash and deposits with central bank over the average.
 SQL
 ```sql
@@ -120,19 +124,15 @@ FROM balance_sheet AS b1 INNER JOIN basic_info AS b2
 ON b1.stk_code = b2.stk_code
 WHERE cash_cb > (SELECT AVG(cash_cb) FROM balance_sheet)
 ```
-
 This SQL statement already solves the problem, so there is no need to continue generating text.
 
-==========
-Here is a new example, please start answering:
-
+Please start solving the problem:
 [Schema]
 {}
 [Hint]
 {}
 [Question]
 {}
-
 Decompose the question into sub questions, considering [Requirements] and [SQL Constraints], and generate the SQL after thinking step by step:
 [Answer]
 """

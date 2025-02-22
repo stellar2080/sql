@@ -5,7 +5,7 @@ import sys
 current_dir = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.path.dirname(current_dir)
 sys.path.append(ROOT_PATH)
-from src.utils.utils import get_cos_similarity, get_embedding, user_message
+from src.utils.utils import get_cos_similarity, get_embedding, parse_json, user_message
 from src.manager.manager import Manager
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
@@ -41,7 +41,7 @@ m = Manager(
 #             print(e)
 
 message = {
-    "question": "I want to compare the precious metal assets of Bank of China and Industrial and Commercial Bank of China, what are their respective precious metal assets?",
+    "question": "What are the business and management fees and impairment losses on assets of China Construction Bank?",
     "extract": None,
     "sql": None,
     "schema": None,
@@ -53,4 +53,4 @@ message = {
 
 if __name__ == '__main__':
     message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-    # # message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+    message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
