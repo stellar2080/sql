@@ -12,7 +12,7 @@ import ast
 import numpy as np
 from chromadb.utils import embedding_functions
 
-from src.utils.const import LSH_THRESHOLD
+from src.utils.const import F_LSH_THRESHOLD
 
 def system_message(message: str):
     return {'role': 'system', 'content': message}
@@ -119,7 +119,7 @@ def lsh(query_list: list, target_list: list) -> dict:
 
     query_results = {}
 
-    lsh = MinHashLSH(threshold=LSH_THRESHOLD, num_perm=128)
+    lsh = MinHashLSH(threshold=F_LSH_THRESHOLD, num_perm=128)
     n_gram = 3
 
     for i, target in enumerate(target_list):
@@ -156,6 +156,10 @@ def get_cos_similarity(vec1, vec2):
     if norm_vec1 == 0 or norm_vec2 == 0:
         return 0
     return dot_product / (norm_vec1 * norm_vec2)
+
+def get_embedding(_str: str):
+    embedding_func = embedding_functions.DefaultEmbeddingFunction()
+    return embedding_func([_str.lower().replace('_',' ').replace('-',' ')])[0]
 
 def get_embedding_list(_list: list):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()

@@ -1,17 +1,17 @@
 import os
 import sys
 from fastapi import FastAPI, Request
-from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import uvicorn
 import json
 import torch
 current_dir = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.path.dirname(current_dir)
-sys.path.append(ROOT_PATH)
-from src.utils.const import MAX_TOKENS, TEMPERATURE, LLM_HOST, LLM_PORT
+sys.path.append(ROOT_PATH)  
+from src.utils.const import MAX_TOKENS, TEMPERATURE, TOP_P, LLM_HOST, LLM_PORT
 
 # from modelscope import snapshot_download
-# model_dir = snapshot_download('Qwen/Qwen2.5-14B-Instruct-GPTQ-Int4', cache_dir='/home/stellar/model', revision='master') 
+# model_dir = snapshot_download('Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4', cache_dir='/home/stellar/model', revision='master') 
 
 # 设置设备参数
 DEVICE = "cuda"  # 使用CUDA
@@ -38,7 +38,12 @@ async def create_item(request: Request):
     # 调用模型进行对话生成
     text = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
     model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
-    generated_ids = model.generate(model_inputs.input_ids,temperature=TEMPERATURE,max_new_tokens=MAX_TOKENS) # 思考需要输出更多的Token数，设为8K
+    generated_ids = model.generate(
+        model_inputs.input_ids,
+        temperature=TEMPERATURE,
+        max_length=MAX_TOKENS,
+        top_p=TOP_P
+    ) 
     generated_ids = [
         output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
     ]
@@ -54,7 +59,8 @@ async def create_item(request: Request):
 # 主函数入口
 if __name__ == '__main__':
     # 加载预训练的分词器和模型
-    model_path = '/home/stellar/model/LLM-Research/Meta-Llama-3.1-8B-Instruct-bnb-4bit'
+    # model_path = '/home/stellar/model/Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4'
+    model_path = '/home/stellar/model/LLM-Research/Meta-Llama-3___1-8B-Instruct-bnb-4bit'
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
         model_path, device_map=CUDA_DEVICE, torch_dtype="auto", trust_remote_code=True).eval()

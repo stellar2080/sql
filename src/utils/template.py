@@ -9,11 +9,11 @@ Example:
 I want to know the working capital and current ratio of Huaxia Bank.
 [Hint]
 Here are some entity names for reference:
-{{'Total Assets', 'working capital', 'current ratio', 'current assets', 'return on assets'}}
+{{'Total Assets', 'Working capital', 'Current ratio', 'current assets', 'return on assets'}}
 [Answer]
 ['working capital','current ratio','Huaxia Bank']
 
-Please don't use code and start solving the problem:
+Please start solving the problem:
 [Text]
 {}
 [Hint]
