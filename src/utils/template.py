@@ -34,7 +34,7 @@ You need to follow the instructions below to solve the problem step by step:
 2. Format the answer in the same JSON format as the [Answer] part of the example
 
 Requirements:
-1. When there is column related to the organization name in the schema, select it
+1. When there is a column related to the organization code or name in the schema, select it
 2. When you have generated a JSON statement which already solves the problem, there is no need to generate more text
 
 Example:
@@ -52,15 +52,15 @@ Column:
 Table: Income_Statement
 Column:
 (Stk_Code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
-(Fee_com_inc, Comment: Fee and commission income)
-(Fee_com_exp, Comment: Handling fees and commission expenses)
+(Fee_Com_Inc, Comment: Fee and commission income)
+(Fee_Com_Exp, Comment: Handling fees and commission expenses)
 [Question]
 What is the fee and commission income of Huaxia Bank?
 [Answer]
 {{
   "Basic_Info": ["Stk_Code","Stk_Name"],
   "Balance_Sheet": [],
-  "Income_Statement": ["Stk_Code","Fee_com_inc"]
+  "Income_Statement": ["Stk_Code","Fee_Com_Inc"]
 }}
 This JSON statement already solves the problem, so there is no need to continue generating text.
 
@@ -76,7 +76,6 @@ You can refer to following information:
 {}
 """
 
-
 decomposer_template = """
 You are an experienced financial database administrator.
 You need to follow the instructions below to solve the problem step by step:
@@ -84,7 +83,8 @@ You need to follow the instructions below to solve the problem step by step:
 2. Use the {} dialect to generate SQL statements in the same format as the [Answer] part of the example
 
 Requirements:
-When you have generated a SQL statement that already solves the problem, there is no need to generate more text
+1. When there is a column related to the organization code or name in the schema, the SQL statement you generate should select it
+2. When you have generated a SQL statement that already solves the problem, there is no need to generate more text
 
 Example:
 [Schema]
@@ -127,23 +127,15 @@ You can refer to following information:
 """
 
 reviser_template = """
-[Task]
 You are an experienced financial database administrator.
 When executing SQL below, some errors occurred, please fix up SQL and generate new SQL based on the information given.
-Solve the task step by step if you need. When you find an answer, verify the answer carefully. 
-
-[SQL Constraints]
-When generating SQL, we should always consider constraints:
-- In `SELECT <column>`, just select needed columns in the [Question] without any unnecessary column or value
-- In `FROM <table>` or `JOIN <table>`, do not include unnecessary table
-- If use max or min func, `JOIN <table>` FIRST, THEN use `SELECT MAX(<column>)` or `SELECT MIN(<column>)`
-- If use `ORDER BY <column> ASC|DESC`, add `GROUP BY <column>` before to select distinct values
+Solve the task step by step if you need. When you find an answer, verify the answer carefully.
 
 [Schema]
 {}
-[Hint]
-{}
 [Question]
+{}
+[Hint]
 {}
 [old SQL]
 ```sql

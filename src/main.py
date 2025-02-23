@@ -33,7 +33,6 @@ m = Manager(
 #                 "schema": None,
 #                 "hint": None,
 #                 "message_to": "extractor",
-#                 "response": None,
 #                 "sql_result": None
 #             }
 #             message = m.extractor.chat(message, m.llm, m.vectordb)
@@ -41,16 +40,18 @@ m = Manager(
 #             print(e)
 
 message = {
-    "question": "What are the business and management fees and impairment losses on assets of China Construction Bank?",
-    "extract": None,
-    "sql": None,
+    "question": "What are the interest income and net interest income of China Construction Bank?",
+    "entity": None,
+    "dialect": "sqlite",
     "schema": None,
     "hint": None,
-    "message_to": "extractor",
-    "response": None,
-    "sql_result": None
+    "sql": None,
+    "sql_result": None,
+    "message_to": "extractor"
 }
 
 if __name__ == '__main__':
     message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb, db_conn=m.db_conn)
     message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb, db_conn=m.db_conn)
+    message = m.decomposer.chat(message=message, llm=m.llm)
+    message = m.reviser.chat(message=message, llm=m.llm, db_conn=m.db_conn)

@@ -282,7 +282,7 @@ class Filter(Agent_Base):
             raise Exception("The message should not be processed by " + FILTER +
                             ". It is sent to " + message["message_to"])
         else:
-            # print("The message is being processed by " + FILTER + "...")
+            print("The message is being processed by " + FILTER + "...")
             tbl_name_selected = set()
             hint_list = self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
             hint_str, entity_list = self.process_hint_list(
@@ -299,7 +299,6 @@ class Filter(Agent_Base):
             self.prune_schema(ans_json=ans_json, schema=schema, tbl_name_selected=tbl_name_selected)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
-            print(new_schema_str)
             message["schema"] = new_schema_str
             message["hint"] = hint_str
             message["message_to"] = DECOMPOSER

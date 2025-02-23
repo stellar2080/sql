@@ -10,28 +10,35 @@ from src.agent.agent_base import Agent_Base
 
 
 class Reviser(Agent_Base):
-    def __init__(self,config=None):
-        if config is None:
-            config = {}
-        self.config = config
-        url = config.get("db_path",'.')
-        check_same_thread = config.get("check_same_thread", False)
-        self.conn, self.dialect = connect_to_sqlite(url=url,check_same_thread=check_same_thread)
+    def __init__(self,config):
+        super().__init__()
         self.platform = config['platform']
+
+    def run_sql(
+        self,
+        sql: str,
+        db_conn
+    ) -> list:
+        if QUERY_MODE == "ori":
+            cursor = db_conn.cursor()
+            cursor.execute(sql)
+            result = cursor.fetchall()
+            return result
+        elif QUERY_MODE == "pd":
+            result = pd.read_sql_query(sql, db_conn)
+            return result.values.tolist()
 
     def create_reviser_prompt(
         self,
         message: dict,
-        sqlite_error,
-        error_class
+        sqlite_error
     ) -> str:
         prompt = reviser_template.format(
             message["schema"],
-            message["hint"],
             message["question"],
+            message["hint"],
             message["sql"],
-            sqlite_error,
-            error_class
+            sqlite_error
         )
         print(prompt)
         return prompt
@@ -49,29 +56,12 @@ class Reviser(Agent_Base):
         new_sql = parse_sql(answer)
         return new_sql
 
-    def is_conn(self):
-        return self.conn is not None
-
-    def run_sql(
-        self,
-        sql: str
-    ) -> list:
-        if self.is_conn() is False:
-            raise Exception("Please connect to database first.")
-        if QUERY_MODE == "cr":
-            cursor = self.conn.cursor()
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-        elif QUERY_MODE == "pd":
-            result = pd.read_sql_query(sql, self.conn)
-            return result.values.tolist()
-
     @override
     def chat(
         self,
         message: dict,
-        llm: LLM_Base=None
+        llm: LLM_Base=None,
+        db_conn = None
     ):
         if message["message_to"] != REVISER:
             raise Exception("The message should not be processed by " + REVISER + ". It is sent to " + message["message_to"])
@@ -81,9 +71,9 @@ class Reviser(Agent_Base):
             except_flag = False
             result = None
             try:
-                result = self.run_sql(message["sql"])
+                result = self.run_sql(message["sql"],db_conn)
             except Exception as error:
-                if QUERY_MODE == "cr":
+                if QUERY_MODE == "ori":
                     sqlite_error = str(error.args[0])
                     except_flag = True
                 elif QUERY_MODE == "pd":
@@ -94,6 +84,7 @@ class Reviser(Agent_Base):
             if except_flag is False:
                 message["message_to"] = MANAGER
                 message["sql_result"] = result
+                print(result)
                 return message
             else:
                 prompt = self.create_reviser_prompt(

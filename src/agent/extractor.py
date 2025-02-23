@@ -169,20 +169,15 @@ class Extractor(Agent_Base):
         if message["message_to"] != EXTRACTOR:
             raise Exception("The message should not be processed by " + EXTRACTOR + ". It is sent to " + message["message_to"])
         else:
-            # print("The message is being processed by " + EXTRACTOR + "...")
-            
+            print("The message is being processed by " + EXTRACTOR + "...")
             schema = self.get_schema(db_conn=db_conn)
             hint_set = self.get_rela_hint_keys(question=message['question'], vectordb=vectordb)
             col_set = self.get_related_column(question=message['question'], schema=schema)
             value_set = self.get_related_value(question=message['question'], schema=schema, db_conn=db_conn)
             entity_set = hint_set | col_set | value_set
-            print("="*10,"entity_set")
-            print(entity_set)
-
             prompt = self.create_extractor_prompt(message["question"], entity_set)
             ans = self.get_extractor_ans(prompt, llm)
             ans_list = parse_list(ans)
-            
             message["entity"] = ans_list
             message["message_to"] = FILTER
             return message

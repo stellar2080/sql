@@ -1,7 +1,7 @@
 from src.agent.agent_base import Agent_Base
 from src.llm.llm_base import LLM_Base
 from src.utils.const import DECOMPOSER, REVISER
-from src.utils.template import decomposer_template
+from src.utils.template import decomposer_template, decomposer_hint_template
 from src.utils.utils import parse_sql, user_message, get_response_content, timeout
 
 
@@ -14,7 +14,15 @@ class Decomposer(Agent_Base):
         self,
         message: dict
     ) -> str:
-        prompt = decomposer_template.format(message["schema"],message["hint"],message["question"])
+        dialect = message['dialect']
+        schema_str = message['schema']
+        hint_str = message['hint']
+        question = message['question']
+        if hint_str == "":
+            prompt = decomposer_template.format(dialect, schema_str, question)
+        else:
+            prompt = decomposer_template.format(dialect, schema_str, question) + decomposer_hint_template.format(hint_str)
+        print("="*10,"PROMPT","="*10)
         print(prompt)
         return prompt
 

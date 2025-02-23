@@ -28,7 +28,7 @@ class Manager:
 
         self.url = config.get("db_path", '.')
         self.check_same_thread = config.get("check_same_thread", False)
-        self.db_conn, self.dialect = connect_to_sqlite(self.url, self.check_same_thread)
+        self.db_conn, dialect = connect_to_sqlite(self.url, self.check_same_thread)
         
         self.extractor = Extractor(config)
         self.filter = Filter(config)
@@ -38,11 +38,12 @@ class Manager:
         self.message = {
             "question": None,
             "entity": None,
-            "sql": None,
+            "dialect": dialect,
             "schema": None,
             "hint": None,
-            "message_to": None,
-            "sql_result": None
+            "sql": None,
+            "sql_result": None,
+            "message_to": None
         }
 
     def train_doc(self, path):
