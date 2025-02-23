@@ -42,25 +42,25 @@ Example:
 =====
 Table: Basic_Info
 Column:
-(Stk_code, Comment: Securities code, Primary key)
-(Stk_name, Comment: Securities name, Sample: Huaxia Bank)
+(Stk_Code, Comment: Securities code, Primary key)
+(Stk_Name, Comment: Securities name, Sample: Huaxia Bank)
 =====
 Table: Balance_Sheet
 Column:
-(Stk_code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
+(Stk_Code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
 =====
 Table: Income_Statement
 Column:
-(Stk_code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
+(Stk_Code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
 (Fee_com_inc, Comment: Fee and commission income)
 (Fee_com_exp, Comment: Handling fees and commission expenses)
 [Question]
 What is the fee and commission income of Huaxia Bank?
 [Answer]
 {{
-  "Basic_Info": ["Stk_code","Stk_name"],
+  "Basic_Info": ["Stk_Code","Stk_Name"],
   "Balance_Sheet": [],
-  "Income_Statement": ["Stk_code","Fee_com_inc"]
+  "Income_Statement": ["Stk_Code","Fee_com_inc"]
 }}
 This JSON statement already solves the problem, so there is no need to continue generating text.
 
@@ -78,63 +78,52 @@ You can refer to following information:
 
 
 decomposer_template = """
-[Task]
 You are an experienced financial database administrator.
-Given a database schema, a hint and a question.
-Your task is to decompose the question into subquestions and use the SQLite dialect for text-to-SQL generation.
+You need to follow the instructions below to solve the problem step by step:
+1. Decompose the question into sub questions
+2. Use the {} dialect to generate SQL statements in the same format as the [Answer] part of the example
 
-[Requirements]
-- When you have generated an SQL statement that already solves the problem, there is no need to generate more text
+Requirements:
+When you have generated a SQL statement that already solves the problem, there is no need to generate more text
 
-[SQL Constraints]
-When generating SQL, we should always consider constraints:
-- In `SELECT <column>`, just select needed columns in the [Question] without any unnecessary column or value
-- In `FROM <table>` or `JOIN <table>`, do not include unnecessary table
-- If use max or min func, `JOIN <table>` FIRST, THEN use `SELECT MAX(<column>)` or `SELECT MIN(<column>)`
-- If use `ORDER BY <column> ASC|DESC`, add `GROUP BY <column>` before to select distinct values
-
-==========
-Here is a typical example:
-
+Example:
 [Schema]
 =====
-Table: basic_info
+Table: Basic_Info
 Column:
-(Stk_code, Comment: Securities code, Type: TEXT, Primary key)
-(Stk_name, Comment: Securities name, Type: TEXT)
+(Stk_Code, Comment: Securities code, Primary key)
+(Stk_Name, Comment: Securities name)
 =====
-Table: balance_sheet
+Table: Balance_Sheet
 Column:
-(Stk_code, Comment: Securities code, Type: TEXT, Foreign key: references Basic_Info(Stk_Code))
-(Cash_cb, Comment: Cash and deposits with central bank, Type: REAL)
+(Stk_Code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
+(Cash_CB, Comment: Cash and deposits with central bank)
 [Question]
 List securities codes and securities names with cash and deposits with central bank over the average.
-Decompose the question into sub questions, considering [Requirements] and [SQL Constraints], and generate the SQL after thinking step by step:
 [Answer]
 Sub question 1: Get the average value of cash and deposits with central bank.
-SQL
 ```sql
-SELECT AVG(cash_cb) FROM balance_sheet
+SELECT AVG(Cash_CB) FROM Balance_Sheet
 ```
 Sub question 2: List securities codes and securities names with cash and deposits with central bank over the average.
-SQL
 ```sql
-SELECT b2.stk_code,stk_name 
-FROM balance_sheet AS b1 INNER JOIN basic_info AS b2 
-ON b1.stk_code = b2.stk_code
-WHERE cash_cb > (SELECT AVG(cash_cb) FROM balance_sheet)
+SELECT b1.Stk_Code, b1.Stk_Name 
+FROM Balance_Sheet AS b1 INNER JOIN Basic_Info AS b2 
+ON b1.Stk_Code = b2.Stk_Code
+WHERE Cash_CB > (SELECT AVG(Cash_CB) FROM Balance_Sheet)
 ```
 This SQL statement already solves the problem, so there is no need to continue generating text.
 
 Please start solving the problem:
 [Schema]
 {}
-[Hint]
-{}
 [Question]
 {}
-Decompose the question into sub questions, considering [Requirements] and [SQL Constraints], and generate the SQL after thinking step by step:
-[Answer]
+"""
+
+decomposer_hint_template = """[Hint]
+You can refer to following information:
+{}
 """
 
 reviser_template = """

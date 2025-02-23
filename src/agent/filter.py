@@ -1,6 +1,5 @@
 from src.llm.llm_base import LLM_Base
 from src.utils.const import FILTER, DECOMPOSER, F_HINT_THRESHOLD, F_COL_THRESHOLD, F_VAL_THRESHOLD
-from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import filter_template, filter_hint_template
 from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
     get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
@@ -11,9 +10,6 @@ from src.vectordb.vectordb import VectorDB
 class Filter(Agent_Base):
     def __init__(self, config):
         super().__init__()
-        self.url = config.get("db_path", '.')
-        self.check_same_thread = config.get("check_same_thread", False)
-        self.conn, _ = connect_to_sqlite(self.url, self.check_same_thread)
         self.platform = config['platform']
 
     def get_related_hint_list(
@@ -61,8 +57,11 @@ class Filter(Agent_Base):
             
         return hint_str, entity_list
 
-    def get_schema(self):
-        cur = self.conn.cursor()
+    def get_schema(
+        self,
+        db_conn
+    ):
+        cur = db_conn.cursor()
         cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tbl_names = cur.fetchall()
         cur.execute("SELECT sql FROM sqlite_master WHERE type='table'")
@@ -106,8 +105,12 @@ class Filter(Agent_Base):
         # schema = [[0 enum, 1 pk,2 tbl_name,3 col_name,4 col_type,5 comment,6 value_list,7 fk,8 similarity,9 ischosen],...]
         return schema
 
-    def add_fk_to_schema(self, schema: list):
-        cur = self.conn.cursor()
+    def add_fk_to_schema(
+        self,
+        schema: list,
+        db_conn
+    ):
+        cur = db_conn.cursor()
         cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
         tbl_names = cur.fetchall()
 
@@ -164,8 +167,8 @@ class Filter(Agent_Base):
                     tbl_name_selected.add(col[2])
                     # print(col)
 
-    def get_related_value(self, entity_list: list, schema: list, tbl_name_selected: set):
-        cur = self.conn.cursor()
+    def get_related_value(self, entity_list: list, schema: list, tbl_name_selected: set, db_conn):
+        cur = db_conn.cursor()
         for col in schema:
             if col[4].lower() == 'text':
                 cur.execute(f"SELECT {col[3]} FROM {col[2]}")
@@ -272,7 +275,8 @@ class Filter(Agent_Base):
         self,
         message: dict,
         llm: LLM_Base = None,
-        vectordb: VectorDB = None
+        vectordb: VectorDB = None,
+        db_conn = None
     ):
         if message["message_to"] != FILTER:
             raise Exception("The message should not be processed by " + FILTER +
@@ -283,10 +287,10 @@ class Filter(Agent_Base):
             hint_list = self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
             hint_str, entity_list = self.process_hint_list(
                 hint_list=hint_list, entity_list=message['entity'])
-            schema = self.get_schema()
-            self.add_fk_to_schema(schema=schema)
+            schema = self.get_schema(db_conn=db_conn)
+            self.add_fk_to_schema(schema=schema,db_conn=db_conn)
             self.get_related_column(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
-            self.get_related_value(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
+            self.get_related_value(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
             prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])

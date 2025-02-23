@@ -11,6 +11,7 @@ from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, EXTRACTOR
+from src.utils.database_utils import connect_to_sqlite
 
 
 class Manager:
@@ -24,8 +25,10 @@ class Manager:
             self.llm = Api(config)
         elif self.platform == 'Qwen':
             self.llm = Qwen(config)
-        elif self.platform == 'Ollama':
-            self.llm = Ollama(config)
+
+        self.url = config.get("db_path", '.')
+        self.check_same_thread = config.get("check_same_thread", False)
+        self.db_conn, self.dialect = connect_to_sqlite(self.url, self.check_same_thread)
         
         self.extractor = Extractor(config)
         self.filter = Filter(config)
@@ -132,11 +135,11 @@ class Manager:
                 print("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == EXTRACTOR:
-                self.message = self.extractor.chat(self.message, self.llm)
+                self.message = self.extractor.chat(self.message, self.llm, self.db_conn)
             elif self.message["message_to"] == FILTER:
-                self.message = self.filter.chat(self.message, self.llm, self.vectordb)
+                self.message = self.filter.chat(self.message, self.llm, self.vectordb, self.db_conn)
             elif self.message["message_to"] == DECOMPOSER:
                 self.message = self.decomposer.chat(self.message, self.llm)
             elif self.message["message_to"] == REVISER:
-                self.message = self.reviser.chat(self.message, self.llm)
+                self.message = self.reviser.chat(self.message, self.llm, self.db_conn)
         return self.message

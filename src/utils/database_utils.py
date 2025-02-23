@@ -21,5 +21,5 @@ def connect_to_sqlite(
         check_same_thread=check_same_thread,
         **kwargs
     )
-    dialect = "SQLite"
-    return conn,dialect
+    dialect = "sqlite"
+    return conn, dialect

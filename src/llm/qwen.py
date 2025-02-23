@@ -4,7 +4,7 @@ import random
 from .llm_base import LLM_Base
 from dashscope import Generation
 
-from ..utils.const import TEMPERATURE, MAX_TOKENS
+from ..utils.const import TEMPERATURE, MAX_LENGTH, TOP_K, TOP_P
 
 
 class Qwen(LLM_Base):
@@ -18,9 +18,11 @@ class Qwen(LLM_Base):
       model=self.model,
       api_key=self.api_key,
       messages=messages,
-      temperature=TEMPERATURE,
       result_format='message',
-      max_tokens=MAX_TOKENS,
+      max_tokens=MAX_LENGTH,
+      temperature=TEMPERATURE,
+      top_k=TOP_K,
+      top_p=TOP_P
     )
     print(response)
     return response

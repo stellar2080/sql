@@ -8,7 +8,7 @@ import torch
 current_dir = os.path.dirname(os.path.abspath(__file__))
 ROOT_PATH = os.path.dirname(current_dir)
 sys.path.append(ROOT_PATH)  
-from src.utils.const import MAX_TOKENS, TEMPERATURE, TOP_P, LLM_HOST, LLM_PORT
+from src.utils.const import MAX_LENGTH, DO_SAMPLE, TEMPERATURE, TOP_K, TOP_P, LLM_HOST, LLM_PORT
 
 # from modelscope import snapshot_download
 # model_dir = snapshot_download('Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4', cache_dir='/home/stellar/model', revision='master') 
@@ -39,9 +39,11 @@ async def create_item(request: Request):
     text = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
     model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
     generated_ids = model.generate(
-        model_inputs.input_ids,
+        input_ids=model_inputs.input_ids,
+        max_length=MAX_LENGTH,
+        do_sample=DO_SAMPLE,
         temperature=TEMPERATURE,
-        max_length=MAX_TOKENS,
+        top_k=TOP_K,
         top_p=TOP_P
     ) 
     generated_ids = [

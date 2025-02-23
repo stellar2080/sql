@@ -52,5 +52,5 @@ message = {
 }
 
 if __name__ == '__main__':
-    message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb)
-    message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb)
+    message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb, db_conn=m.db_conn)
+    message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb, db_conn=m.db_conn)

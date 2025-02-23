@@ -26,8 +26,6 @@ def assistant_message(message: str):
 def get_response_content(response, platform):
     if platform == "Qwen":
         return response.output.choices[0].message.content
-    elif platform == "Ollama":
-        return response.message.content
     elif platform == "Api":
         return response['response']
 
