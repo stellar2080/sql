@@ -187,6 +187,7 @@ class Filter(Agent_Base):
                                 value_list.append(value)
                                 
                     if len(value_list) != 0:
+                        value_list = list(dict.fromkeys(value_list))
                         col[6] = value_list
                         col[9] = True
                         tbl_name_selected.add(col[2])
@@ -208,7 +209,7 @@ class Filter(Agent_Base):
         def add_col_to_schema_str(column, schema_str):
             schema_str += "(" + column[3] + ", " + "Comment: " + column[5]
             if column[6] is not None:
-                schema_str += ", Sample: " + ",".join(column[6])
+                schema_str += ", Sample: " + ", ".join(column[6])
             if column[1] == 1:
                 schema_str += ", Primary key"
             if column[7] is not None and column[7][0] in tbl_name_selected:

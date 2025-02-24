@@ -3,11 +3,19 @@ You are an expert in the field of finance and database.
 You need to follow the instructions below to solve the problem step by step:
 1. Identify and extract any key entities from the text that can help with financial database queries
 2. Format the answer in the same Python list format as the [Answer] part of the example
+- When you have generated a list which already solves the problem, there is no need to generate more text
 
-Requirements:
-When you have generated a list which already solves the problem, there is no need to generate more text
+Example 1:
+[Text]
+Tell me all company names.
+[Hint]
+Here are some entity names for reference:
+{{'China Construction Bank', 'China Mingsheng Bank', 'Securities Name'}}
+[Answer]
+['company names']
+This list already solves the problem, so there is no need to continue generating text.
 
-Example:
+Example 2:
 [Text]
 I want to know the working capital and current ratio of Huaxia Bank.
 [Hint]
@@ -31,11 +39,9 @@ filter_template = """
 You are an expert in the field of finance and database. 
 You need to follow the instructions below to solve the problem step by step:
 1. Select the tables and columns relevant to the question from the database schema
+- When there is a column related to the organization code or name in the schema, select it
 2. Format the answer in the same JSON format as the [Answer] part of the example
-
-Requirements:
-1. When there is a column related to the organization code or name in the schema, select it
-2. When you have generated a JSON statement which already solves the problem, there is no need to generate more text
+- When you have generated a JSON statement which already solves the problem, there is no need to generate more text
 
 Example:
 [Schema]
@@ -81,10 +87,8 @@ You are an experienced financial database administrator.
 You need to follow the instructions below to solve the problem step by step:
 1. Decompose the question into sub questions
 2. Use the {} dialect to generate SQL statements in the same format as the [Answer] part of the example
-
-Requirements:
-1. When there is a column related to the organization code or name in the schema, the SQL statement you generate should select it
-2. When you have generated a SQL statement that already solves the problem, there is no need to generate more text
+- When there is a column related to the organization code or name in the schema, the SQL statement you generate should select it
+- When you have generated a SQL statement that already solves the problem, there is no need to generate more text
 
 Example:
 [Schema]

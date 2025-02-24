@@ -40,7 +40,7 @@ m = Manager(
 #             print(e)
 
 message = {
-    "question": "What are the interest income and net interest income of China Construction Bank?",
+    "question": "What are the company names?",
     "entity": None,
     "dialect": "sqlite",
     "schema": None,

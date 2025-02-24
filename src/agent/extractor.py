@@ -178,6 +178,7 @@ class Extractor(Agent_Base):
             prompt = self.create_extractor_prompt(message["question"], entity_set)
             ans = self.get_extractor_ans(prompt, llm)
             ans_list = parse_list(ans)
+            ans_list = list(dict.fromkeys(ans_list))
             message["entity"] = ans_list
             message["message_to"] = FILTER
             return message
