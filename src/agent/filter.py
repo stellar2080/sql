@@ -5,18 +5,34 @@ from src.utils.utils import parse_json, user_message, get_response_content, time
     get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
 from src.agent.agent_base import Agent_Base
 from src.vectordb.vectordb import VectorDB
-
+import spacy
 
 class Filter(Agent_Base):
     def __init__(self, config):
         super().__init__()
         self.platform = config['platform']
 
+    def parse_nouns(
+        self,
+        question: str
+    ) -> list:
+        noun_set = set()
+        nlp = spacy.load('en_core_web_sm')
+        doc = nlp(question)
+        for token in doc:
+            if token.pos_ == 'NOUN':
+                noun_set.add(token.text)
+        noun_list = list(noun_set)
+        return noun_list
+
     def get_related_hint_list(
         self,
         entity_list: list,
         vectordb: VectorDB,
+        threshold: float = None
     ) -> list:
+        if threshold is None:
+            threshold = F_HINT_THRESHOLD
         hint_list = []
         hint_ids = vectordb.get_related_key(query_texts=entity_list, extracts=['distances', 'metadatas'])
         for i in range(len(entity_list)):
@@ -29,7 +45,7 @@ class Filter(Agent_Base):
             filtered_ids = [
                 metadata['doc_id'] for distance, metadata in sorted(
                     zip(distances, metadatas), key=lambda x: x[0]
-                ) if 1 - distance > F_HINT_THRESHOLD
+                ) if 1 - distance > threshold
             ]
             
             if len(filtered_ids) != 0:
@@ -135,8 +151,11 @@ class Filter(Agent_Base):
         self, 
         entity_list: list, 
         schema: list, 
-        tbl_name_selected: set
+        tbl_name_selected: set,
+        threshold: float = None
     ):
+        if threshold is None:
+            threshold = F_COL_THRESHOLD
         col_name_list = []
         comment_list = []
         for column in schema:
@@ -162,15 +181,15 @@ class Filter(Agent_Base):
             column_num_set = set()
             for column in sorted(schema, key=lambda x: x[8][0], reverse=True)[:4]:
                 name_sub_similarity = column[8][0]
-                if name_sub_similarity > F_COL_THRESHOLD:
+                if name_sub_similarity > threshold:
                     column_num_set.add(column[0])
             for column in sorted(schema, key=lambda x: x[8][1], reverse=True)[:4]:
                 name_cos_similarity = column[8][1]
-                if name_cos_similarity > F_COL_THRESHOLD:
+                if name_cos_similarity > threshold:
                     column_num_set.add(column[0])
             for column in sorted(schema, key=lambda x: x[8][2], reverse=True)[:4]:
                 comment_cos_similarity = column[8][2]
-                if comment_cos_similarity > F_COL_THRESHOLD:
+                if comment_cos_similarity > threshold:
                     column_num_set.add(column[0])
 
             for enum, column in enumerate(schema,start=0):
@@ -184,8 +203,12 @@ class Filter(Agent_Base):
         entity_list: list, 
         schema: list, 
         tbl_name_selected: set, 
-        db_conn
+        db_conn,
+        use_lsh: bool = True,
+        threshold: float = None
     ):
+        if threshold is None:
+            threshold = F_VAL_THRESHOLD
         cur = db_conn.cursor()
         for column in schema:
             col_type = column[4]
@@ -196,23 +219,33 @@ class Filter(Agent_Base):
                 value_datas = cur.fetchall()
                 value_list = [value_data[0] for value_data in value_datas]
 
-                query_results = lsh(entity_list,value_list)
-                if query_results != {}:
-                    # print(query_results)
-                    value_list = []
-                    for entity, values in query_results.items():
-                        embedding_list = get_embedding_list([entity] + values)
-                        for enum, value in enumerate(values,start=1):
-                            # print(key, value, get_subsequence_similarity(key, value), get_cos_similarity(embedding_list[0], embedding_list[idx]))
-                            if get_subsequence_similarity(entity, value) > F_VAL_THRESHOLD \
-                            or get_cos_similarity(embedding_list[0], embedding_list[enum]) > F_VAL_THRESHOLD:
-                                value_list.append(value)
-                                
-                    if len(value_list) != 0:
-                        distinct_value_list = list(dict.fromkeys(value_list))
-                        column[6] = distinct_value_list
-                        column[9] = True
-                        tbl_name_selected.add(tbl_name)
+                related_value_list = []
+                if use_lsh:
+                    query_results = lsh(entity_list,value_list)
+                    if query_results != {}:
+                        for entity, values in query_results.items():
+                            embedding_list = get_embedding_list([entity] + values)
+                            for enum, value in enumerate(values,start=1):
+                                subsequence_similarity = get_subsequence_similarity(entity, value)
+                                cos_similarity = get_cos_similarity(embedding_list[0], embedding_list[enum])
+                                # print(entity, value, subsequence_similarity, cos_similarity)
+                                if subsequence_similarity > threshold or cos_similarity > threshold:
+                                    related_value_list.append(value)
+                else:
+                    entity_embeddings = get_embedding_list(entity_list)
+                    value_embeddings = get_embedding_list(value_list)
+                    for enum, entity in enumerate(entity_list,start=0):
+                        for vnum, value in enumerate(value_list,start=0):
+                            subsequence_similarity = get_subsequence_similarity(entity, value)
+                            cos_similarity = get_cos_similarity(entity_embeddings[enum], value_embeddings[vnum])
+                            # print(entity, value, subsequence_similarity, cos_similarity)
+                            if subsequence_similarity > threshold or cos_similarity > threshold:
+                                    related_value_list.append(value)
+                if len(related_value_list) != 0:
+                    distinct_value_list = list(dict.fromkeys(related_value_list))
+                    column[6] = distinct_value_list
+                    column[9] = True
+                    tbl_name_selected.add(tbl_name)
 
     def sel_pf_keys(
         self, 
@@ -241,21 +274,21 @@ class Filter(Agent_Base):
         def add_col_to_schema_str(column, schema_str):
             col_name = column[3]
             comment = column[5]
-            schema_str += "(" + col_name + ", " + "Comment: " + comment
+            schema_str += "(" + col_name + "; " + "Comment: " + comment
             if need_type:
                 col_type = column[4]
-                schema_str += ", Type: " + col_type
+                schema_str += "; Type: " + col_type
             is_primary_key = column[1]
             sample = column[6]
             foreign_key = column[7]
             if sample is not None:
-                schema_str += ", Sample: " + ", ".join(sample)
+                schema_str += "; Sample: " + ", ".join(sample)
             if is_primary_key == 1:
-                schema_str += ", Primary key"
+                schema_str += "; Primary key"
             if foreign_key is not None and foreign_key[0] in tbl_name_selected:
                 ref_tbl_name = foreign_key[0]
                 ref_col_name = foreign_key[1]
-                schema_str += ", Foreign key: references " + ref_tbl_name + "(" + ref_col_name + ")"
+                schema_str += "; Foreign key: references " + ref_tbl_name + "(" + ref_col_name + ")"
             schema_str += ")\n"
             return schema_str
 
@@ -330,14 +363,20 @@ class Filter(Agent_Base):
                             ". It is sent to " + message["message_to"])
         else:
             print("The message is being processed by " + FILTER + "...")
+            noun_list = self.parse_nouns(message['question'])
             tbl_name_selected = set()
             hint_list = self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
-            hint_str, entity_list = self.process_hint_list(
-                hint_list=hint_list, entity_list=message['entity'])
+            hint_str, entity_list = self.process_hint_list(hint_list=hint_list, entity_list=message['entity'])
             schema = self.get_schema(db_conn=db_conn)
             self.add_fk_to_schema(schema=schema,db_conn=db_conn)
-            self.get_related_column(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
-            self.get_related_value(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn)
+            self.get_related_column(
+                entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
+            self.get_related_column(
+                entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,threshold=0.30)
+            self.get_related_value(
+                entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn)
+            self.get_related_value(
+                entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn,use_lsh=False,threshold=0.30)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=False)
             prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])

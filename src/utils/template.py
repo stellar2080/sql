@@ -49,18 +49,18 @@ Example:
 =====
 Table: Basic_Info
 Column:
-(Stk_Code, Comment: Securities code, Primary key)
-(Stk_Name, Comment: Securities name, Sample: Huaxia Bank)
+(Stk_Code; Comment: Securities code; Primary key)
+(Stk_Name; Comment: Securities name; Sample: Huaxia Bank)
 =====
 Table: Balance_Sheet
 Column:
-(Stk_Code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
+(Stk_Code; Comment: Securities code; Foreign key: references Basic_Info(Stk_Code))
 =====
 Table: Income_Statement
 Column:
-(Stk_Code, Comment: Securities code, Foreign key: references Basic_Info(Stk_Code))
-(Fee_Com_Inc, Comment: Fee and commission income)
-(Fee_Com_Exp, Comment: Handling fees and commission expenses)
+(Stk_Code; Comment: Securities code; Foreign key: references Basic_Info(Stk_Code))
+(Fee_Com_Inc; Comment: Fee and commission income)
+(Fee_Com_Exp; Comment: Handling fees and commission expenses)
 [Question]
 What is the fee and commission income of Huaxia Bank?
 [Answer]
@@ -89,6 +89,7 @@ You need to follow the instructions below to solve the problem step by step:
 1. Decompose the question into sub questions
 2. Use the {} dialect to generate SQL statements in the same format as the [Answer] part of the example
 - When there is a column related to the organization code or name in the schema, the SQL statement you generate should select it
+- When joining tables, use alias like 't1,t2'
 - When you have generated a SQL statement that already solves the problem, there is no need to generate more text
 
 Example:
@@ -96,13 +97,13 @@ Example:
 =====
 Table: Basic_Info
 Column:
-(Stk_Code, Comment: Securities code, Type: TEXT, Primary key)
-(Stk_Name, Comment: Securities name, Type: TEXT)
+(Stk_Code; Comment: Securities code; Type: TEXT; Primary key)
+(Stk_Name; Comment: Securities name; Type: TEXT)
 =====
 Table: Balance_Sheet
 Column:
-(Stk_Code, Comment: Securities code, Type: TEXT, Foreign key: references Basic_Info(Stk_Code))
-(Cash_CB, Comment: Cash and deposits with central bank, Type: REAL)
+(Stk_Code; Comment: Securities code; Type: TEXT; Foreign key: references Basic_Info(Stk_Code))
+(Cash_CB; Comment: Cash and deposits with central bank; Type: REAL)
 [Question]
 List securities codes and securities names with cash and deposits with central bank over the average.
 [Answer]

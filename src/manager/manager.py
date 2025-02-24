@@ -131,9 +131,9 @@ class Manager:
         else:
             raise Exception("Please provide a question or a message")
 
-        for i in range(MAX_ITERATIONS):
+        for i in range(1, MAX_ITERATIONS+1):
             print("ITERATION {}".format(i))
-            print("MESSAGE: " + str(self.message))
+            # print("MESSAGE: " + str(self.message))
             if i == 0 and self.message["message_to"] is None:
                 self.message["message_to"] = EXTRACTOR
 

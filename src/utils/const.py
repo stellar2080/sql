@@ -4,7 +4,7 @@ DECOMPOSER = "decomposer"
 REVISER = "reviser"
 MANAGER = "manager"
 
-MAX_ITERATIONS = 6
+MAX_ITERATIONS = 8
 
 DO_SAMPLE = False
 TEMPERATURE = 0.05

@@ -84,8 +84,10 @@ class Extractor(Agent_Base):
         col_name_list = []
         comment_list = []
         for column in schema:
-            col_name_list.append(column[1])
-            comment_list.append(column[3])
+            col_name = column[1]
+            comment = column[3]
+            col_name_list.append(col_name)
+            comment_list.append(comment)
         question_embedding = get_embedding(question)
         col_name_embeddings = get_embedding_list(col_name_list)
         comment_embeddings = get_embedding_list(comment_list)
