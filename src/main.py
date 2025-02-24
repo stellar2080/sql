@@ -10,7 +10,7 @@ from src.manager.manager import Manager
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 
-m = Manager(
+manager = Manager(
     config={
         'platform': 'Api',
         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
@@ -23,24 +23,24 @@ m = Manager(
 
 # with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev.json')) as f:
 #     data = json.load(f)
-#     for i in range(5):
+#     for i in range(50):
 #         item = data[i]
 #         try:
-#             message = {
-#                 "question": item["question"],
-#                 "extract": None,
-#                 "sql": None,
-#                 "schema": None,
-#                 "hint": None,
-#                 "message_to": "extractor",
-#                 "sql_result": None
-#             }
-#             message = m.extractor.chat(message, m.llm, m.vectordb)
+#             # message = {
+#             #     "question": item["question"],
+#             #     "extract": None,
+#             #     "sql": None,
+#             #     "schema": None,
+#             #     "hint": None,
+#             #     "message_to": "extractor",
+#             #     "sql_result": None
+#             # }
+#             message = manager.chat(item["question"])
 #         except Exception as e:
 #             print(e)
 
 message = {
-    "question": "What are the company names?",
+    "question": "Find the banks where precious metal assets account for more than 0.5% of total assets.",
     "entity": None,
     "dialect": "sqlite",
     "schema": None,
@@ -51,7 +51,7 @@ message = {
 }
 
 if __name__ == '__main__':
-    message = m.extractor.chat(message=message, llm=m.llm, vectordb=m.vectordb, db_conn=m.db_conn)
-    message = m.filter.chat(message=message, llm=m.llm, vectordb=m.vectordb, db_conn=m.db_conn)
-    message = m.decomposer.chat(message=message, llm=m.llm)
-    message = m.reviser.chat(message=message, llm=m.llm, db_conn=m.db_conn)
+    message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+    message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+    message = manager.decomposer.chat(message=message, llm=manager.llm)
+    message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)

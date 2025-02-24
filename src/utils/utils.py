@@ -1,3 +1,4 @@
+from collections import defaultdict
 import difflib
 import functools
 import hashlib
@@ -43,13 +44,20 @@ def deterministic_uuid(content: Union[str, bytes]) -> str:
 
     return content_uuid
 
+def merge_duplicates(pairs):
+    merged = defaultdict(list)
+    for key, value in pairs:
+        merged[key].extend(value)
+    merged[key] = list(dict.fromkeys(merged[key]))
+    return dict(merged)
+
 def parse_json(text: str):
     try:
         start = text.rfind("{")
         end = text.rfind("}")
         if start != -1 and end != -1:
             json_string = text[start: end+1]
-            json_data = json.loads(json_string)
+            json_data = json.loads(s=json_string, object_pairs_hook=merge_duplicates)
             return json_data
         else:
             raise Exception('parse json error!\n')

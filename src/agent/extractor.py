@@ -17,9 +17,8 @@ class Extractor(Agent_Base):
         self,
         question: str,
         vectordb: VectorDB,
-    ):
-        hint_keys = vectordb.get_related_key(question, extracts=['distances', 'documents'])
-        
+    ) -> set:
+        hint_keys = vectordb.get_related_key(query_texts=question, extracts=['distances', 'documents'])
         distances = hint_keys['distances']
         documents = hint_keys['documents']
         hint_key_list = [
@@ -27,51 +26,50 @@ class Extractor(Agent_Base):
                 zip(distances, documents), key=lambda x: x[0]
             ) if 1 - distance > E_HINT_THRESHOLD
         ]
-
-        return set(hint_key_list)
+        hint_key_set = set(hint_key_list)
+        return hint_key_set
 
     def get_schema(
         self,
         db_conn
-    ):
+    ) -> list:
         cur = db_conn.cursor()
         cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tbl_names = cur.fetchall()
+        tbl_name_datas = cur.fetchall()
+        tbl_names = [tbl_name_data[0] for tbl_name_data in tbl_name_datas]
         cur.execute("SELECT sql FROM sqlite_master WHERE type='table'")
         sql_datas = cur.fetchall()
+        sql_strs = [sql_data[0] for sql_data in sql_datas]
 
         schema = []
 
         for enum, tbl_name in enumerate(tbl_names,start=0):
-            tbl_name = tbl_name[0]
-
             cur.execute(f"PRAGMA table_info({tbl_name})")
             col_datas = cur.fetchall()
-            cols = [[tbl_name, col_data[1],col_data[2]] for col_data in col_datas]
+            columns = []
+            for col_data in col_datas:
+                col_name = col_data[1]
+                col_type = col_data[2]
+                columns.append([tbl_name, col_name, col_type])
 
-            sql_str: str = sql_datas[enum][0]
-            start = 0
+            sql_str = sql_strs[enum]
+            point_now = 0
             num = 0
             while True:
-                idx = sql_str.find("-- ", start)
-                if idx == -1:
+                start = sql_str.find("-- ", point_now)
+                if start == -1:
                     break
                 else:
-                    end = sql_str.find("\n", idx)
-                    start = end + 2
-                    sub_str = sql_str[idx + 3:end]
-
-                    Samples_idx = sub_str.find("Samples:")
-                    sub_str = sub_str if Samples_idx == -1 else sub_str[:Samples_idx - 1]
-
-                    sub_str = sub_str.replace("(in Yuan)", "")
-
-                    sub_str = sub_str.strip()
-
-                    cols[num].append(sub_str)
-                    cols[num].append(())
+                    end = sql_str.find("\n", start)
+                    point_now = end + 2
+                    comment_str = sql_str[start + 3:end]
+                    Samples_idx = comment_str.find("Samples:")
+                    comment_str = comment_str if Samples_idx == -1 else comment_str[:Samples_idx - 1]
+                    comment_str = comment_str.replace("(in Yuan)", "")
+                    comment_str = comment_str.strip()
+                    columns[num].extend([comment_str,None])
                     num += 1
-            schema.extend(cols)
+            schema.extend(columns)
 
         # schema = [[0 tbl_name,1 col_name,2 col_type,3 comment,4 similarity],...]
         return schema
@@ -80,55 +78,58 @@ class Extractor(Agent_Base):
         self,
         question: str,
         schema
-    ):
-        col_set = set()
+    ) -> set:
+        column_set = set()
 
-        name_list = []
+        col_name_list = []
         comment_list = []
-        for col in schema:
-            name_list.append(col[1])
-            comment_list.append(col[3])
-
-        name_embeddings = get_embedding_list(name_list)
-        comment_embeddings = get_embedding_list(comment_list)
+        for column in schema:
+            col_name_list.append(column[1])
+            comment_list.append(column[3])
         question_embedding = get_embedding(question)
+        col_name_embeddings = get_embedding_list(col_name_list)
+        comment_embeddings = get_embedding_list(comment_list)
 
-        for enum, col in enumerate(schema, start=0):
-            name_cos_similarity = get_cos_similarity(question_embedding, name_embeddings[enum])
+        for enum, column in enumerate(schema, start=0):
+            name_cos_similarity = get_cos_similarity(question_embedding, col_name_embeddings[enum])
             comment_cos_similarity = get_cos_similarity(question_embedding, comment_embeddings[enum])
-            col[4] = (name_cos_similarity,comment_cos_similarity)
-            # print(col[1], (name_cos_similarity,comment_cos_similarity))
+            column[4] = (name_cos_similarity,comment_cos_similarity)
+            # print(column[1], (name_cos_similarity,comment_cos_similarity))
 
-        # print("=" * 30,"cos_similarity-col_name")
-        for item in sorted(schema, key=lambda x: x[4][0], reverse=True)[:10]:
-            # print(item)
-            if item[4][0] > E_COL_THRESHOLD:
-                col_set.add(item[1])
-        # print("=" * 30,"cos_similarity-comment")
-        for item in sorted(schema, key=lambda x: x[4][1], reverse=True)[:10]:
-            # print(item)
-            if item[4][1] > E_COL_THRESHOLD:
-                col_set.add(item[3])
+        for column in sorted(schema, key=lambda x: x[4][0], reverse=True)[:10]:
+            name_cos_similarity = column[4][0]
+            col_name = column[1]
+            if name_cos_similarity > E_COL_THRESHOLD:
+                column_set.add(col_name)
+        for column in sorted(schema, key=lambda x: x[4][1], reverse=True)[:10]:
+            comment_cos_similarity = column[4][1]
+            comment = column[3]
+            if comment_cos_similarity > E_COL_THRESHOLD:
+                column_set.add(comment)
 
-        return col_set
+        return column_set
 
     def get_related_value(
         self, 
         question: str,
         schema: list,
         db_conn
-    ):
+    ) -> set:
         value_set = set()
         cur = db_conn.cursor()
-        for col in schema:
-            if col[2].lower() == 'text':
-                cur.execute(f"SELECT {col[1]} FROM {col[0]}")
-                value_list = [item[0] for item in cur.fetchall()]
+        for column in schema:
+            tbl_name = column[0]
+            col_name = column[1]
+            col_type = column[2]
+            if col_type.lower() == 'text':
+                cur.execute(f"SELECT {col_name} FROM {tbl_name}")
+                value_datas = cur.fetchall()
+                value_list = [value_data[0] for value_data in value_datas]
 
                 question_embedding = get_embedding(question)
                 value_embeddings = get_embedding_list(value_list)
-                for vnum, value in enumerate(value_list, start=0):
-                    if get_cos_similarity(question_embedding, value_embeddings[vnum]) > E_VAL_THRESHOLD:
+                for enum, value in enumerate(value_list, start=0):
+                    if get_cos_similarity(vec1=question_embedding, vec2=value_embeddings[enum]) > E_VAL_THRESHOLD:
                             value_set.add(value)
 
         return value_set
@@ -136,12 +137,12 @@ class Extractor(Agent_Base):
     def create_extractor_prompt(
         self,
         question: str,
-        entity_set: set
+        hint_entity_set: set
     ) -> str:
-        if len(entity_set) == 0:
+        if len(hint_entity_set) == 0:
             prompt = extractor_template.format(question)
         else:
-            prompt = extractor_template.format(question) + extractor_hint_template.format(entity_set)
+            prompt = extractor_template.format(question) + extractor_hint_template.format(hint_entity_set)
         print("="*10,"PROMPT","="*10)
         print(prompt)
         return prompt
@@ -154,7 +155,7 @@ class Extractor(Agent_Base):
     ) -> str:
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
-        answer = get_response_content(response, self.platform)
+        answer = get_response_content(response=response, platform=self.platform)
         print("="*10,"ANSWER","="*10)
         print(answer)
         return answer
@@ -167,7 +168,8 @@ class Extractor(Agent_Base):
         db_conn = None
     ):
         if message["message_to"] != EXTRACTOR:
-            raise Exception("The message should not be processed by " + EXTRACTOR + ". It is sent to " + message["message_to"])
+            raise Exception("The message should not be processed by " + EXTRACTOR + 
+                            ". It is sent to " + message["message_to"])
         else:
             print("The message is being processed by " + EXTRACTOR + "...")
             schema = self.get_schema(db_conn=db_conn)
@@ -175,10 +177,10 @@ class Extractor(Agent_Base):
             col_set = self.get_related_column(question=message['question'], schema=schema)
             value_set = self.get_related_value(question=message['question'], schema=schema, db_conn=db_conn)
             entity_set = hint_set | col_set | value_set
-            prompt = self.create_extractor_prompt(message["question"], entity_set)
-            ans = self.get_extractor_ans(prompt, llm)
-            ans_list = parse_list(ans)
-            ans_list = list(dict.fromkeys(ans_list))
-            message["entity"] = ans_list
+            prompt = self.create_extractor_prompt(question=message["question"], hint_entity_set=entity_set)
+            ans = self.get_extractor_ans(prompt=prompt, llm=llm)
+            ans_list = parse_list(text=ans)
+            distinct_ans_list = list(dict.fromkeys(ans_list))
+            message["entity"] = distinct_ans_list
             message["message_to"] = FILTER
             return message

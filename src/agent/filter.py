@@ -16,9 +16,9 @@ class Filter(Agent_Base):
         self,
         entity_list: list,
         vectordb: VectorDB,
-    ):
+    ) -> list:
         hint_list = []
-        hint_ids = vectordb.get_related_key(entity_list, extracts=['distances', 'metadatas'])
+        hint_ids = vectordb.get_related_key(query_texts=entity_list, extracts=['distances', 'metadatas'])
         for i in range(len(entity_list)):
             if len(entity_list) == 1:
                 distances = hint_ids['distances']
@@ -31,26 +31,27 @@ class Filter(Agent_Base):
                     zip(distances, metadatas), key=lambda x: x[0]
                 ) if 1 - distance > F_HINT_THRESHOLD
             ]
-            # print(filtered_ids)
+            
             if len(filtered_ids) != 0:
-                hint_list.extend(vectordb.get_doc_by_id(filtered_ids))
+                doc_list = vectordb.get_doc_by_id(embedding_ids=filtered_ids)
+                hint_list.extend(doc_list)
 
-        # print(hint_list)
-        return list(dict.fromkeys(hint_list))
+        distinct_hint_list = list(dict.fromkeys(hint_list))
+        return distinct_hint_list
 
     def process_hint_list(
         self,
         hint_list: list,
         entity_list: list,
-    ):
+    ) -> tuple[str, list]:
         hint_str = ""
         if len(hint_list) != 0:
             for enum, hint in enumerate(hint_list,start=1):
                 express_list = parse_list(hint)
+                expression = " ".join(express_list)
+                hint_str += f"[{enum}] " + expression + "\n"
 
-                hint_str += f"[{enum}] " + " ".join(express_list) + "\n"
-
-                for i in range(0,len(express_list)):
+                for i in range(0, len(express_list)):
                     entity = express_list[i]
                     if len(entity) > 1:
                         entity_list.append(entity)
@@ -60,49 +61,50 @@ class Filter(Agent_Base):
     def get_schema(
         self,
         db_conn
-    ):
+    ) -> list:
         cur = db_conn.cursor()
         cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tbl_names = cur.fetchall()
+        tbl_name_datas = cur.fetchall()
+        tbl_names = [tbl_name_data[0] for tbl_name_data in tbl_name_datas]
         cur.execute("SELECT sql FROM sqlite_master WHERE type='table'")
         sql_datas = cur.fetchall()
+        sql_strs = [sql_data[0] for sql_data in sql_datas]
 
         schema = []
 
-        count = 0
+        index = 0
         for enum, tbl_name in enumerate(tbl_names,start=0):
-            tbl_name = tbl_name[0]
-
             cur.execute(f"PRAGMA table_info({tbl_name})")
             col_datas = cur.fetchall()
 
-            cols = []
+            columns = []
             for col_data in col_datas:
-                cols.append([count, col_data[5], tbl_name, col_data[1], col_data[2]])
-                count += 1
+                is_primary_key = col_data[5]
+                col_name = col_data[1]
+                col_type = col_data[2]
+                columns.append([index, is_primary_key, tbl_name, col_name, col_type])
+                index += 1
 
-            sql_str: str = sql_datas[enum][0]
-            start = 0
+            sql_str = sql_strs[enum]
+            point_now = 0
             num = 0
             while True:
-                idx = sql_str.find("-- ", start)
-                if idx == -1:
+                start = sql_str.find("-- ", point_now)
+                if start == -1:
                     break
                 else:
-                    end = sql_str.find("\n", idx)
-                    start = end + 2
-                    comment_str = sql_str[idx + 3:end]
-
+                    end = sql_str.find("\n", start)
+                    point_now = end + 2
+                    comment_str = sql_str[start + 3:end]
                     Samples_idx = comment_str.find("Samples:")
                     comment_str = comment_str if Samples_idx == -1 else comment_str[:Samples_idx - 1]
-
-                    comment_str = comment_str.replace("(in Yuan)", "").strip()
-                    
-                    cols[num].extend([comment_str,None,None,None,False])
+                    comment_str = comment_str.replace("(in Yuan)", "")
+                    comment_str = comment_str.strip()
+                    columns[num].extend([comment_str,None,None,None,False])
                     num += 1
-            schema.extend(cols)
+            schema.extend(columns)
 
-        # schema = [[0 enum, 1 pk,2 tbl_name,3 col_name,4 col_type,5 comment,6 value_list,7 fk,8 similarity,9 ischosen],...]
+        # schema = [[0 index, 1 pk,2 tbl_name,3 col_name,4 col_type,5 comment,6 value_list,7 fk,8 similarity,9 ischosen],...]
         return schema
 
     def add_fk_to_schema(
@@ -112,119 +114,161 @@ class Filter(Agent_Base):
     ):
         cur = db_conn.cursor()
         cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tbl_names = cur.fetchall()
+        tbl_name_datas = cur.fetchall()
+        tbl_names = [tbl_name_data[0] for tbl_name_data in tbl_name_datas]
 
-        for enum, tbl_name in enumerate(tbl_names,start=0):
-            tbl_name = tbl_name[0]
+        for tbl_name in tbl_names:
             cur.execute(f"PRAGMA foreign_key_list({tbl_name})")
             fk_datas = cur.fetchall()
             for fk_data in fk_datas:
-                for col in schema:
-                    if tbl_name == col[2] and fk_data[4] == col[3]:
-                        col[7] = (fk_data[2], fk_data[3])
+                fk_col_name = fk_data[3]
+                for column in schema:
+                    column_tbl_name = column[2]
+                    column_col_name = column[3]
+                    if tbl_name == column_tbl_name and fk_col_name == column_col_name:
+                        ref_tbl_name = fk_data[2]
+                        ref_col_name = fk_data[4]
+                        column[7] = (ref_tbl_name, ref_col_name)
 
 
-    def get_related_column(self, entity_list: list, schema: list, tbl_name_selected: set):
-        name_list = []
+    def get_related_column(
+        self, 
+        entity_list: list, 
+        schema: list, 
+        tbl_name_selected: set
+    ):
+        col_name_list = []
         comment_list = []
-        for col in schema:
-            name_list.append(col[3])
-            comment_list.append(col[5])
+        for column in schema:
+            col_name = column[3]
+            comment = column[5]
+            col_name_list.append(col_name)
+            comment_list.append(comment)
 
-        name_embeddings = get_embedding_list(name_list)
-        comment_embeddings = get_embedding_list(comment_list)
         entity_embeddings = get_embedding_list(entity_list)
-
+        col_name_embeddings = get_embedding_list(col_name_list)
+        comment_embeddings = get_embedding_list(comment_list)
+        
         for enum, entity in enumerate(entity_list, start=0):
             entity_embedding = entity_embeddings[enum]
-            for cnum, col in enumerate(schema, start=0):
-                col_name = col[3]
+            for cnum, column in enumerate(schema, start=0):
+                col_name = column[3]
                 name_sub_similarity = get_subsequence_similarity(entity, col_name)
-                name_cos_similarity = get_cos_similarity(entity_embedding, name_embeddings[cnum])
+                name_cos_similarity = get_cos_similarity(entity_embedding, col_name_embeddings[cnum])
                 comment_cos_similarity = get_cos_similarity(entity_embedding, comment_embeddings[cnum])
-                col[8] = (name_sub_similarity,name_cos_similarity,comment_cos_similarity)
+                column[8] = (name_sub_similarity,name_cos_similarity,comment_cos_similarity)
                 # print(entity, col_name, (name_sub_similarity,name_cos_similarity,comment_cos_similarity))
 
-            col_num_set = set()
-            for col in sorted(schema, key=lambda x: x[8][0], reverse=True)[:4]:
-                # print(col)
-                if col[8][0] > F_COL_THRESHOLD:
-                    col_num_set.add(col[0])
-            # print("=" * 30,"cos_similarity-col_name")
-            for col in sorted(schema, key=lambda x: x[8][1], reverse=True)[:4]:
-                # print(col)
-                if col[8][1] > F_COL_THRESHOLD:
-                    col_num_set.add(col[0])
-            # print("=" * 30,"cos_similarity-comment")
-            for col in sorted(schema, key=lambda x: x[8][2], reverse=True)[:4]:
-                # print(col)
-                if col[8][2] > F_COL_THRESHOLD:
-                    col_num_set.add(col[0])
+            column_num_set = set()
+            for column in sorted(schema, key=lambda x: x[8][0], reverse=True)[:4]:
+                name_sub_similarity = column[8][0]
+                if name_sub_similarity > F_COL_THRESHOLD:
+                    column_num_set.add(column[0])
+            for column in sorted(schema, key=lambda x: x[8][1], reverse=True)[:4]:
+                name_cos_similarity = column[8][1]
+                if name_cos_similarity > F_COL_THRESHOLD:
+                    column_num_set.add(column[0])
+            for column in sorted(schema, key=lambda x: x[8][2], reverse=True)[:4]:
+                comment_cos_similarity = column[8][2]
+                if comment_cos_similarity > F_COL_THRESHOLD:
+                    column_num_set.add(column[0])
 
-            for enum, col in enumerate(schema,start=0):
-                if enum in col_num_set:
-                    col[9] = True
-                    tbl_name_selected.add(col[2])
-                    # print(col)
+            for enum, column in enumerate(schema,start=0):
+                if enum in column_num_set:
+                    column[9] = True
+                    tbl_name = column[2]
+                    tbl_name_selected.add(tbl_name)
 
-    def get_related_value(self, entity_list: list, schema: list, tbl_name_selected: set, db_conn):
+    def get_related_value(
+        self, 
+        entity_list: list, 
+        schema: list, 
+        tbl_name_selected: set, 
+        db_conn
+    ):
         cur = db_conn.cursor()
-        for col in schema:
-            if col[4].lower() == 'text':
-                cur.execute(f"SELECT {col[3]} FROM {col[2]}")
-                value_list = [item[0] for item in cur.fetchall()]
+        for column in schema:
+            col_type = column[4]
+            if col_type.lower() == 'text':
+                tbl_name = column[2]
+                col_name = column[3]
+                cur.execute(f"SELECT {col_name} FROM {tbl_name}")
+                value_datas = cur.fetchall()
+                value_list = [value_data[0] for value_data in value_datas]
 
                 query_results = lsh(entity_list,value_list)
                 if query_results != {}:
                     # print(query_results)
                     value_list = []
-                    for key, values in query_results.items():
-                        embedding_list = get_embedding_list([key] + values)
+                    for entity, values in query_results.items():
+                        embedding_list = get_embedding_list([entity] + values)
                         for enum, value in enumerate(values,start=1):
                             # print(key, value, get_subsequence_similarity(key, value), get_cos_similarity(embedding_list[0], embedding_list[idx]))
-                            if get_subsequence_similarity(key, value) > F_VAL_THRESHOLD \
+                            if get_subsequence_similarity(entity, value) > F_VAL_THRESHOLD \
                             or get_cos_similarity(embedding_list[0], embedding_list[enum]) > F_VAL_THRESHOLD:
                                 value_list.append(value)
                                 
                     if len(value_list) != 0:
-                        value_list = list(dict.fromkeys(value_list))
-                        col[6] = value_list
-                        col[9] = True
-                        tbl_name_selected.add(col[2])
-                        # print(col)
+                        distinct_value_list = list(dict.fromkeys(value_list))
+                        column[6] = distinct_value_list
+                        column[9] = True
+                        tbl_name_selected.add(tbl_name)
 
-    def sel_pf_keys(self, schema: list, tbl_name_selected: set):
-        for col in schema:
-            if (col[1] == 1 and col[2] in tbl_name_selected) \
-            or (col[7] is not None and col[2] in tbl_name_selected):
-                col[9] = True
+    def sel_pf_keys(
+        self, 
+        schema: list, 
+        tbl_name_selected: set
+    ):
+        for column in schema:
+            is_primary_key = column[1]
+            tbl_name = column[2]
+            fk = column[7]
+            if (is_primary_key == 1 and tbl_name in tbl_name_selected) \
+            or (fk is not None and tbl_name in tbl_name_selected):
+                column[9] = True
 
-    def get_schema_str(self, schema: list, tbl_name_selected: set):
-
+    def get_schema_str(
+        self, 
+        schema: list, 
+        tbl_name_selected: set, 
+        need_type: bool = False
+    ) -> str:
         def add_tbl_to_schema_str(tbl_name, schema_str):
             schema_str += "=====\n"
             schema_str += f"Table: {tbl_name}\nColumn:\n"
             return schema_str
 
         def add_col_to_schema_str(column, schema_str):
-            schema_str += "(" + column[3] + ", " + "Comment: " + column[5]
-            if column[6] is not None:
-                schema_str += ", Sample: " + ", ".join(column[6])
-            if column[1] == 1:
+            col_name = column[3]
+            comment = column[5]
+            schema_str += "(" + col_name + ", " + "Comment: " + comment
+            if need_type:
+                col_type = column[4]
+                schema_str += ", Type: " + col_type
+            is_primary_key = column[1]
+            sample = column[6]
+            foreign_key = column[7]
+            if sample is not None:
+                schema_str += ", Sample: " + ", ".join(sample)
+            if is_primary_key == 1:
                 schema_str += ", Primary key"
-            if column[7] is not None and column[7][0] in tbl_name_selected:
-                schema_str += ", Foreign key: references " + column[7][0] + "(" + column[7][1] + ")"
+            if foreign_key is not None and foreign_key[0] in tbl_name_selected:
+                ref_tbl_name = foreign_key[0]
+                ref_col_name = foreign_key[1]
+                schema_str += ", Foreign key: references " + ref_tbl_name + "(" + ref_col_name + ")"
             schema_str += ")\n"
             return schema_str
 
         schema_str = ""
         tbl_now = None
-        for col in schema:
-            if (tbl_now is None or tbl_now != col[2]) and col[2] in tbl_name_selected:
-                schema_str = add_tbl_to_schema_str(tbl_name=col[2],schema_str=schema_str)
-                tbl_now = col[2]
-            if col[9]:
-                schema_str = add_col_to_schema_str(column=col,schema_str=schema_str)
+        for column in schema:
+            tbl_name = column[2]
+            is_selected = column[9]
+            if (tbl_now is None or tbl_now != tbl_name) and tbl_name in tbl_name_selected:
+                schema_str = add_tbl_to_schema_str(tbl_name=tbl_name,schema_str=schema_str)
+                tbl_now = tbl_name
+            if is_selected:
+                schema_str = add_col_to_schema_str(column=column,schema_str=schema_str)
         
         return schema_str
                 
@@ -250,7 +294,7 @@ class Filter(Agent_Base):
     ) -> str:
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
-        answer = get_response_content(response, self.platform)
+        answer = get_response_content(response=response, platform=self.platform)
         print("="*10,"ANSWER","="*10)
         print(answer)
         return answer
@@ -261,16 +305,18 @@ class Filter(Agent_Base):
         schema: list,
         tbl_name_selected: set
     ):
-        for col in schema:
-            col[9] = False
+        for column in schema:
+            column[9] = False
         tbl_name_selected.clear()
 
-        for key, col_list in ans_json.items():
-            if len(col_list) != 0:
-                tbl_name_selected.add(key)
-                for col in schema:
-                    if col[2] == key and col[3] in col_list:
-                        col[9] = True
+        for sel_tbl_name, sel_col_list in ans_json.items():
+            if len(sel_col_list) != 0:
+                tbl_name_selected.add(sel_tbl_name)
+                for column in schema:
+                    tbl_name = column[2]
+                    col_name = column[3]
+                    if tbl_name == sel_tbl_name and col_name in sel_col_list:
+                        column[9] = True
 
     def chat(
         self,
@@ -293,13 +339,13 @@ class Filter(Agent_Base):
             self.get_related_column(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
             self.get_related_value(entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
-            schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
+            schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=False)
             prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])
             ans = self.get_filter_ans(prompt=prompt, llm=llm)
             ans_json = parse_json(ans)
             self.prune_schema(ans_json=ans_json, schema=schema, tbl_name_selected=tbl_name_selected)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
-            new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected)
+            new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=True)
             message["schema"] = new_schema_str
             message["hint"] = hint_str
             message["message_to"] = DECOMPOSER

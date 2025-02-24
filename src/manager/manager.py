@@ -28,22 +28,26 @@ class Manager:
 
         self.url = config.get("db_path", '.')
         self.check_same_thread = config.get("check_same_thread", False)
-        self.db_conn, dialect = connect_to_sqlite(self.url, self.check_same_thread)
+        self.db_conn, self.dialect = connect_to_sqlite(self.url, self.check_same_thread)
         
         self.extractor = Extractor(config)
         self.filter = Filter(config)
         self.decomposer = Decomposer(config)
         self.reviser = Reviser(config)
         self.vectordb = VectorDB(config)
+
+        self.message = None
+
+    def message_init(self):
         self.message = {
             "question": None,
             "entity": None,
-            "dialect": dialect,
+            "dialect": self.dialect,
             "schema": None,
             "hint": None,
             "sql": None,
             "sql_result": None,
-            "message_to": None
+            "message_to": EXTRACTOR
         }
 
     def train_doc(self, path):
@@ -69,33 +73,33 @@ class Manager:
                 content = f.readlines()
                 for line in content:
                     print("="*30)
-                    result_all = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item
+                    expression = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item
                                   for item in list(expr.parseString(line)[0])]
-                    key = result_all[0]
-                    print(result_all)
-                    for num, name in enumerate(result_all[2:],start=2):
-                        if len(name) <= 1:
+                    key = expression[0]
+                    right_hand_size = expression[2:]
+                    for enum, entity in enumerate(right_hand_size,start=2):
+                        if len(entity) <= 1:
                             continue
-                        results = self.vectordb.get_related_key(query_texts=name, extracts=['documents','distances','metadatas'])
-                        print(results)
-                        if len(results['documents']) != 0:
+                        related_keys = self.vectordb.get_related_key(query_texts=entity, extracts=['documents','distances','metadatas'])
+                        print(related_keys)
+                        if len(related_keys['documents']) != 0:
                             threshold = 0.1
                             filtered_keys = [
-                                (f_key, doc_id) for f_key, distance, doc_id in sorted(
-                                    zip(results['documents'], results['distances'], results['metadatas']),
+                                (filtered_key, doc_id) for filtered_key, distance, doc_id in sorted(
+                                    zip(related_keys['documents'], related_keys['distances'], related_keys['metadatas']),
                                     key=lambda x: x[1]
                                 ) if distance < threshold
                             ]
-                            print("Elem:", name)
+                            print("Elem:", entity)
                             print("Rela:", filtered_keys)
                             if len(filtered_keys) > 0:
-                                f_key = filtered_keys[0][0]
+                                filtered_key = filtered_keys[0][0]
                                 doc_id = filtered_keys[0][1]['doc_id']
-                                if f_key != name:
-                                    result_all[num] = f_key
+                                if filtered_key != entity:
+                                    expression[enum] = filtered_key
                                 self.vectordb.add_key(key=key, doc_id=doc_id)
                                 print("="*10)
-                    doc = str(result_all)
+                    doc = str(expression)
                     key_n_doc = key + ": " + doc
                     key_id = deterministic_uuid(key_n_doc) + "-key"
                     doc_id = deterministic_uuid(doc) + "-doc"
@@ -120,6 +124,7 @@ class Manager:
         message: dict = None,
     ):
         if question is not None:
+            self.message_init()
             self.message["question"] = question
         elif message is not None:
             self.message = message
@@ -136,11 +141,11 @@ class Manager:
                 print("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == EXTRACTOR:
-                self.message = self.extractor.chat(self.message, self.llm, self.db_conn)
+                self.message = self.extractor.chat(message=self.message, llm=self.llm, vectordb=self.vectordb, db_conn=self.db_conn)
             elif self.message["message_to"] == FILTER:
-                self.message = self.filter.chat(self.message, self.llm, self.vectordb, self.db_conn)
+                self.message = self.filter.chat(message=self.message, llm=self.llm, vectordb=self.vectordb, db_conn=self.db_conn)
             elif self.message["message_to"] == DECOMPOSER:
-                self.message = self.decomposer.chat(self.message, self.llm)
+                self.message = self.decomposer.chat(message=self.message, llm=self.llm)
             elif self.message["message_to"] == REVISER:
-                self.message = self.reviser.chat(self.message, self.llm, self.db_conn)
+                self.message = self.reviser.chat(message=self.message, llm=self.llm, db_conn=self.db_conn)
         return self.message
