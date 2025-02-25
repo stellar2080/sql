@@ -21,27 +21,31 @@ manager = Manager(
         'vectordb_port': '8000'
     },
 )
-
+        
 # with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev.json')) as f:
 #     data = json.load(f)
-#     for i in range(50):
+#     for i in range(0, 10):
 #         item = data[i]
 #         try:
-#             # message = {
-#             #     "question": item["question"],
-#             #     "extract": None,
-#             #     "sql": None,
-#             #     "schema": None,
-#             #     "hint": None,
-#             #     "message_to": "extractor",
-#             #     "sql_result": None
-#             # }
-#             message = manager.chat(item["question"])
+#             question = item['question'] 
+#             message = manager.chat(question) 
+#             print("="*50)
+#             print(message['question'])
+#             print(message['sql'])
+#             print(message['sql_result'])
+#             # query = item['query']
+#             # cur = manager.db_conn.cursor()
+#             # cur.execute(query)
+#             # result = cur.fetchall()
+#             # print("="*50)
+#             # print(question)
+#             # print(query)
+#             # print(result)
 #         except Exception as e:
 #             print(e)
 
 message = {
-    "question": "I want to know which banks have borrowed more from other financial institutions than their interbank deposits.",
+    "question": "What is the total amount of due from interbank deposits and borrowings from other financial institutions for each bank?",
     "entity": None,
     "dialect": "sqlite",
     "schema": None,
@@ -52,8 +56,9 @@ message = {
 }
 
 if __name__ == '__main__':
-    # message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
-    # message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
-    # message = manager.decomposer.chat(message=message, llm=manager.llm)
-    # message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)
-    manager.chat(message=message)
+#     # message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+#     # message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+#     # message = manager.generator.chat(message=message, llm=manager.llm)
+#     # message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)
+    message = manager.chat(message=message)
+    print(message['sql_result'])

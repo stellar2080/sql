@@ -1,11 +1,11 @@
 from src.agent.agent_base import Agent_Base
 from src.llm.llm_base import LLM_Base
-from src.utils.const import DECOMPOSER, REVISER
-from src.utils.template import decomposer_template, decomposer_hint_template
+from src.utils.const import GENERATOR, REVISER
+from src.utils.template import generator_template_p1, generator_hint_template, generator_template_p2
 from src.utils.utils import parse_sql, user_message, get_response_content, timeout
 
 
-class Decomposer(Agent_Base):
+class Generator(Agent_Base):
     def __init__(
         self, 
         config
@@ -13,7 +13,7 @@ class Decomposer(Agent_Base):
         super().__init__()
         self.platform = config['platform']
 
-    def create_decomposer_prompt(
+    def create_generator_prompt(
         self,
         message: dict
     ) -> str:
@@ -22,15 +22,16 @@ class Decomposer(Agent_Base):
         hint_str = message['hint']
         question = message['question']
         if hint_str == "":
-            prompt = decomposer_template.format(dialect, schema_str, question)
+            prompt = generator_template_p1.format(dialect, schema_str, question) + generator_template_p2
         else:
-            prompt = decomposer_template.format(dialect, schema_str, question) + decomposer_hint_template.format(hint_str)
+            prompt = generator_template_p1.format(dialect, schema_str, question) + \
+            generator_hint_template.format(hint_str) + generator_template_p2
         print("="*10,"PROMPT","="*10)
         print(prompt)
         return prompt
 
-    @timeout(180)
-    def get_decomposer_sql(
+    @timeout(90)
+    def get_generator_sql(
         self,
         prompt: str,
         llm: LLM_Base
@@ -38,6 +39,7 @@ class Decomposer(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
+        print("="*10,"ANSWER","="*10)
         print(answer)
         sql = parse_sql(text=answer)
         return sql
@@ -48,13 +50,13 @@ class Decomposer(Agent_Base):
         message: dict,
         llm: LLM_Base = None
     ) -> dict:
-        if message["message_to"] != DECOMPOSER:
-            raise Exception("The message should not be processed by " + DECOMPOSER + 
+        if message["message_to"] != GENERATOR:
+            raise Exception("The message should not be processed by " + GENERATOR + 
                             ". It is sent to " + message["message_to"])
         else:
-            print("The message is being processed by " + DECOMPOSER + "...")
-            prompt = self.create_decomposer_prompt(message=message)
-            sql = self.get_decomposer_sql(prompt=prompt, llm=llm)
+            # print("The message is being processed by " + GENERATOR + "...")
+            prompt = self.create_generator_prompt(message=message)
+            sql = self.get_generator_sql(prompt=prompt, llm=llm)
             message["sql"] = sql
             message["message_to"] = REVISER
             return message

@@ -1,6 +1,6 @@
 EXTRACTOR = "extractor"
 FILTER = "filter"
-DECOMPOSER = "decomposer"
+GENERATOR = "generator"
 REVISER = "reviser"
 MANAGER = "manager"
 

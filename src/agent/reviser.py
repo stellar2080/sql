@@ -3,7 +3,6 @@ from typing_extensions import override
 
 from src.llm.llm_base import LLM_Base
 from src.utils.const import REVISER, MANAGER, QUERY_MODE
-from src.utils.database_utils import connect_to_sqlite
 from src.utils.template import reviser_template_p1, reviser_template_p2, reviser_hint_template
 from src.utils.utils import parse_sql, user_message, get_response_content, timeout
 from src.agent.agent_base import Agent_Base
@@ -52,7 +51,7 @@ class Reviser(Agent_Base):
         print(prompt)
         return prompt
 
-    @timeout(180)
+    @timeout(90)
     def revise(
         self,
         prompt: str,
@@ -61,6 +60,7 @@ class Reviser(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(llm_message)
         answer = get_response_content(response=response, platform=self.platform)
+        print("="*10,"ANSWER","="*10)
         print(answer)
         new_sql = parse_sql(text=answer)
         return new_sql
@@ -76,7 +76,7 @@ class Reviser(Agent_Base):
             raise Exception("The message should not be processed by " + REVISER +
                              ". It is sent to " + message["message_to"])
         else:
-            print("The message is being processed by " + REVISER + "...")
+            # print("The message is being processed by " + REVISER + "...")
             error_str = ""
             except_flag = False
             sql_result = None
@@ -94,7 +94,6 @@ class Reviser(Agent_Base):
             if except_flag is False:
                 message["message_to"] = MANAGER
                 message["sql_result"] = sql_result
-                print(sql_result)
                 return message
             else:
                 prompt = self.create_reviser_prompt(message,error_str)

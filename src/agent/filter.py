@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import FILTER, DECOMPOSER, F_HINT_THRESHOLD, F_COL_THRESHOLD, F_VAL_THRESHOLD
+from src.utils.const import FILTER, GENERATOR, F_HINT_THRESHOLD, F_COL_THRESHOLD, F_VAL_THRESHOLD
 from src.utils.template import filter_template, filter_hint_template
 from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
     get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
@@ -241,9 +241,14 @@ class Filter(Agent_Base):
                             # print(entity, value, subsequence_similarity, cos_similarity)
                             if subsequence_similarity > threshold or cos_similarity > threshold:
                                     related_value_list.append(value)
+                # print(related_value_list)
                 if len(related_value_list) != 0:
                     distinct_value_list = list(dict.fromkeys(related_value_list))
-                    column[6] = distinct_value_list
+                    column_value_list = column[6]
+                    if column_value_list is None:
+                        column[6] = distinct_value_list
+                    else:
+                        column[6].extend(distinct_value_list)
                     column[9] = True
                     tbl_name_selected.add(tbl_name)
 
@@ -319,7 +324,7 @@ class Filter(Agent_Base):
         print(prompt)
         return prompt
 
-    @timeout(180)
+    @timeout(90)
     def get_filter_ans(
         self,
         prompt: str,
@@ -362,7 +367,7 @@ class Filter(Agent_Base):
             raise Exception("The message should not be processed by " + FILTER +
                             ". It is sent to " + message["message_to"])
         else:
-            print("The message is being processed by " + FILTER + "...")
+            # print("The message is being processed by " + FILTER + "...")
             noun_list = self.parse_nouns(message['question'])
             tbl_name_selected = set()
             hint_list = self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
@@ -372,11 +377,11 @@ class Filter(Agent_Base):
             self.get_related_column(
                 entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
             self.get_related_column(
-                entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,threshold=0.30)
+                entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,threshold=0.35)
             self.get_related_value(
                 entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn)
             self.get_related_value(
-                entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn,use_lsh=False,threshold=0.30)
+                entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn,use_lsh=False,threshold=0.35)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=False)
             prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])
@@ -387,5 +392,5 @@ class Filter(Agent_Base):
             new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=True)
             message["schema"] = new_schema_str
             message["hint"] = hint_str
-            message["message_to"] = DECOMPOSER
+            message["message_to"] = GENERATOR
             return message

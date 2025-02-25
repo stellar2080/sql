@@ -149,7 +149,7 @@ class Extractor(Agent_Base):
         print(prompt)
         return prompt
 
-    @timeout(180)
+    @timeout(90)
     def get_extractor_ans(
         self,
         prompt: str,
@@ -173,7 +173,7 @@ class Extractor(Agent_Base):
             raise Exception("The message should not be processed by " + EXTRACTOR + 
                             ". It is sent to " + message["message_to"])
         else:
-            print("The message is being processed by " + EXTRACTOR + "...")
+            # print("The message is being processed by " + EXTRACTOR + "...")
             schema = self.get_schema(db_conn=db_conn)
             hint_set = self.get_rela_hint_keys(question=message['question'], vectordb=vectordb)
             col_set = self.get_related_column(question=message['question'], schema=schema)

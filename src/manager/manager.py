@@ -1,17 +1,18 @@
 import os
-
+import sqlite3
+from urllib.parse import urlparse
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums, Suppress
+import requests
 
 from src.llm.api import Api
 from src.agent.extractor import Extractor
 from src.agent.filter import Filter
-from src.agent.decomposer import Decomposer
+from agent.generator import Generator
 from src.agent.reviser import Reviser
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
-from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, DECOMPOSER, EXTRACTOR
-from src.utils.database_utils import connect_to_sqlite
+from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, GENERATOR, EXTRACTOR
 
 
 class Manager:
@@ -28,11 +29,11 @@ class Manager:
 
         self.url = config.get("db_path", '.')
         self.check_same_thread = config.get("check_same_thread", False)
-        self.db_conn, self.dialect = connect_to_sqlite(self.url, self.check_same_thread)
+        self.db_conn, self.dialect = self.connect_to_sqlite(self.url, self.check_same_thread)
         
         self.extractor = Extractor(config)
         self.filter = Filter(config)
-        self.decomposer = Decomposer(config)
+        self.generator = Generator(config)
         self.reviser = Reviser(config)
         self.vectordb = VectorDB(config)
 
@@ -49,6 +50,26 @@ class Manager:
             "sql_result": None,
             "message_to": EXTRACTOR
         }
+
+    def connect_to_sqlite(
+        self,
+        url: str,
+        check_same_thread: bool = False,
+        **kwargs
+    ):
+        if not os.path.exists(url):
+            path = os.path.basename(urlparse(url).path)
+            response = requests.get(url)
+            response.raise_for_status()
+            with open(path, "wb") as f:
+                f.write(response.content)
+        conn = sqlite3.connect(
+            url,
+            check_same_thread=check_same_thread,
+            **kwargs
+        )
+        dialect = "sqlite"
+        return conn, dialect
 
     def train_doc(self, path):
         if not os.path.exists(path):
@@ -132,20 +153,20 @@ class Manager:
             raise Exception("Please provide a question or a message")
 
         for i in range(1, MAX_ITERATIONS+1):
-            print("ITERATION {}".format(i))
+            # print("ITERATION {}".format(i))
             # print("MESSAGE: " + str(self.message))
             if i == 0 and self.message["message_to"] is None:
                 self.message["message_to"] = EXTRACTOR
 
             if self.message["message_to"] == MANAGER:
-                print("The message is begin processed by manager...")
+                # print("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == EXTRACTOR:
                 self.message = self.extractor.chat(message=self.message, llm=self.llm, vectordb=self.vectordb, db_conn=self.db_conn)
             elif self.message["message_to"] == FILTER:
                 self.message = self.filter.chat(message=self.message, llm=self.llm, vectordb=self.vectordb, db_conn=self.db_conn)
-            elif self.message["message_to"] == DECOMPOSER:
-                self.message = self.decomposer.chat(message=self.message, llm=self.llm)
+            elif self.message["message_to"] == GENERATOR:
+                self.message = self.generator.chat(message=self.message, llm=self.llm)
             elif self.message["message_to"] == REVISER:
                 self.message = self.reviser.chat(message=self.message, llm=self.llm, db_conn=self.db_conn)
         return self.message
