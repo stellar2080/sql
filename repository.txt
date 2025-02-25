@@ -1,5 +1,5 @@
 the debt to asset ratio = total liabilities / total assets
-current assets = cash and deposits with central bank + due from interbank deposits + noble metal + trading financial assets + derivative financial assets + purchase of resale financial assets + interest receivable + issuance of loans and advances + available for sale financial assets + accounts receivable investment
+current assets = cash and deposits with central bank + due from interbank deposits + noble metal + trading financial assets + derivative financial assets + purchase of resale financial assets + interest receivable + issuance of loans and advances + available_for_sale financial assets + accounts receivable investment
 current liabilities = deposit absorption + payable employee compensation + taxes and fees payable + interest payable + estimated liabilities + other liabilities
 current ratio = current asset / current liabilities
 equity ratio = total owner's equity / total assets
@@ -23,3 +23,7 @@ cash flow adequacy ratio = net cash flow generated from operating activities / (
 net assets = total owner's equity
 total stockholder's equity = total owner's equity
 shareholder's equity = total owner's equity
+non_interest income = operating income - net interest income
+Loan_to_deposit ratio = Loans and advances / Deposit absorption
+total cash outflow = cash outflow from operational activities + cash outflow from investments activities  + cash outflow from financing activities
+total cash inflow = cash inflow from operational activities + cash inflow from investments activities + cash inflow from financing activities

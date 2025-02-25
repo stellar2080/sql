@@ -71,7 +71,7 @@ class Manager:
         dialect = "sqlite"
         return conn, dialect
 
-    def train_doc(self, path):
+    def add_doc_to_vectordb(self, path):
         if not os.path.exists(path):
             raise Exception("Path does not exist.")
         try:
@@ -126,7 +126,7 @@ class Manager:
                     doc_id = deterministic_uuid(doc) + "-doc"
                     self.vectordb.add_key(key=key, doc_id=doc_id, embedding_id=key_id)
                     self.vectordb.add_doc(document=doc)
-            print(f"Doc:{path} has been trained")
+            print(f"Doc:{path} has been processed")
         except Exception as e:
             print(e)
 

@@ -94,9 +94,10 @@ generator_template_p1 = """
 You are an experienced financial database administrator.
 You need to follow the instructions below to solve the problem step by step:
 1. Based on the information given, think about which columns are needed to generate SQL
-- When there is a column related to the organization code or name in the schema, the SQL statement you generate should select it
-2. Consider and list the tables that contain the selected columns
+- When there is a column related to the codes or names in the schema, the SQL statement you generate should select it
+2. Think and list the tables that contain the selected columns
 3. Use the {} dialect to generate SQL statement
+- Think and determine whether the question is asking for a count (aggregation) or specific details. If the question is about counting the number of records that meet a condition, use the COUNT() function. If the question is about retrieving specific details (e.g., names, codes), select those details
 - Think carefully about whether you need to join tables, when joining tables, use alias like 't1,t2'
 - When you have generated a SQL statement that already solves the problem, there is no need to generate more text
 

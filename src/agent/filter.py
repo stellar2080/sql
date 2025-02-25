@@ -320,8 +320,8 @@ class Filter(Agent_Base):
             prompt = filter_template.format(schema_str, question)
         else:
             prompt = filter_template.format(schema_str, question) + filter_hint_template.format(hint_str)
-        print("="*10,"PROMPT","="*10)
-        print(prompt)
+        # print("="*10,"PROMPT","="*10)
+        # print(prompt)
         return prompt
 
     @timeout(90)
@@ -333,8 +333,8 @@ class Filter(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
-        print("="*10,"ANSWER","="*10)
-        print(answer)
+        # print("="*10,"ANSWER","="*10)
+        # print(answer)
         return answer
 
     def prune_schema(

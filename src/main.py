@@ -21,44 +21,48 @@ manager = Manager(
         'vectordb_port': '8000'
     },
 )
+
+# manager.add_doc_to_vectordb(os.path.join(ROOT_PATH,"repository.txt"))
         
-# with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev.json')) as f:
-#     data = json.load(f)
-#     for i in range(0, 10):
-#         item = data[i]
-#         try:
-#             question = item['question'] 
-#             message = manager.chat(question) 
-#             print("="*50)
-#             print(message['question'])
-#             print(message['sql'])
-#             print(message['sql_result'])
-#             # query = item['query']
-#             # cur = manager.db_conn.cursor()
-#             # cur.execute(query)
-#             # result = cur.fetchall()
-#             # print("="*50)
-#             # print(question)
-#             # print(query)
-#             # print(result)
-#         except Exception as e:
-#             print(e)
+with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev_copy.json')) as f:
+    data = json.load(f)
+    for i in range(60, 80):
+        item = data[i]
+        try:
+            print("="*50)
+            question = item['question'] 
+            message = manager.chat(question) 
+            print(question)
+            print(message['sql'])
+            print(message['sql_result'])
+            print("="*30)
+            query = item['query']
+            cur = manager.db_conn.cursor()
+            cur.execute(query)
+            result = cur.fetchall()
+            print(question)
+            print(query)
+            print(result)
+            print("="*50)
+        except Exception as e:
+            print(e)
 
-message = {
-    "question": "What is the total amount of due from interbank deposits and borrowings from other financial institutions for each bank?",
-    "entity": None,
-    "dialect": "sqlite",
-    "schema": None,
-    "hint": None,
-    "sql": None,
-    "sql_result": None,
-    "message_to": "extractor"
-}
+# message = {
+#     "question": "Which bank holds the amount of precious metal assets closest to the average level?",
+#     "entity": None,
+#     "dialect": "sqlite",
+#     "schema": None,
+#     "hint": None,
+#     "sql": None,
+#     "sql_result": None,
+#     "message_to": "extractor"
+# }
 
-if __name__ == '__main__':
-#     # message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
-#     # message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
-#     # message = manager.generator.chat(message=message, llm=manager.llm)
-#     # message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)
-    message = manager.chat(message=message)
-    print(message['sql_result'])
+# if __name__ == '__main__':
+# #     # message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+# #     # message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+# #     # message = manager.generator.chat(message=message, llm=manager.llm)
+# #     # message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)
+#     message = manager.chat(message=message)
+#     print(message['sql'])
+#     print(message['sql_result'])

@@ -145,8 +145,8 @@ class Extractor(Agent_Base):
             prompt = extractor_template.format(question)
         else:
             prompt = extractor_template.format(question) + extractor_hint_template.format(hint_entity_set)
-        print("="*10,"PROMPT","="*10)
-        print(prompt)
+        # print("="*10,"PROMPT","="*10)
+        # print(prompt)
         return prompt
 
     @timeout(90)
@@ -158,8 +158,8 @@ class Extractor(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
-        print("="*10,"ANSWER","="*10)
-        print(answer)
+        # print("="*10,"ANSWER","="*10)
+        # print(answer)
         return answer
 
     def chat(

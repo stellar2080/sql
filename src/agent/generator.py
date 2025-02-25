@@ -26,8 +26,8 @@ class Generator(Agent_Base):
         else:
             prompt = generator_template_p1.format(dialect, schema_str, question) + \
             generator_hint_template.format(hint_str) + generator_template_p2
-        print("="*10,"PROMPT","="*10)
-        print(prompt)
+        # print("="*10,"PROMPT","="*10)
+        # print(prompt)
         return prompt
 
     @timeout(90)
@@ -39,8 +39,8 @@ class Generator(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
-        print("="*10,"ANSWER","="*10)
-        print(answer)
+        # print("="*10,"ANSWER","="*10)
+        # print(answer)
         sql = parse_sql(text=answer)
         return sql
 
