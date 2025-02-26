@@ -136,17 +136,35 @@ class Extractor(Agent_Base):
 
         return value_set
 
+    def get_hint_str(
+        self,
+        entity_set
+    ) -> str:
+        hint_str = ""
+        if len(entity_set) == 0:
+            return hint_str
+        hint_str += "{"
+        entity_list = list(entity_set)
+        length = len(entity_list)
+        for idx in range(length):
+            entity = entity_list[idx]
+            hint_str += '"' + entity + '"'
+            if idx != length - 1:
+                hint_str += ", "
+        hint_str += "}"
+        return hint_str
+
     def create_extractor_prompt(
         self,
         question: str,
-        hint_entity_set: set
+        hint_str: set
     ) -> str:
-        if len(hint_entity_set) == 0:
+        if len(hint_str) == "":
             prompt = extractor_template.format(question)
         else:
-            prompt = extractor_template.format(question) + extractor_hint_template.format(hint_entity_set)
-        # print("="*10,"PROMPT","="*10)
-        # print(prompt)
+            prompt = extractor_template.format(question) + extractor_hint_template.format(hint_str)
+        print("="*10,"PROMPT","="*10)
+        print(prompt)
         return prompt
 
     @timeout(90)
@@ -158,8 +176,8 @@ class Extractor(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
-        # print("="*10,"ANSWER","="*10)
-        # print(answer)
+        print("="*10,"ANSWER","="*10)
+        print(answer)
         return answer
 
     def chat(
@@ -179,7 +197,8 @@ class Extractor(Agent_Base):
             col_set = self.get_related_column(question=message['question'], schema=schema)
             value_set = self.get_related_value(question=message['question'], schema=schema, db_conn=db_conn)
             entity_set = hint_set | col_set | value_set
-            prompt = self.create_extractor_prompt(question=message["question"], hint_entity_set=entity_set)
+            hint_str = self.get_hint_str(entity_set=entity_set)
+            prompt = self.create_extractor_prompt(question=message["question"], hint_str=hint_str)
             ans = self.get_extractor_ans(prompt=prompt, llm=llm)
             ans_list = parse_list(text=ans)
             distinct_ans_list = list(dict.fromkeys(ans_list))

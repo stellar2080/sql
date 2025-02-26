@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from urllib.parse import urlparse
-from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums, Suppress
+from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
 import requests
 
 from src.llm.api import Api
@@ -14,6 +14,20 @@ from src.vectordb.vectordb import VectorDB
 from src.utils.utils import deterministic_uuid
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, GENERATOR, EXTRACTOR
 
+special_chars = "'_,."
+word = Word(alphas + nums + special_chars)
+identifier = Combine(word + ZeroOrMore(White(" ") + word))
+
+eq_1 = Word("=")
+operator_1 = oneOf("+ - * /")
+lparen_1 = Word("(")
+rparen_1 = Word(")")
+
+expr = Group(
+    identifier + eq_1 + OneOrMore(
+        Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
+    )
+)
 
 class Manager:
     def __init__(self,config=None):
@@ -71,31 +85,30 @@ class Manager:
         dialect = "sqlite"
         return conn, dialect
 
+    def parse_expression(
+        self,
+        s: str
+    ):
+        try:
+            result_list = expr.parseString(s)[0]
+            return result_list
+        except Exception as e:
+            return -1
+
     def add_doc_to_vectordb(self, path):
         if not os.path.exists(path):
             raise Exception("Path does not exist.")
         try:
-            special_chars = "'_,."
-            word = Word(alphas + nums + special_chars)
-            identifier = Combine(word + ZeroOrMore(White(" ") + word))
-
-            eq_1 = Word("=")
-            operator_1 = oneOf("+ - * /")
-            lparen_1 = Word("(")
-            rparen_1 = Word(")")
-
-            expr = Group(
-                identifier + eq_1 + OneOrMore(
-                    Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
-                )
-            )
-
             with open(path, mode="r") as f:
                 content = f.readlines()
                 for line in content:
                     print("="*30)
-                    expression = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item
-                                  for item in list(expr.parseString(line)[0])]
+                    result = self.parse_expression(line)
+                    if result == -1:
+                        self.vectordb.add_tip(tip=line)
+                        continue
+                    else:
+                        expression = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item for item in result]
                     key = expression[0]
                     right_hand_size = expression[2:]
                     for enum, entity in enumerate(right_hand_size,start=2):
@@ -166,7 +179,7 @@ class Manager:
             elif self.message["message_to"] == FILTER:
                 self.message = self.filter.chat(message=self.message, llm=self.llm, vectordb=self.vectordb, db_conn=self.db_conn)
             elif self.message["message_to"] == GENERATOR:
-                self.message = self.generator.chat(message=self.message, llm=self.llm)
+                self.message = self.generator.chat(message=self.message, llm=self.llm, vectordb=self.vectordb)
             elif self.message["message_to"] == REVISER:
                 self.message = self.reviser.chat(message=self.message, llm=self.llm, db_conn=self.db_conn)
         return self.message

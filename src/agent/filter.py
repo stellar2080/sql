@@ -59,12 +59,14 @@ class Filter(Agent_Base):
         self,
         hint_list: list,
         entity_list: list,
-    ) -> tuple[str, list]:
+    ) -> tuple[str, list, list]:
         hint_str = ""
+        proc_hint_list = []
         if len(hint_list) != 0:
             for enum, hint in enumerate(hint_list,start=1):
                 express_list = parse_list(hint)
                 expression = " ".join(express_list)
+                proc_hint_list.append(expression)
                 hint_str += f"[{enum}] " + expression + "\n"
 
                 for i in range(0, len(express_list)):
@@ -72,7 +74,7 @@ class Filter(Agent_Base):
                     if len(entity) > 1:
                         entity_list.append(entity)
             
-        return hint_str, entity_list
+        return hint_str, entity_list, proc_hint_list
 
     def get_schema(
         self,
@@ -320,8 +322,8 @@ class Filter(Agent_Base):
             prompt = filter_template.format(schema_str, question)
         else:
             prompt = filter_template.format(schema_str, question) + filter_hint_template.format(hint_str)
-        # print("="*10,"PROMPT","="*10)
-        # print(prompt)
+        print("="*10,"PROMPT","="*10)
+        print(prompt)
         return prompt
 
     @timeout(90)
@@ -333,8 +335,8 @@ class Filter(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
-        # print("="*10,"ANSWER","="*10)
-        # print(answer)
+        print("="*10,"ANSWER","="*10)
+        print(answer)
         return answer
 
     def prune_schema(
@@ -371,7 +373,7 @@ class Filter(Agent_Base):
             noun_list = self.parse_nouns(message['question'])
             tbl_name_selected = set()
             hint_list = self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
-            hint_str, entity_list = self.process_hint_list(hint_list=hint_list, entity_list=message['entity'])
+            hint_str, entity_list, proc_hint_list = self.process_hint_list(hint_list=hint_list, entity_list=message['entity'])
             schema = self.get_schema(db_conn=db_conn)
             self.add_fk_to_schema(schema=schema,db_conn=db_conn)
             self.get_related_column(
@@ -391,6 +393,6 @@ class Filter(Agent_Base):
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=True)
             message["schema"] = new_schema_str
-            message["hint"] = hint_str
+            message["hint"] = proc_hint_list
             message["message_to"] = GENERATOR
             return message

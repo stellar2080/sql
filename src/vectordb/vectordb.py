@@ -7,7 +7,10 @@ from src.utils.utils import deterministic_uuid
 from ..utils.const import N_RESULTS_KEY
 
 class VectorDB(VectorDB_Base):
-    def __init__(self, config):
+    def __init__(
+        self, 
+        config
+    ):
         super().__init__(config)
 
         path = config.get("vectordb_path", None)
@@ -43,14 +46,28 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
+        self.tip_collection = self.chroma_client.get_or_create_collection(
+            name="tip",
+            embedding_function=self.embedding_function,
+            metadata={"hnsw:space": "cosine"},
+        )
 
-    def generate_embedding(self, data:str, **kwargs):
+    def generate_embedding(
+        self, 
+        data:str, 
+        **kwargs
+    ):
         embedding = self.embedding_function([data])
         if len(embedding) == 1:
             return embedding[0]
         return embedding
 
-    def add_doc(self, document: str, embedding_id: str = None, **kwargs):
+    def add_doc(
+        self, 
+        document: str, 
+        embedding_id: str = None, 
+        **kwargs
+    ):
         if embedding_id is None:
             embedding_id = deterministic_uuid(document) + "-doc"
         else:
@@ -62,7 +79,13 @@ class VectorDB(VectorDB_Base):
         )
         print("Add_doc: ", document, " ID: ", embedding_id)
 
-    def add_key(self, key: str, doc_id: str, embedding_id: str = None, **kwargs):
+    def add_key(
+        self, 
+        key: str, 
+        doc_id: str, 
+        embedding_id: str = None, 
+        **kwargs
+    ):
         if embedding_id is None:
             doc = self.document_collection.get(ids=[doc_id])['documents'][0]
             key_n_doc = key + ": " + doc
@@ -75,17 +98,45 @@ class VectorDB(VectorDB_Base):
         )
         print("Add_key: ", key, " Doc_id: ", doc_id)
 
-    def remove_data(self, embedding_id: str, **kwargs) -> bool:
+    def add_tip(
+        self, 
+        tip: str, 
+        embedding_id: str = None, 
+        **kwargs
+    ):
+        if embedding_id is None:
+            embedding_id = deterministic_uuid(tip) + "-tip"
+        else:
+            embedding_id = embedding_id
+        self.tip_collection.add(
+            ids=embedding_id,
+            documents=tip,
+            embeddings=self.generate_embedding(tip),
+        )
+        print("Add_tip: ", tip, " ID: ", embedding_id)
+
+    def remove_data(
+        self, 
+        embedding_id: str, 
+        **kwargs
+    ) -> bool:
         if embedding_id.endswith("-key"):
             self.key_collection.delete(ids=[embedding_id])
             return True
         elif embedding_id.endswith("-doc"):
             self.document_collection.delete(ids=[embedding_id])
             return True
+        elif embedding_id.endswith("-tip"):
+            self.tip_collection.delete(ids=[embedding_id])
+            return True
         else:
             return False
 
-    def extract_query_results(self,query_results, extracts) -> dict:
+    def extract_query_results(
+        self,
+        query_results, 
+        extracts
+    ) -> dict:
         if query_results is None:
             return {}
         extracted_results = {}
@@ -105,9 +156,16 @@ class VectorDB(VectorDB_Base):
 
         return extracted_results
 
-    def get_related_doc(self, query_texts, n_results, extracts=None, **kwargs) -> dict:
+    def get_related_doc(
+        self, 
+        query_texts, 
+        n_results, 
+        extracts=None, 
+        **kwargs
+    ) -> dict:
         if extracts is None:
             extracts = 'documents'
+        n_results = N_RESULTS_KEY if not n_results else n_results
         return self.extract_query_results(
             self.document_collection.query(
                 query_texts=query_texts,
@@ -116,12 +174,36 @@ class VectorDB(VectorDB_Base):
             extracts=extracts
         )
 
-    def get_related_key(self, query_texts, n_results=None, extracts=None, **kwargs) -> dict:
+    def get_related_key(
+        self, 
+        query_texts, 
+        n_results=None, 
+        extracts=None, 
+        **kwargs
+    ) -> dict:
         if extracts is None:
             extracts = 'documents'
         n_results = N_RESULTS_KEY if not n_results else n_results
         return self.extract_query_results(
             self.key_collection.query(
+                query_texts=query_texts,
+                n_results=n_results,
+            ),
+            extracts=extracts
+        )
+    
+    def get_related_tip(
+        self, 
+        query_texts, 
+        n_results=None, 
+        extracts=None, 
+        **kwargs
+    ) -> dict:
+        if extracts is None:
+            extracts = 'documents'
+        n_results = N_RESULTS_KEY if not n_results else n_results
+        return self.extract_query_results(
+            self.tip_collection.query(
                 query_texts=query_texts,
                 n_results=n_results,
             ),
@@ -147,6 +229,7 @@ class VectorDB(VectorDB_Base):
         try:
             self.chroma_client.delete_collection(name="document")
             self.chroma_client.delete_collection(name="key")
+            self.chroma_client.delete_collection(name="tip")
 
             self.chroma_client.create_collection(
                 name="document",
@@ -155,6 +238,11 @@ class VectorDB(VectorDB_Base):
             )
             self.chroma_client.create_collection(
                 name="key",
+                embedding_function=self.embedding_function,
+                metadata={"hnsw:space": "cosine"},
+            )
+            self.chroma_client.create_collection(
+                name="tip",
                 embedding_function=self.embedding_function,
                 metadata={"hnsw:space": "cosine"},
             )

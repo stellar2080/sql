@@ -2,7 +2,8 @@ extractor_template = """
 You are an expert in the field of finance and database.
 You need to follow the instructions below to solve the problem step by step:
 1. Identify and extract any key entities from the text that can help with financial database queries
-2. Format the answer in the same Python list format as the [Answer] part of the example
+2. If given a hint, list the entities relevant to the text in the hint
+3. Combine the answer and format it in the same Python list format as the [Answer] part of the example
 - When you have generated a list which already solves the problem, there is no need to generate more text
 
 Example 1:
@@ -10,9 +11,9 @@ Example 1:
 Tell me all company names.
 [Hint]
 Here are some entity names for reference:
-{{'China Construction Bank', 'China Mingsheng Bank', 'Securities Name'}}
+{{"operating income", "cash inflow", "Securities Name"}}
 [Answer]
-['company names']
+["company names", "Securities Name"]
 This list already solves the problem, so there is no need to continue generating text.
 
 Example 2:
@@ -20,9 +21,9 @@ Example 2:
 I want to know the working capital and current ratio of Huaxia Bank.
 [Hint]
 Here are some entity names for reference:
-{{'Total Assets', 'Working capital', 'Current ratio', 'current assets', 'return on assets'}}
+{{"Total Assets", "Current ratio", "current assets", "return on assets"}}
 [Answer]
-['working capital','current ratio','Huaxia Bank']
+["working capital", "Current ratio", "Huaxia Bank"]
 This list already solves the problem, so there is no need to continue generating text.
 
 Please start solving the problem:

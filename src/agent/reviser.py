@@ -47,8 +47,8 @@ class Reviser(Agent_Base):
             prompt = reviser_template_p1.format(dialect, schema_str, question) + \
                 reviser_hint_template.format(hint_str) + \
                 reviser_template_p2.format(sql, sqlite_error)
-        # print("="*10,"PROMPT","="*10)
-        # print(prompt)
+        print("="*10,"PROMPT","="*10)
+        print(prompt)
         return prompt
 
     @timeout(90)
@@ -60,8 +60,8 @@ class Reviser(Agent_Base):
         llm_message = [user_message(prompt)]
         response = llm.call(llm_message)
         answer = get_response_content(response=response, platform=self.platform)
-        # print("="*10,"ANSWER","="*10)
-        # print(answer)
+        print("="*10,"ANSWER","="*10)
+        print(answer)
         new_sql = parse_sql(text=answer)
         return new_sql
 
