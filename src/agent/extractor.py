@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import E_HINT_THRESHOLD, E_COL_THRESHOLD, E_VAL_THRESHOLD, EXTRACTOR, FILTER
+from src.utils.const import E_HINT_THRESHOLD, E_COL_THRESHOLD, E_COL_STRONG_THRESHOLD, E_VAL_THRESHOLD, E_VAL_STRONG_THRESHOLD, EXTRACTOR, FILTER
 from src.utils.template import extractor_template, extractor_hint_template
 from src.utils.utils import get_cos_similarity, get_embedding, get_embedding_list, user_message, get_response_content, timeout, parse_list
 from src.agent.agent_base import Agent_Base
@@ -78,8 +78,9 @@ class Extractor(Agent_Base):
         self,
         question: str,
         schema
-    ) -> set:
+    ) -> tuple[set,set]:
         column_set = set()
+        strong_rala_set = set()
 
         col_name_list = []
         comment_list = []
@@ -98,26 +99,34 @@ class Extractor(Agent_Base):
             column[4] = (name_cos_similarity,comment_cos_similarity)
             # print(column[1], (name_cos_similarity,comment_cos_similarity))
 
-        for column in sorted(schema, key=lambda x: x[4][0], reverse=True)[:10]:
+        sort_schema = sorted(schema, key=lambda x: x[4][0], reverse=True)[:10]
+        for enum, column in enumerate(sort_schema, start=0):
             name_cos_similarity = column[4][0]
-            col_name = column[1]
+            col_name = column[1]       
             if name_cos_similarity > E_COL_THRESHOLD:
                 column_set.add(col_name)
-        for column in sorted(schema, key=lambda x: x[4][1], reverse=True)[:10]:
+                if name_cos_similarity > E_COL_STRONG_THRESHOLD:
+                    strong_rala_set.add(col_name)
+                
+        sort_schema = sorted(schema, key=lambda x: x[4][1], reverse=True)[:10]
+        for enum, column in enumerate(sort_schema, start=0):
             comment_cos_similarity = column[4][1]
             comment = column[3]
             if comment_cos_similarity > E_COL_THRESHOLD:
                 column_set.add(comment)
+                if comment_cos_similarity > E_COL_STRONG_THRESHOLD:
+                    strong_rala_set.add(col_name)
 
-        return column_set
+        return column_set, strong_rala_set
 
     def get_related_value(
         self, 
         question: str,
         schema: list,
         db_conn
-    ) -> set:
+    ) -> tuple[set,set]:
         value_set = set()
+        strong_rala_set = set()
         cur = db_conn.cursor()
         for column in schema:
             tbl_name = column[0]
@@ -131,10 +140,13 @@ class Extractor(Agent_Base):
                 question_embedding = get_embedding(question)
                 value_embeddings = get_embedding_list(value_list)
                 for enum, value in enumerate(value_list, start=0):
-                    if get_cos_similarity(vec1=question_embedding, vec2=value_embeddings[enum]) > E_VAL_THRESHOLD:
-                            value_set.add(value)
+                    cos_similarity = get_cos_similarity(vec1=question_embedding, vec2=value_embeddings[enum])
+                    if cos_similarity > E_VAL_THRESHOLD:
+                        value_set.add(value)
+                        if cos_similarity > E_VAL_STRONG_THRESHOLD:
+                            strong_rala_set.add(value)
 
-        return value_set
+        return value_set, strong_rala_set
 
     def get_hint_str(
         self,
@@ -194,13 +206,16 @@ class Extractor(Agent_Base):
             # print("The message is being processed by " + EXTRACTOR + "...")
             schema = self.get_schema(db_conn=db_conn)
             hint_set = self.get_rela_hint_keys(question=message['question'], vectordb=vectordb)
-            col_set = self.get_related_column(question=message['question'], schema=schema)
-            value_set = self.get_related_value(question=message['question'], schema=schema, db_conn=db_conn)
+            col_set, strong_rela_col_set = self.get_related_column(question=message['question'], schema=schema)
+            value_set, strong_rela_value_set = self.get_related_value(question=message['question'], schema=schema, db_conn=db_conn)
             entity_set = hint_set | col_set | value_set
+            strong_rela_set = strong_rela_col_set | strong_rela_value_set
+            strong_rela_list = list(strong_rela_set)
             hint_str = self.get_hint_str(entity_set=entity_set)
             prompt = self.create_extractor_prompt(question=message["question"], hint_str=hint_str)
             ans = self.get_extractor_ans(prompt=prompt, llm=llm)
             ans_list = parse_list(text=ans)
+            ans_list.extend(strong_rela_list)
             distinct_ans_list = list(dict.fromkeys(ans_list))
             message["entity"] = distinct_ans_list
             message["message_to"] = FILTER

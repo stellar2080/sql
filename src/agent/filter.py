@@ -1,5 +1,5 @@
 from src.llm.llm_base import LLM_Base
-from src.utils.const import FILTER, GENERATOR, F_HINT_THRESHOLD, F_COL_THRESHOLD, F_VAL_THRESHOLD
+from src.utils.const import F_COL_STRONG_THRESHOLD, F_VAL_STRONG_THRESHOLD, FILTER, GENERATOR, F_HINT_THRESHOLD, F_COL_THRESHOLD, F_VAL_THRESHOLD
 from src.utils.template import filter_template, filter_hint_template
 from src.utils.utils import parse_json, user_message, get_response_content, timeout, \
     get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
@@ -155,7 +155,7 @@ class Filter(Agent_Base):
         schema: list, 
         tbl_name_selected: set,
         threshold: float = None
-    ):
+    ) -> set:
         if threshold is None:
             threshold = F_COL_THRESHOLD
         col_name_list = []
@@ -170,6 +170,7 @@ class Filter(Agent_Base):
         col_name_embeddings = get_embedding_list(col_name_list)
         comment_embeddings = get_embedding_list(comment_list)
         
+        strong_rela_num_set = set()
         for enum, entity in enumerate(entity_list, start=0):
             entity_embedding = entity_embeddings[enum]
             for cnum, column in enumerate(schema, start=0):
@@ -183,22 +184,35 @@ class Filter(Agent_Base):
             column_num_set = set()
             for column in sorted(schema, key=lambda x: x[8][0], reverse=True)[:4]:
                 name_sub_similarity = column[8][0]
+                column_idx = column[0]
                 if name_sub_similarity > threshold:
-                    column_num_set.add(column[0])
+                    column_num_set.add(column_idx)
+                    if name_sub_similarity > F_COL_STRONG_THRESHOLD:
+                        strong_rela_num_set.add(column_idx)
+                
             for column in sorted(schema, key=lambda x: x[8][1], reverse=True)[:4]:
                 name_cos_similarity = column[8][1]
+                column_idx = column[0]
                 if name_cos_similarity > threshold:
-                    column_num_set.add(column[0])
+                    column_num_set.add(column_idx)
+                    if name_cos_similarity > F_COL_STRONG_THRESHOLD:
+                        strong_rela_num_set.add(column_idx)
             for column in sorted(schema, key=lambda x: x[8][2], reverse=True)[:4]:
                 comment_cos_similarity = column[8][2]
+                column_idx = column[0]
                 if comment_cos_similarity > threshold:
-                    column_num_set.add(column[0])
+                    column_num_set.add(column_idx)
+                    if comment_cos_similarity > F_COL_STRONG_THRESHOLD:
+                        strong_rela_num_set.add(column_idx)
 
             for enum, column in enumerate(schema,start=0):
                 if enum in column_num_set:
                     column[9] = True
                     tbl_name = column[2]
                     tbl_name_selected.add(tbl_name)
+
+        return strong_rela_num_set
+
 
     def get_related_value(
         self, 
@@ -208,11 +222,13 @@ class Filter(Agent_Base):
         db_conn,
         use_lsh: bool = True,
         threshold: float = None
-    ):
+    ) -> set:
         if threshold is None:
             threshold = F_VAL_THRESHOLD
+        strong_rela_num_set = set()
         cur = db_conn.cursor()
         for column in schema:
+            column_idx = column[0]
             col_type = column[4]
             if col_type.lower() == 'text':
                 tbl_name = column[2]
@@ -233,6 +249,8 @@ class Filter(Agent_Base):
                                 # print(entity, value, subsequence_similarity, cos_similarity)
                                 if subsequence_similarity > threshold or cos_similarity > threshold:
                                     related_value_list.append(value)
+                                    if subsequence_similarity > F_VAL_STRONG_THRESHOLD or cos_similarity > F_VAL_STRONG_THRESHOLD:
+                                        strong_rela_num_set.add(column_idx)
                 else:
                     entity_embeddings = get_embedding_list(entity_list)
                     value_embeddings = get_embedding_list(value_list)
@@ -242,7 +260,9 @@ class Filter(Agent_Base):
                             cos_similarity = get_cos_similarity(entity_embeddings[enum], value_embeddings[vnum])
                             # print(entity, value, subsequence_similarity, cos_similarity)
                             if subsequence_similarity > threshold or cos_similarity > threshold:
-                                    related_value_list.append(value)
+                                related_value_list.append(value)
+                                if subsequence_similarity > F_VAL_STRONG_THRESHOLD or cos_similarity > F_VAL_STRONG_THRESHOLD:
+                                    strong_rela_num_set.add(column_idx)
                 # print(related_value_list)
                 if len(related_value_list) != 0:
                     distinct_value_list = list(dict.fromkeys(related_value_list))
@@ -254,18 +274,9 @@ class Filter(Agent_Base):
                     column[9] = True
                     tbl_name_selected.add(tbl_name)
 
-    def sel_pf_keys(
-        self, 
-        schema: list, 
-        tbl_name_selected: set
-    ):
-        for column in schema:
-            is_primary_key = column[1]
-            tbl_name = column[2]
-            fk = column[7]
-            if (is_primary_key == 1 and tbl_name in tbl_name_selected) \
-            or (fk is not None and tbl_name in tbl_name_selected):
-                column[9] = True
+        return strong_rela_num_set
+    
+
 
     def get_schema_str(
         self, 
@@ -358,6 +369,30 @@ class Filter(Agent_Base):
                     if tbl_name == sel_tbl_name and col_name in sel_col_list:
                         column[9] = True
 
+    def add_strong_rela_column(
+        self,
+        schema: list,
+        strong_rela_num_set: set
+    ):
+        for column in schema:
+            column_idx = column[0]
+            if column_idx in strong_rela_num_set:
+                print(column[2],column[3])
+                column[9] = True
+
+    def sel_pf_keys(
+        self, 
+        schema: list, 
+        tbl_name_selected: set
+    ):
+        for column in schema:
+            is_primary_key = column[1]
+            tbl_name = column[2]
+            fk = column[7]
+            if (is_primary_key == 1 and tbl_name in tbl_name_selected) \
+            or (fk is not None and tbl_name in tbl_name_selected):
+                column[9] = True
+
     def chat(
         self,
         message: dict,
@@ -376,20 +411,22 @@ class Filter(Agent_Base):
             hint_str, entity_list, proc_hint_list = self.process_hint_list(hint_list=hint_list, entity_list=message['entity'])
             schema = self.get_schema(db_conn=db_conn)
             self.add_fk_to_schema(schema=schema,db_conn=db_conn)
-            self.get_related_column(
+            strong_rela_num_set_p1 = self.get_related_column(
                 entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected)
-            self.get_related_column(
+            strong_rela_num_set_p2 = self.get_related_column(
                 entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,threshold=0.35)
-            self.get_related_value(
+            strong_rela_num_set_p3 = self.get_related_value(
                 entity_list=entity_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn)
-            self.get_related_value(
+            strong_rela_num_set_p4 = self.get_related_value(
                 entity_list=noun_list,schema=schema,tbl_name_selected=tbl_name_selected,db_conn=db_conn,use_lsh=False,threshold=0.35)
+            strong_rela_num_set = strong_rela_num_set_p1 | strong_rela_num_set_p2 | strong_rela_num_set_p3 | strong_rela_num_set_p4
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=False)
             prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])
             ans = self.get_filter_ans(prompt=prompt, llm=llm)
             ans_json = parse_json(ans)
             self.prune_schema(ans_json=ans_json, schema=schema, tbl_name_selected=tbl_name_selected)
+            self.add_strong_rela_column(schema=schema, strong_rela_num_set=strong_rela_num_set)
             self.sel_pf_keys(schema=schema, tbl_name_selected=tbl_name_selected)
             new_schema_str = self.get_schema_str(schema=schema, tbl_name_selected=tbl_name_selected, need_type=True)
             message["schema"] = new_schema_str

@@ -23,7 +23,7 @@ manager = Manager(
         
 # with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev_proc.json')) as f:
 #     data = json.load(f)
-#     for i in range(60, 80):
+#     for i in range(20, 30):
 #         item = data[i]
 #         try:
 #             print("="*50)
@@ -45,7 +45,7 @@ manager = Manager(
 #             print(e)
 
 message = {
-    "question": "What are the names of the banks where the net interest income exceeds the median?",
+    "question": "Which banks have a positive net interest income?",
     "entity": None,
     "dialect": "sqlite",
     "schema": None,

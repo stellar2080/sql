@@ -1,13 +1,12 @@
 extractor_template = """
 You are an expert in the field of finance and database.
 You need to follow the instructions below to solve the problem step by step:
-1. Identify and extract any key entities from the text that can help with financial database queries
-2. If given a hint, list the entities relevant to the text in the hint
-3. Combine the answer and format it in the same Python list format as the [Answer] part of the example
+1. Identify and extract any key entities from the question or hint (If hint is given) that can help with financial database queries
+2. Format the answer in the same Python list format as the [Answer] part of the example
 - When you have generated a list which already solves the problem, there is no need to generate more text
 
 Example 1:
-[Text]
+[Question]
 Tell me all company names.
 [Hint]
 Here are some entity names for reference:
@@ -17,7 +16,7 @@ Here are some entity names for reference:
 This list already solves the problem, so there is no need to continue generating text.
 
 Example 2:
-[Text]
+[Question]
 I want to know the working capital and current ratio of Huaxia Bank.
 [Hint]
 Here are some entity names for reference:
@@ -27,7 +26,7 @@ Here are some entity names for reference:
 This list already solves the problem, so there is no need to continue generating text.
 
 Please start solving the problem:
-[Text]
+[Question]
 {}
 """
 
@@ -83,13 +82,6 @@ filter_hint_template = """[Hint]
 You can refer to following information:
 {}
 """
-
-# When generating SQL, we should always consider constraints:
-# - In `SELECT <column>`, just select needed columns in the 【Question】 without any unnecessary column or value
-# - In `FROM <table>` or `JOIN <table>`, do not include unnecessary table
-# - If use max or min func, `JOIN <table>` FIRST, THEN use `SELECT MAX(<column>)` or `SELECT MIN(<column>)`
-# - If use `ORDER BY <column> ASC|DESC`, add `GROUP BY <column>` before to select distinct values
-
 
 generator_template_p1 = """
 You are an experienced financial database administrator.
