@@ -46,7 +46,7 @@ manager = Manager(
 #             print(e)
 
 message = {
-    "question": "Which bank has the lowest total amount of loans and advances?",
+    "question": "I want the non_interest income of all bank",
     "entity": None,
     "dialect": "sqlite",
     "schema": None,
@@ -57,10 +57,10 @@ message = {
 }
 
 if __name__ == '__main__':
-    message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
-    message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+    # message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
+    # message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
     # message = manager.generator.chat(message=message, llm=manager.llm)
     # message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)
-    # message = manager.chat(message=message)
-    # print(message['sql'])
-    # print(message['sql_result'])
+    message = manager.chat(message=message)
+    print(message['sql'])
+    print(message['sql_result'])
