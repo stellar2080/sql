@@ -106,6 +106,7 @@ class Extractor(Agent_Base):
             if name_cos_similarity > E_COL_THRESHOLD:
                 column_set.add(col_name)
                 if name_cos_similarity > E_COL_STRONG_THRESHOLD:
+                    # print(col_name, name_cos_similarity)
                     strong_rala_set.add(col_name)
                 
         sort_schema = sorted(schema, key=lambda x: x[4][1], reverse=True)[:10]
@@ -115,8 +116,10 @@ class Extractor(Agent_Base):
             if comment_cos_similarity > E_COL_THRESHOLD:
                 column_set.add(comment)
                 if comment_cos_similarity > E_COL_STRONG_THRESHOLD:
-                    strong_rala_set.add(col_name)
+                    # print(comment, comment_cos_similarity)
+                    strong_rala_set.add(comment)
 
+        # print(strong_rala_set)
         return column_set, strong_rala_set
 
     def get_related_value(
@@ -211,6 +214,7 @@ class Extractor(Agent_Base):
             entity_set = hint_set | col_set | value_set
             strong_rela_set = strong_rela_col_set | strong_rela_value_set
             strong_rela_list = list(strong_rela_set)
+            print(strong_rela_list)
             hint_str = self.get_hint_str(entity_set=entity_set)
             prompt = self.create_extractor_prompt(question=message["question"], hint_str=hint_str)
             ans = self.get_extractor_ans(prompt=prompt, llm=llm)

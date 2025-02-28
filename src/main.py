@@ -23,12 +23,13 @@ manager = Manager(
         
 # with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev_proc.json')) as f:
 #     data = json.load(f)
-#     for i in range(20, 30):
+#     for i in range(0, 40):
 #         item = data[i]
 #         try:
 #             print("="*50)
 #             question = item['question'] 
-#             message = manager.chat(question) 
+#             message = manager.chat(question)
+#             print("="*30)
 #             print(question)
 #             print(message['sql'])
 #             print(message['sql_result'])
@@ -45,7 +46,7 @@ manager = Manager(
 #             print(e)
 
 message = {
-    "question": "Which banks have a positive net interest income?",
+    "question": "What is the total operating income of China Construction Bank in millions of yuan?",
     "entity": None,
     "dialect": "sqlite",
     "schema": None,
