@@ -27,4 +27,5 @@ non_interest income = operating income - net interest income
 Loan_to_deposit ratio = Loans and advances / Deposit absorption
 total cash outflow = cash outflow from operational activities + cash outflow from investments activities  + cash outflow from financing activities
 total cash inflow = cash inflow from operational activities + cash inflow from investments activities + cash inflow from financing activities
+"In millions of yuan" means that the amount being referred to is expressed in units of one million yuan. For example: If a value is stated as "10 in millions of yuan," it means 10 million yuan, or 10,000,000 yuan.
 Calculate the median with the following statement: SELECT column FROM (SELECT column, PERCENT_RANK() OVER (ORDER BY column) AS percentile FROM table) AS Ranked WHERE percentile = 0.5
