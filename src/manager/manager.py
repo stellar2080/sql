@@ -1,13 +1,12 @@
 import os
-import sqlite3
 from urllib.parse import urlparse
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
-import requests
 
+from src.utils.db_utils import connect_to_sqlite
 from src.llm.api import Api
 from src.agent.extractor import Extractor
 from src.agent.filter import Filter
-from agent.generator import Generator
+from src.agent.generator import Generator
 from src.agent.reviser import Reviser
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
@@ -43,7 +42,7 @@ class Manager:
 
         self.url = config.get("db_path", '.')
         self.check_same_thread = config.get("check_same_thread", False)
-        self.db_conn, self.dialect = self.connect_to_sqlite(self.url, self.check_same_thread)
+        self.db_conn, self.dialect = connect_to_sqlite(self.url, self.check_same_thread)
         
         self.extractor = Extractor(config)
         self.filter = Filter(config)
@@ -64,26 +63,6 @@ class Manager:
             "sql_result": None,
             "message_to": EXTRACTOR
         }
-
-    def connect_to_sqlite(
-        self,
-        url: str,
-        check_same_thread: bool = False,
-        **kwargs
-    ):
-        if not os.path.exists(url):
-            path = os.path.basename(urlparse(url).path)
-            response = requests.get(url)
-            response.raise_for_status()
-            with open(path, "wb") as f:
-                f.write(response.content)
-        conn = sqlite3.connect(
-            url,
-            check_same_thread=check_same_thread,
-            **kwargs
-        )
-        dialect = "sqlite"
-        return conn, dialect
 
     def parse_expression(
         self,

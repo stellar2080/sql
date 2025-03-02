@@ -394,15 +394,15 @@ class Filter(Agent_Base):
             schema_str += ")\n"
             return schema_str
 
-        schema_str = ""
-        tbl_now = None
+        schema_str = ""    
         for tbl_name, col_datas in schema_dict.items():
+            add_tbl_flag = True
             for col_name, col_data in col_datas.items():
                 is_selected = col_data[5]
-                if (tbl_now is None or tbl_now != tbl_name) and tbl_name in tbl_name_selected:
-                    schema_str = add_tbl_to_schema_str(tbl_name=tbl_name,schema_str=schema_str)
-                    tbl_now = tbl_name
                 if is_selected:
+                    if add_tbl_flag:
+                        schema_str = add_tbl_to_schema_str(tbl_name=tbl_name,schema_str=schema_str)
+                        add_tbl_flag = False
                     schema_str = add_col_to_schema_str(col_name=col_name,col_data=col_data,schema_str=schema_str)
         
         return schema_str
@@ -454,9 +454,11 @@ class Filter(Agent_Base):
     def add_strong_rela_column(
         self,
         schema_dict: dict,
-        strong_rela_set: set
+        strong_rela_set: set,
+        tbl_name_selected: set
     ):
         for tbl_name, col_name in strong_rela_set:
+            tbl_name_selected.add(tbl_name)
             schema_dict[tbl_name][col_name][5] = True
 
     def sel_pf_keys(
@@ -501,7 +503,7 @@ class Filter(Agent_Base):
             ans = self.get_filter_ans(prompt=prompt, llm=llm)
             ans_json = parse_json(ans)
             self.prune_schema(ans_json=ans_json, schema_dict=schema_dict, tbl_name_selected=tbl_name_selected)
-            self.add_strong_rela_column(schema_dict=schema_dict, strong_rela_set=strong_rela_set)
+            self.add_strong_rela_column(schema_dict=schema_dict, strong_rela_set=strong_rela_set, tbl_name_selected=tbl_name_selected)
             self.sel_pf_keys(schema_dict=schema_dict, tbl_name_selected=tbl_name_selected)
             new_schema_str = self.get_schema_str(schema_dict=schema_dict, tbl_name_selected=tbl_name_selected, need_type=True)
             print(strong_rela_set)

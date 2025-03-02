@@ -1,8 +1,7 @@
-import pandas as pd
 from typing_extensions import override
 
 from src.llm.llm_base import LLM_Base
-from src.utils.const import REVISER, MANAGER, QUERY_MODE
+from src.utils.const import REVISER, MANAGER
 from src.utils.template import reviser_template_p1, reviser_template_p2, reviser_hint_template
 from src.utils.utils import parse_sql, user_message, get_response_content, timeout
 from src.agent.agent_base import Agent_Base
@@ -20,15 +19,16 @@ class Reviser(Agent_Base):
         self,
         sql: str,
         db_conn
-    ) -> list:
-        if QUERY_MODE == "ori":
-            cursor = db_conn.cursor()
-            cursor.execute(sql)
-            result = cursor.fetchall()
-            return result
-        elif QUERY_MODE == "pd":
-            result = pd.read_sql_query(sql, db_conn)
-            return result.values.tolist()
+    ) -> dict:
+        cursor = db_conn.cursor()
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        col_names = [description[0] for description in cursor.description]
+        result = {}
+        result['cols'] = col_names
+        result['rows'] = rows
+        
+        return result
 
     def create_reviser_prompt(
         self,
@@ -83,13 +83,8 @@ class Reviser(Agent_Base):
             try:
                 sql_result = self.run_sql(message["sql"],db_conn)
             except Exception as error:
-                if QUERY_MODE == "ori":
-                    error_str = str(error.args[0])
-                    except_flag = True
-                elif QUERY_MODE == "pd":
-                    error_str = str(error.args[0])
-                    error_str = error_str[error_str.index("': ") + 3:]
-                    except_flag = True
+                error_str = str(error.args[0])
+                except_flag = True
 
             if except_flag is False:
                 message["message_to"] = MANAGER
