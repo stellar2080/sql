@@ -74,53 +74,44 @@ class Manager:
         except Exception as e:
             return -1
 
-    def add_doc_to_vectordb(self, path):
-        if not os.path.exists(path):
-            raise Exception("Path does not exist.")
-        try:
-            with open(path, mode="r") as f:
-                content = f.readlines()
-                for line in content:
-                    print("="*30)
-                    result = self.parse_expression(line)
-                    if result == -1:
-                        self.vectordb.add_tip(tip=line)
-                        continue
-                    else:
-                        expression = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item for item in result]
-                    key = expression[0]
-                    right_hand_size = expression[2:]
-                    for enum, entity in enumerate(right_hand_size,start=2):
-                        if len(entity) <= 1:
-                            continue
-                        related_keys = self.vectordb.get_related_key(query_texts=entity, extracts=['documents','distances','metadatas'])
-                        print(related_keys)
-                        if len(related_keys['documents']) != 0:
-                            threshold = 0.1
-                            filtered_keys = [
-                                (filtered_key, doc_id) for filtered_key, distance, doc_id in sorted(
-                                    zip(related_keys['documents'], related_keys['distances'], related_keys['metadatas']),
-                                    key=lambda x: x[1]
-                                ) if distance < threshold
-                            ]
-                            print("Elem:", entity)
-                            print("Rela:", filtered_keys)
-                            if len(filtered_keys) > 0:
-                                filtered_key = filtered_keys[0][0]
-                                doc_id = filtered_keys[0][1]['doc_id']
-                                if filtered_key != entity:
-                                    expression[enum] = filtered_key
-                                self.vectordb.add_key(key=key, doc_id=doc_id)
-                                print("="*10)
-                    doc = str(expression)
-                    key_n_doc = key + ": " + doc
-                    key_id = deterministic_uuid(key_n_doc) + "-key"
-                    doc_id = deterministic_uuid(doc) + "-doc"
-                    self.vectordb.add_key(key=key, doc_id=doc_id, embedding_id=key_id)
-                    self.vectordb.add_doc(document=doc)
-            print(f"Doc:{path} has been processed")
-        except Exception as e:
-            print(e)
+    def add_doc_to_vectordb(self, doc: str):
+        print("="*30)
+        result = self.parse_expression(doc)
+        if result == -1:
+            self.vectordb.add_tip(tip=doc)
+            return
+        else:
+            expression = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item for item in result]
+        key = expression[0]
+        right_hand_size = expression[2:]
+        for enum, entity in enumerate(right_hand_size,start=2):
+            if len(entity) <= 1:
+                continue
+            related_keys = self.vectordb.get_related_key(query_texts=entity, extracts=['documents','distances','metadatas'])
+            print(related_keys)
+            if len(related_keys['documents']) != 0:
+                threshold = 0.1
+                filtered_keys = [
+                    (filtered_key, doc_id) for filtered_key, distance, doc_id in sorted(
+                        zip(related_keys['documents'], related_keys['distances'], related_keys['metadatas']),
+                        key=lambda x: x[1]
+                    ) if distance < threshold
+                ]
+                print("Elem:", entity)
+                print("Rela:", filtered_keys)
+                if len(filtered_keys) > 0:
+                    filtered_key = filtered_keys[0][0]
+                    doc_id = filtered_keys[0][1]['doc_id']
+                    if filtered_key != entity:
+                        expression[enum] = filtered_key
+                    self.vectordb.add_key(key=key, doc_id=doc_id)
+                    print("="*10)
+        doc = str(expression)
+        key_n_doc = key + ": " + doc
+        key_id = deterministic_uuid(key_n_doc) + "-key"
+        doc_id = deterministic_uuid(doc) + "-doc"
+        self.vectordb.add_key(key=key, doc_id=doc_id, embedding_id=key_id)
+        self.vectordb.add_doc(document=doc)
 
     def clear_doc(
         self

@@ -10,13 +10,10 @@ sys.path.append(ROOT_PATH)
 from register import register
 from login import login
 from navigation import navigation
+from forget_pwd import forget_pwd
 
 if 'page' not in st.session_state:
     st.session_state.page = "login"
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'username' not in st.session_state:
-    st.session_state.username = ""
 
 if __name__ == '__main__':
     st.set_page_config(
@@ -28,5 +25,7 @@ if __name__ == '__main__':
         login()
     if st.session_state.page == "register":
         register()
+    if st.session_state.page == "forget_pwd":
+        forget_pwd()
     if st.session_state.page == "navigation":
         navigation()

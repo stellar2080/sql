@@ -6,7 +6,7 @@ import uvicorn
 import json
 import torch
 current_dir = os.path.dirname(os.path.abspath(__file__))
-ROOT_PATH = os.path.dirname(current_dir)
+ROOT_PATH = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(ROOT_PATH)  
 from src.utils.const import MAX_LENGTH, DO_SAMPLE, TEMPERATURE, TOP_K, TOP_P, LLM_HOST, LLM_PORT
 

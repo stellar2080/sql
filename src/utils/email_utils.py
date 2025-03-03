@@ -10,7 +10,7 @@ def send_email(msg_to):
  
     captcha = random.randint(100000, 999999)
     captcha_str = str(captcha)
-    send_info = f'您的注册验证码为：{captcha_str}，两分钟内有效，请勿转发给他人！'
+    send_info = f'您的注册验证码为：{captcha_str}，5分钟内有效，请勿转发给他人！'
     msg = MIMEText(send_info, 'plain', 'utf-8')
  
     msg['Subject'] = Header(subject, 'utf-8')

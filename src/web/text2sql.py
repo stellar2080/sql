@@ -1,28 +1,12 @@
 import streamlit as st 
-import os
 import pandas as pd
 import numpy as np
 
-from src.manager.manager import Manager
-os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
-os.environ["DEEPSEEK_API_KEY"] = "sk-46d3e1d50d704b15a53421dbb7e4ab6a"
-ROOT_PATH = os.environ["ROOT_PATH"]
-
-# manager = Manager(
-#     config={
-#         'platform': 'Api',
-#         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
-#         'vectordb_path': os.path.join(ROOT_PATH, 'vectordb'),
-#         'vectordb_client': 'http',
-#         'vectordb_host': 'localhost',
-#         'vectordb_port': '8000'
-#     },
-# )
-
-st.title('TEXT2SQL')
+st.title('Text2SQL')
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+manager = st.session_state.manager
 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]) as role_message:

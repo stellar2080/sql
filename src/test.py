@@ -61,6 +61,6 @@ if __name__ == '__main__':
     # message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
     # message = manager.generator.chat(message=message, llm=manager.llm)
     # message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)
-    message = manager.chat(message=message)
+    # message = manager.chat(message=message)
     print(message['sql'])
     print(message['sql_result'])
