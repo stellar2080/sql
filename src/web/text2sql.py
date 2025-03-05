@@ -4,8 +4,7 @@ import numpy as np
 
 st.title('Text2SQL')
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+messages = st.session_state.messages
 manager = st.session_state.manager
 
 for message in st.session_state.messages:
@@ -25,7 +24,7 @@ if question := st.chat_input("请输入你的问题："):
     # sql_result = message['sql_result']
     # col_names = sql_result['cols']
     # rows = sql_result['rows']
-    # df = pd.DataFrame(rows, columns=col_names)
+    # df = pd.DataFrame(data=rows, columns=col_names)
     df = pd.DataFrame(np.random.randn(3,3))
 
     st.session_state.messages.append({"role": "assistant", "content": df})

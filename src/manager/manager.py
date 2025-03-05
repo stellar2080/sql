@@ -1,5 +1,3 @@
-import os
-from urllib.parse import urlparse
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
 
 from src.utils.db_utils import connect_to_sqlite
@@ -10,7 +8,7 @@ from src.agent.generator import Generator
 from src.agent.reviser import Reviser
 from src.llm.qwen import Qwen
 from src.vectordb.vectordb import VectorDB
-from src.utils.utils import deterministic_uuid
+from src.utils.utils import deterministic_uuid, parse_list
 from src.utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, GENERATOR, EXTRACTOR
 
 special_chars = "'_,."
@@ -74,20 +72,28 @@ class Manager:
         except Exception as e:
             return -1
 
-    def add_doc_to_vectordb(self, doc: str):
+    def add_doc_to_vectordb(
+        self, 
+        doc: str, 
+        user_id: str,
+        file_name: str
+    ):
         print("="*30)
         result = self.parse_expression(doc)
         if result == -1:
-            self.vectordb.add_tip(tip=doc)
+            self.vectordb.add_tip(user_id=user_id, file_name=file_name, tip=doc)
             return
         else:
-            expression = [item.lower().replace('_',' ').replace('-',' ') if len(item) > 1 else item for item in result]
+            expression = [item.lower().replace('_',' ').replace('-',' ') 
+                          if len(item) > 1 else item for item in result]
         key = expression[0]
         right_hand_size = expression[2:]
         for enum, entity in enumerate(right_hand_size,start=2):
             if len(entity) <= 1:
                 continue
-            related_keys = self.vectordb.get_related_key(query_texts=entity, extracts=['documents','distances','metadatas'])
+            related_keys = self.vectordb.get_related_key(
+                user_id=user_id, file_name=file_name, query_texts=entity, extracts=['documents','distances','metadatas']
+            )
             print(related_keys)
             if len(related_keys['documents']) != 0:
                 threshold = 0.1
@@ -100,28 +106,55 @@ class Manager:
                 print("Elem:", entity)
                 print("Rela:", filtered_keys)
                 if len(filtered_keys) > 0:
-                    filtered_key = filtered_keys[0][0]
+                    key_name = filtered_keys[0][0]
                     doc_id = filtered_keys[0][1]['doc_id']
-                    if filtered_key != entity:
-                        expression[enum] = filtered_key
-                    self.vectordb.add_key(key=key, doc_id=doc_id)
+                    if key_name != entity:
+                        expression[enum] = key_name
+                    self.vectordb.add_key(user_id=user_id, file_name=file_name, key=key, doc_id=doc_id)
                     print("="*10)
         doc = str(expression)
-        key_n_doc = key + ": " + doc
-        key_id = deterministic_uuid(key_n_doc) + "-key"
-        doc_id = deterministic_uuid(doc) + "-doc"
-        self.vectordb.add_key(key=key, doc_id=doc_id, embedding_id=key_id)
-        self.vectordb.add_doc(document=doc)
+        key_id = deterministic_uuid(user_id+file_name+key+doc) + "-key"
+        doc_id = deterministic_uuid(user_id+file_name+doc) + "-doc"
+        self.vectordb.add_key(user_id=user_id, file_name=file_name, key=key, doc_id=doc_id, embedding_id=key_id)
+        self.vectordb.add_doc(user_id=user_id, file_name=file_name, document=doc)
 
-    def clear_doc(
-        self
+    def get_repository(
+        self,
+        user_id: str,
+        file_name: str
     ):
-        try:
-            print("Clearing rag data...")
-            self.vectordb.clear_doc()
-        except Exception as e:
-            print(e)
+        all_keys = self.vectordb.get_all_key(
+            user_id=user_id,file_name=file_name,extracts=['ids','documents','metadatas']
+        )
+        if len(all_keys['ids']) != 0:
+            key_ids = all_keys['ids']
+            keys = all_keys['documents']
+            metadatas = all_keys['metadatas']
+            doc_ids = []
+            file_names = []
+            for metadata in metadatas:
+                doc_ids.append(metadata['doc_id'])
+                file_names.append(metadata['file_name'])
+            docs = self.vectordb.get_doc_by_id(user_id=user_id,embedding_ids=doc_ids)
+            docs = [" ".join(parse_list(doc)) for doc in docs] 
+            key_zip = zip(file_names, key_ids, keys, doc_ids, docs)
+        else:
+            key_zip = None
 
+        all_tips = self.vectordb.get_all_tip(
+            user_id=user_id,file_name=file_name,extracts=['ids','documents','metadatas']
+        )
+        if len(all_tips['ids']) != 0:
+            tip_ids = all_tips['ids']
+            tips = all_tips['documents']
+            metadatas = all_keys['metadatas']
+            file_names = [metadata['file_name'] for metadata in metadatas]
+            tip_zip = zip(file_names, tip_ids, tips)
+        else:
+            tip_zip = None
+
+        return key_zip, tip_zip
+    
     def chat(
         self,
         question: str = None,

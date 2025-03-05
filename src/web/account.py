@@ -1,19 +1,10 @@
 from datetime import datetime
-import os
-import sqlite3
 import bcrypt
 import streamlit as st
 
-ROOT_PATH = os.environ["ROOT_PATH"]
-db_path = os.path.join(ROOT_PATH,'db','database.sqlite3')
-conn = sqlite3.connect(database=db_path,
-                        check_same_thread=False)
-
 from src.utils.email_utils import send_email,validate_email
 
-if 'send_time' not in st.session_state:
-    epoch = datetime(1970, 1, 1, 0, 0, 0)
-    st.session_state.send_time = epoch
+conn = st.session_state.conn
 
 @st.dialog("修改用户名",width="large")
 def change_username():

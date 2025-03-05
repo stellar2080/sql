@@ -55,7 +55,6 @@ class VectorDB(VectorDB_Base):
     def generate_embedding(
         self, 
         data:str, 
-        **kwargs
     ):
         embedding = self.embedding_function([data])
         if len(embedding) == 1:
@@ -64,70 +63,77 @@ class VectorDB(VectorDB_Base):
 
     def add_doc(
         self, 
+        user_id: str,
+        file_name: str,
         document: str, 
         embedding_id: str = None, 
-        **kwargs
     ):
         if embedding_id is None:
-            embedding_id = deterministic_uuid(document) + "-doc"
+            embedding_id = deterministic_uuid(user_id+file_name+document) + "-doc"
         else:
             embedding_id = embedding_id
         self.document_collection.add(
             ids=embedding_id,
             documents=document,
             embeddings=self.generate_embedding(document),
+            metadatas={"user_id": user_id, "file_name": file_name}
         )
-        print("Add_doc: ", document, " ID: ", embedding_id)
+        print("Add_doc: ", document, " ID: ", embedding_id, " user_id: ", user_id, "file_name: ", file_name)
 
     def add_key(
         self, 
+        user_id: str,
+        file_name: str,
         key: str, 
         doc_id: str, 
         embedding_id: str = None, 
-        **kwargs
     ):
         if embedding_id is None:
             doc = self.document_collection.get(ids=[doc_id])['documents'][0]
-            key_n_doc = key + ": " + doc
-            embedding_id = deterministic_uuid(key_n_doc) + "-key"
+            embedding_id = deterministic_uuid(user_id+file_name+key+doc) + "-key"
         self.key_collection.add(
             ids=embedding_id,
             documents=key,
             embeddings=self.generate_embedding(key),
-            metadatas={"doc_id": doc_id}
+            metadatas={"doc_id": doc_id, "user_id": user_id, "file_name": file_name}
         )
-        print("Add_key: ", key, " Doc_id: ", doc_id)
+        print("Add_key: ", key, " Doc_id: ", doc_id, " user_id: ", user_id, "file_name: ", file_name)
 
     def add_tip(
         self, 
+        user_id: str,
+        file_name: str,
         tip: str, 
         embedding_id: str = None, 
-        **kwargs
     ):
         if embedding_id is None:
-            embedding_id = deterministic_uuid(tip) + "-tip"
+            embedding_id = deterministic_uuid(user_id+file_name+tip) + "-tip"
         else:
             embedding_id = embedding_id
         self.tip_collection.add(
             ids=embedding_id,
             documents=tip,
             embeddings=self.generate_embedding(tip),
+            metadatas={"user_id": user_id, "file_name": file_name}
         )
-        print("Add_tip: ", tip, " ID: ", embedding_id)
+        print("Add_tip: ", tip, " ID: ", embedding_id, " user_id: ", user_id, "file_name: ", file_name)
 
     def remove_data(
         self, 
+        user_id: str,
         embedding_id: str, 
-        **kwargs
     ) -> bool:
         if embedding_id.endswith("-key"):
-            self.key_collection.delete(ids=[embedding_id])
+            self.key_collection.delete(
+                ids=[embedding_id],where={"user_id":user_id})
             return True
         elif embedding_id.endswith("-doc"):
-            self.document_collection.delete(ids=[embedding_id])
+            self.document_collection.delete(
+                ids=[embedding_id],where={"user_id":user_id})
             return True
         elif embedding_id.endswith("-tip"):
-            self.tip_collection.delete(ids=[embedding_id])
+            self.tip_collection.delete(
+                ids=[embedding_id],where={"user_id":user_id})
             return True
         else:
             return False
@@ -158,10 +164,11 @@ class VectorDB(VectorDB_Base):
 
     def get_related_doc(
         self, 
+        user_id,
+        file_name: str,
         query_texts, 
         n_results, 
         extracts=None, 
-        **kwargs
     ) -> dict:
         if extracts is None:
             extracts = 'documents'
@@ -170,16 +177,18 @@ class VectorDB(VectorDB_Base):
             self.document_collection.query(
                 query_texts=query_texts,
                 n_results=n_results,
+                where={"$and":[{"user_id":user_id},{"file_name":file_name}]}
             ),
             extracts=extracts
         )
 
     def get_related_key(
         self, 
+        user_id,
+        file_name: str,
         query_texts, 
         n_results=None, 
         extracts=None, 
-        **kwargs
     ) -> dict:
         if extracts is None:
             extracts = 'documents'
@@ -188,16 +197,18 @@ class VectorDB(VectorDB_Base):
             self.key_collection.query(
                 query_texts=query_texts,
                 n_results=n_results,
+                where={"$and":[{"user_id":user_id},{"file_name":file_name}]}
             ),
             extracts=extracts
         )
     
     def get_related_tip(
         self, 
+        user_id,
+        file_name: str,
         query_texts, 
         n_results=None, 
         extracts=None, 
-        **kwargs
     ) -> dict:
         if extracts is None:
             extracts = 'documents'
@@ -206,46 +217,81 @@ class VectorDB(VectorDB_Base):
             self.tip_collection.query(
                 query_texts=query_texts,
                 n_results=n_results,
+                where={"$and":[{"user_id":user_id},{"file_name":file_name}]}
             ),
             extracts=extracts
         )
 
     def get_doc_by_id(
         self,
+        user_id,
         embedding_ids,
     ):
         if isinstance(embedding_ids,str):
-            result = self.document_collection.get(ids=[embedding_ids])
+            result = self.document_collection.get(
+                ids=[embedding_ids],where={"user_id":user_id})
             return result['documents'][0]
         elif isinstance(embedding_ids,list):
-            result = self.document_collection.get(ids=embedding_ids)
-            return result['documents']
+            ids_set = set(embedding_ids)
+            if len(ids_set) == len(embedding_ids):
+                result = self.document_collection.get(
+                    ids=embedding_ids,where={"user_id":user_id})
+                return result['documents']
+            else:
+                distinct_ids = list(dict.fromkeys(embedding_ids))
+                result = self.document_collection.get(
+                    ids=distinct_ids,where={"user_id":user_id})
+                docs = result['documents']
+                ids_dict = {}
+                for id,doc in zip(distinct_ids,docs):
+                    ids_dict[id] = doc
+                ret_list = [ids_dict[id] for id in embedding_ids]
+                return ret_list
 
-    def get_all_key(self):
-        res = self.key_collection.get()['documents']
+    def get_all_key(
+        self,
+        user_id,
+        file_name,
+        extracts = None
+    ):
+        if extracts is None:
+            extracts = 'documents'
+        res = self.extract_query_results(
+            self.key_collection.get(
+                where={"$and":[{"user_id":user_id},{"file_name":file_name}]}
+            ),
+            extracts=extracts
+        )
         return res
 
-    def clear_doc(self):
-        try:
-            self.chroma_client.delete_collection(name="document")
-            self.chroma_client.delete_collection(name="key")
-            self.chroma_client.delete_collection(name="tip")
-
-            self.chroma_client.create_collection(
-                name="document",
-                embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "cosine"},
-            )
-            self.chroma_client.create_collection(
-                name="key",
-                embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "cosine"},
-            )
-            self.chroma_client.create_collection(
-                name="tip",
-                embedding_function=self.embedding_function,
-                metadata={"hnsw:space": "cosine"},
-            )
-
-        except Exception as error:
-            print(error)
+    def get_all_doc(
+        self,
+        user_id,
+        file_name,
+        extracts = None
+    ):
+        if extracts is None:
+            extracts = 'documents'
+        res = self.extract_query_results(
+            self.document_collection.get(
+                where={"$and":[{"user_id":user_id},{"file_name":file_name}]}
+            ),
+            extracts=extracts
+        )
+        return res
+    
+    def get_all_tip(
+        self,
+        user_id,
+        file_name,
+        extracts = None
+    ):
+        if extracts is None:
+            extracts = 'documents'
+        res = self.extract_query_results(
+            self.tip_collection.get(
+                where={"$and":[{"user_id":user_id},{"file_name":file_name}]}
+            ),
+            extracts=extracts
+        )
+        return res

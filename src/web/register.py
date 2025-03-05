@@ -1,18 +1,13 @@
-import os
+import random
+import string
 import streamlit as st
 import bcrypt
-import sqlite3
 from datetime import datetime
 from src.utils.email_utils import send_email, validate_email
 
-ROOT_PATH = os.environ["ROOT_PATH"]
-db_path = os.path.join(ROOT_PATH,'db','database.sqlite3')
-conn = sqlite3.connect(database=db_path,
-                       check_same_thread=False)
-
-if 'send_time' not in st.session_state:
-    epoch = datetime(1970, 1, 1, 0, 0, 0)
-    st.session_state.send_time = epoch
+def generate_id(length=8):
+    characters = string.digits + string.ascii_letters
+    return ''.join(random.choice(characters) for _ in range(length))
 
 @st.dialog("系统消息")
 def register_success():
@@ -22,6 +17,11 @@ def register_success():
         st.rerun()
 
 def register():
+    if 'send_time' not in st.session_state:
+        epoch = datetime(1970, 1, 1, 0, 0, 0)
+        st.session_state.send_time = epoch
+    conn = st.session_state.conn
+
     st.title("用户注册")
     username = st.text_input(label="用户名",max_chars=10)
     email = st.text_input(label="邮箱")
@@ -101,8 +101,16 @@ def register():
                     else:
                         salt = bcrypt.gensalt()
                         hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
-                        cursor.execute("INSERT INTO user_data(username, email, password) VALUES(?,?,?)", 
-                                    (username,email,hashed_password))
+                        while True:
+                            random_id = generate_id()
+                            cursor.execute('SELECT user_id FROM user_data WHERE user_id = ?',
+                                        (random_id,))
+                            id_result = cursor.fetchone()
+                            if not id_result:
+                                break
+
+                        cursor.execute("INSERT INTO user_data(user_id, username, email, password) VALUES(?,?,?,?)", 
+                                    (random_id,username,email,hashed_password))
                         conn.commit()
                         register_success()
     elif back:

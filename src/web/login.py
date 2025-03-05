@@ -1,21 +1,5 @@
-import os
 import streamlit as st
 import bcrypt
-import sqlite3
-
-ROOT_PATH = os.environ["ROOT_PATH"]
-db_path = os.path.join(ROOT_PATH,'db','database.sqlite3')
-conn = sqlite3.connect(database=db_path,
-                       check_same_thread=False)
-
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'username' not in st.session_state:
-    st.session_state.username = ""
-if 'email' not in st.session_state:
-    st.session_state.email = ""
-if 'password' not in st.session_state:
-    st.session_state.password = ""
 
 @st.dialog("系统消息")
 def login_success(username):
@@ -47,15 +31,18 @@ def login():
         elif " " in password:
             st.error("密码不能含有空格")
         else:
+            conn = st.session_state.conn
             cursor = conn.cursor()
-            cursor.execute('SELECT email, password FROM user_data WHERE username = ?',(user,))
+            cursor.execute('SELECT user_id, email, password FROM user_data WHERE username = ?',(user,))
             user_result = cursor.fetchone() 
-            cursor.execute('SELECT username, password FROM user_data WHERE email = ?',(user,))
-            email_result = cursor.fetchone()           
+            cursor.execute('SELECT user_id, username, password FROM user_data WHERE email = ?',(user,))
+            email_result = cursor.fetchone()        
             if user_result:
-                email = user_result[0]
-                stored_hashed_password = user_result[1]
+                user_id = user_result[0]
+                email = user_result[1]
+                stored_hashed_password = user_result[2]
                 if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password):
+                    st.session_state.user_id = user_id
                     st.session_state.logged_in = True
                     st.session_state.username = user
                     st.session_state.email = email
@@ -64,9 +51,11 @@ def login():
                 else:
                     st.error("密码错误")
             elif email_result:
-                username = email_result[0]
-                stored_hashed_password = email_result[1]
+                user_id = email_result[0]
+                username = email_result[1]
+                stored_hashed_password = email_result[2]
                 if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password):
+                    st.session_state.user_id = user_id
                     st.session_state.logged_in = True
                     st.session_state.username = username
                     st.session_state.email = user

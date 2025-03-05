@@ -1,18 +1,7 @@
-import os
 import streamlit as st
 import bcrypt
-import sqlite3
 from datetime import datetime
 from src.utils.email_utils import send_email, validate_email
-
-ROOT_PATH = os.environ["ROOT_PATH"]
-db_path = os.path.join(ROOT_PATH,'db','database.sqlite3')
-conn = sqlite3.connect(database=db_path,
-                       check_same_thread=False)
-
-if 'send_time' not in st.session_state:
-    epoch = datetime(1970, 1, 1, 0, 0, 0)
-    st.session_state.send_time = epoch
 
 @st.dialog("系统消息")
 def change_pwd_success():
@@ -22,6 +11,11 @@ def change_pwd_success():
         st.rerun()
 
 def forget_pwd():
+    if 'send_time' not in st.session_state:
+        epoch = datetime(1970, 1, 1, 0, 0, 0)
+        st.session_state.send_time = epoch
+    conn = st.session_state.conn
+
     st.title("找回密码")
     email = st.text_input(label="邮箱")
     col0, col1 = st.columns([2,1], vertical_alignment='bottom')
