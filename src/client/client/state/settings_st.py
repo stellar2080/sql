@@ -3,7 +3,6 @@ from .auth_st import AuthState
 
 class SettingsState(AuthState):
 
-    appearance: str = "dark"
     accent_color: str = "violet"
     gray_color: str = "gray"
     radius: str = "large"
@@ -11,15 +10,10 @@ class SettingsState(AuthState):
 
     @rx.event
     def reset_theme(self):
-        self.appearance = "dark"
         self.accent_color = "violet"
         self.gray_color = "gray"
         self.radius = "large"
         self.scaling = "100%"
-
-    @rx.event
-    def set_appearance(self, appearance: str):
-        self.appearance = appearance
 
     @rx.event
     def set_accent_color(self, accent_color: str):

@@ -13,8 +13,6 @@ def scaling_picker() -> rx.Component:
             ),
             rx.select(
                 [
-                    "90%",
-                    "95%",
                     "100%",
                     "105%",
                     "110%",

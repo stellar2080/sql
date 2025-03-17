@@ -2,11 +2,13 @@
 
 import reflex as rx
 
+from state.settings_st import SettingsState
 from .components.sidebar import sidebar_bottom_profile
 from .components.color_picker import primary_color_picker, secondary_color_picker
 from .components.radius_picker import radius_picker
 from .components.scaling_picker import scaling_picker
 from .components.theme_wrap import theme_wrap
+from .components.appearance_picker import appearance_picker
 
 
 def settings() -> rx.Component:
@@ -20,9 +22,10 @@ def settings() -> rx.Component:
                             "系统设置", 
                             size="5"
                         ),
+                        appearance_picker(),
                         rx.vstack(
                             rx.hstack(
-                                rx.icon("palette", color=rx.color("accent", 10)),
+                                rx.icon("palette"),
                                 rx.heading("主题颜色", size="6"),
                                 align="center",
                             ),
@@ -32,7 +35,7 @@ def settings() -> rx.Component:
                         ),
                         rx.vstack(
                             rx.hstack(
-                                rx.icon("blend", color=rx.color("gray", 11)),
+                                rx.icon("blend"),
                                 rx.heading("辅助颜色", size="6"),
                                 align="center",
                             ),

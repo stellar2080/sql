@@ -169,7 +169,7 @@ class AccountState(AuthState):
         if password != confirm_password:
             self.account_dialog_description = "密码与确认密码需完全相同"
             return self.account_dialog_open_change()
-        if password == self.password:
+        if bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8')):
             self.account_dialog_description = "新密码不能和原密码相同"
             return self.account_dialog_open_change()
         salt = bcrypt.gensalt()
