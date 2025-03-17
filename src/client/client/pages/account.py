@@ -16,6 +16,7 @@ def change_username() -> rx.Component:
                         align='center'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("user")),
                         placeholder="新用户名",
                         name="username",
                         size="3",
@@ -74,6 +75,7 @@ def change_email() -> rx.Component:
                         align='center'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("mail")),
                         placeholder="新邮箱",
                         name="email",
                         on_blur=lambda x: AccountState.set_email_sent(x),
@@ -82,6 +84,7 @@ def change_email() -> rx.Component:
                     ),
                     rx.flex(
                         rx.input(
+                            rx.input.slot(rx.icon("shield-check")),
                             placeholder="验证码",
                             name="captcha",
                             size="3",
@@ -157,6 +160,7 @@ def change_password() -> rx.Component:
                         align='center'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("key-round")),
                         placeholder="新密码",
                         name="password",
                         type="password",
@@ -164,6 +168,7 @@ def change_password() -> rx.Component:
                         width='100%'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("key-round")),
                         placeholder="确认密码",
                         name="confirm_password",
                         type="password",
@@ -214,129 +219,123 @@ def account():
     return rx.box( 
         sidebar_bottom_profile(),
         rx.box( 
-            rx.center(
-                rx.card(
+            rx.center(  
+                rx.flex(
+                    rx.heading("个人中心", size="5"),
                     rx.flex(
                         rx.flex(
-                            rx.flex(
-                                rx.icon("user"),
-                                rx.text(
-                                    "用户名",
-                                    size="4",
-                                    width="100%",
-                                    align="left",
-                                    weight='bold'
-                                ),
-                                direction='row',
-                                align='center',
-                                justify='center',
-                                spacing='2',
-                                width='10%'
+                            rx.icon("user"),
+                            rx.text(
+                                "用户名",
+                                size="4",
+                                width="50%",
+                                align="left",
+                                weight='bold'
                             ),
-                            rx.input(
-                                placeholder=AccountState.username,
-                                size="3",
-                                width="30%",
-                                disabled=True
-                            ),
-                            rx.button(
-                                "修改",
-                                size="3",
-                                width="10%",
-                                on_click=AccountState.change_username_dialog_open_change
-                            ),
-                            change_username(),
-                            direction="row",
-                            spacing="4",
-                            align="center",
-                            justify="center",
-                            width="100%",
+                            direction='row',
+                            align='center',
+                            justify='center',
+                            spacing='2',
+                            width='10%'
                         ),
-                        rx.flex(
-                            rx.flex(
-                                rx.icon("mail"),
-                                rx.text(
-                                    "邮箱",
-                                    size="4",
-                                    width="100%",
-                                    align="left",
-                                    weight='bold'
-                                ),
-                                direction='row',
-                                align='center',
-                                justify='center',
-                                spacing='2',
-                                width='10%'
-                            ),
-                            rx.input(
-                                placeholder=AccountState.email,
-                                size="3",
-                                width="30%",
-                                disabled=True
-                            ),
-                            rx.button(
-                                "修改",
-                                size="3",
-                                width="10%",
-                                on_click=AccountState.change_email_dialog_open_change
-                            ),
-                            change_email(),
-                            direction="row",
-                            spacing="4",
-                            align="center",
-                            justify="center",
-                            width="100%",
+                        rx.text(
+                            AccountState.username,
+                            size="3",
+                            width="20%",
                         ),
-                        rx.flex(
-                            rx.flex(
-                                rx.icon("key-round"),
-                                rx.text(
-                                    "密码",
-                                    size="4",
-                                    width="100%",
-                                    align="left",
-                                    weight='bold'
-                                ),
-                                direction='row',
-                                align='center',
-                                justify='center',
-                                spacing='2',
-                                width='10%'
-                            ),
-                            rx.input(
-                                placeholder="*"*10,
-                                size="3",
-                                width="30%",
-                                disabled=True
-                            ),
-                            rx.button(
-                                "修改",
-                                size="3",
-                                width="10%",
-                                on_click=AccountState.change_password_dialog_open_change
-                            ),
-                            change_password(),
-                            direction="row",
-                            spacing="4",
-                            align="center",
-                            justify="center",
-                            width="100%",
+                        rx.button(
+                            "修改",
+                            size="3",
+                            width="10%",
+                            on_click=AccountState.change_username_dialog_open_change
                         ),
-                        direction="column",
+                        change_username(),
+                        direction="row",
+                        spacing="4",
                         align="center",
                         justify="center",
-                        spacing="8",    
                         width="100%",
-                        height="100%",
-                        padding="100px"
                     ),
-                    width="90%",
-                    height='90%'
+                    rx.flex(
+                        rx.flex(
+                            rx.icon("mail"),
+                            rx.text(
+                                "邮箱",
+                                size="4",
+                                width="50%",
+                                align="left",
+                                weight='bold'
+                            ),
+                            direction='row',
+                            align='center',
+                            justify='center',
+                            spacing='2',
+                            width='10%'
+                        ),
+                        rx.text(
+                            AccountState.email,
+                            size="3",
+                            width="20%",
+                        ),
+                        rx.button(
+                            "修改",
+                            size="3",
+                            width="10%",
+                            on_click=AccountState.change_email_dialog_open_change
+                        ),
+                        change_email(),
+                        direction="row",
+                        spacing="4",
+                        align="center",
+                        justify="center",
+                        width="100%",
+                    ),
+                    rx.flex(
+                        rx.flex(
+                            rx.icon("key-round"),
+                            rx.text(
+                                "密码",
+                                size="4",
+                                width="50%",
+                                align="left",
+                                weight='bold'
+                            ),
+                            direction='row',
+                            align='center',
+                            justify='center',
+                            spacing='2',
+                            width='10%'
+                        ),
+                        rx.text(
+                            "*"*10,
+                            size="3",
+                            width="20%",
+                        ),
+                        rx.button(
+                            "修改",
+                            size="3",
+                            width="10%",
+                            on_click=AccountState.change_password_dialog_open_change
+                        ),
+                        change_password(),
+                        direction="row",
+                        spacing="4",
+                        align="center",
+                        justify="center",
+                        width="100%",
+                    ),
+                    direction="column",
+                    align="center",
+                    justify="center",
+                    spacing="8",    
+                    width="100%",
+                    height="100%",
+                    padding="100px"
                 ),
                 width="100%",
                 height="100vh",
             ),
-            position="fixed",
+            position="sticky",
             left="15%",
             width="85%",
         ),

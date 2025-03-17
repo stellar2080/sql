@@ -46,7 +46,7 @@ def sidebar_bottom_profile() -> rx.Component:
                     width="100%",
                 ),
                 rx.vstack(
-                    sidebar_item("AI问答", "bot", rx.redirect("/account")),
+                    sidebar_item("AI问答", "bot", rx.redirect("/chat")),
                     sidebar_item("知识库", "square-library", rx.redirect("/account")),
                     sidebar_item("AI配置", "sliders-horizontal", rx.redirect("/account")),
                     sidebar_item("问答记录", "message_circle", rx.redirect("/account")),
@@ -57,10 +57,13 @@ def sidebar_bottom_profile() -> rx.Component:
                 rx.vstack(
                     rx.vstack(
                         sidebar_item(
-                            "个人中心", "settings", rx.redirect("/account")
+                            "个人中心", "user-round-cog", rx.redirect("/account")
                         ),
                         sidebar_item(
-                            "退出登录", "log-out", AuthState.logout
+                            "系统设置", "settings", rx.redirect("/settings")
+                        ),
+                        sidebar_item(
+                            "退出登录", "power", AuthState.logout
                         ),
                         spacing="1",
                         width="100%",
