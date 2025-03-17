@@ -249,31 +249,13 @@ def account():
                                 width="10%",
                                 on_click=AccountState.change_username_dialog_open_change
                             ),
-                            direction='row',
-                            align='center',
-                            justify='center',
-                            spacing='2',
-                            width='10%'
+                            change_username(),
+                            direction="row",
+                            spacing="4",
+                            align="center",
+                            justify="center",
+                            width="100%",
                         ),
-                        rx.text(
-                            AccountState.username,
-                            size="3",
-                            width="20%",
-                        ),
-                        rx.button(
-                            "修改",
-                            size="3",
-                            width="10%",
-                            on_click=AccountState.change_username_dialog_open_change
-                        ),
-                        change_username(),
-                        direction="row",
-                        spacing="4",
-                        align="center",
-                        justify="center",
-                        width="100%",
-                    ),
-                    rx.flex(
                         rx.flex(
                             rx.flex(
                                 rx.icon("mail"),
@@ -308,20 +290,6 @@ def account():
                             justify="center",
                             width="100%",
                         ),
-                        rx.button(
-                            "修改",
-                            size="3",
-                            width="10%",
-                            on_click=AccountState.change_email_dialog_open_change
-                        ),
-                        change_email(),
-                        direction="row",
-                        spacing="4",
-                        align="center",
-                        justify="center",
-                        width="100%",
-                    ),
-                    rx.flex(
                         rx.flex(
                             rx.flex(
                                 rx.icon("key-round"),
@@ -356,23 +324,13 @@ def account():
                             justify="center",
                             width="100%",
                         ),
-                        rx.text(
-                            "*"*10,
-                            size="3",
-                            width="20%",
-                        ),
-                        rx.button(
-                            "修改",
-                            size="3",
-                            width="10%",
-                            on_click=AccountState.change_password_dialog_open_change
-                        ),
-                        change_password(),
-                        direction="row",
-                        spacing="4",
+                        direction="column",
                         align="center",
                         justify="center",
+                        spacing="8",    
                         width="100%",
+                        height="100%",
+                        padding="100px"
                     ),
                     width="100%",
                     height="100vh",
