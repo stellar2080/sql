@@ -2,6 +2,8 @@ import reflex as rx
 from state.account_st import AccountState
 from .components.alert_dialog import alert_dialog
 from .components.sidebar import sidebar_bottom_profile
+from .components.theme_wrap import theme_wrap
+
 
 def change_username() -> rx.Component:
     return rx.dialog.root(
@@ -16,6 +18,7 @@ def change_username() -> rx.Component:
                         align='center'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("user")),
                         placeholder="新用户名",
                         name="username",
                         size="3",
@@ -26,7 +29,6 @@ def change_username() -> rx.Component:
                             "取消",
                             variant="soft",
                             size="3",
-                            color_scheme="gray",
                             type="button",
                             on_click=AccountState.change_username_dialog_open_change
                         ),
@@ -74,6 +76,7 @@ def change_email() -> rx.Component:
                         align='center'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("mail")),
                         placeholder="新邮箱",
                         name="email",
                         on_blur=lambda x: AccountState.set_email_sent(x),
@@ -82,6 +85,7 @@ def change_email() -> rx.Component:
                     ),
                     rx.flex(
                         rx.input(
+                            rx.input.slot(rx.icon("shield-check")),
                             placeholder="验证码",
                             name="captcha",
                             size="3",
@@ -110,7 +114,6 @@ def change_email() -> rx.Component:
                             type="button",
                             size="3",
                             variant="soft",
-                            color_scheme="gray",
                             on_click=AccountState.change_email_dialog_open_change
                         ),
                         rx.button(
@@ -157,6 +160,7 @@ def change_password() -> rx.Component:
                         align='center'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("key-round")),
                         placeholder="新密码",
                         name="password",
                         type="password",
@@ -164,6 +168,7 @@ def change_password() -> rx.Component:
                         width='100%'
                     ),
                     rx.input(
+                        rx.input.slot(rx.icon("key-round")),
                         placeholder="确认密码",
                         name="confirm_password",
                         type="password",
@@ -175,7 +180,6 @@ def change_password() -> rx.Component:
                             "取消",
                             variant="soft",
                             size="3",
-                            color_scheme="gray",
                             type="button",
                             on_click=AccountState.change_password_dialog_open_change,
                         ),
@@ -211,19 +215,20 @@ def change_password() -> rx.Component:
     )
 
 def account():
-    return rx.box( 
-        sidebar_bottom_profile(),
+    return theme_wrap(
         rx.box( 
-            rx.center(
-                rx.card(
+            sidebar_bottom_profile(),
+            rx.box( 
+                rx.center(  
                     rx.flex(
+                        rx.heading("个人中心", size="5"),
                         rx.flex(
                             rx.flex(
                                 rx.icon("user"),
                                 rx.text(
                                     "用户名",
                                     size="4",
-                                    width="100%",
+                                    width="50%",
                                     align="left",
                                     weight='bold'
                                 ),
@@ -233,11 +238,10 @@ def account():
                                 spacing='2',
                                 width='10%'
                             ),
-                            rx.input(
-                                placeholder=AccountState.username,
+                            rx.text(
+                                AccountState.username,
                                 size="3",
-                                width="30%",
-                                disabled=True
+                                width="20%",
                             ),
                             rx.button(
                                 "修改",
@@ -258,7 +262,7 @@ def account():
                                 rx.text(
                                     "邮箱",
                                     size="4",
-                                    width="100%",
+                                    width="50%",
                                     align="left",
                                     weight='bold'
                                 ),
@@ -268,11 +272,10 @@ def account():
                                 spacing='2',
                                 width='10%'
                             ),
-                            rx.input(
-                                placeholder=AccountState.email,
+                            rx.text(
+                                AccountState.email,
                                 size="3",
-                                width="30%",
-                                disabled=True
+                                width="20%",
                             ),
                             rx.button(
                                 "修改",
@@ -293,7 +296,7 @@ def account():
                                 rx.text(
                                     "密码",
                                     size="4",
-                                    width="100%",
+                                    width="50%",
                                     align="left",
                                     weight='bold'
                                 ),
@@ -303,11 +306,10 @@ def account():
                                 spacing='2',
                                 width='10%'
                             ),
-                            rx.input(
-                                placeholder="*"*10,
+                            rx.text(
+                                "*"*10,
                                 size="3",
-                                width="30%",
-                                disabled=True
+                                width="20%",
                             ),
                             rx.button(
                                 "修改",
@@ -330,14 +332,12 @@ def account():
                         height="100%",
                         padding="100px"
                     ),
-                    width="90%",
-                    height='90%'
+                    width="100%",
+                    height="100vh",
                 ),
-                width="100%",
-                height="100vh",
+                position="sticky",
+                left="15%",
+                width="85%",
             ),
-            position="fixed",
-            left="15%",
-            width="85%",
-        ),
+        )
     )

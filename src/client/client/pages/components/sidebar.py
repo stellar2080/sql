@@ -6,19 +6,18 @@ def sidebar_item(
 ) -> rx.Component:
     return rx.link(
         rx.hstack(
-            rx.icon(icon),
-            rx.text(text, size="4"),
+            rx.icon(
+                icon,
+            ),
+            rx.text(
+                text, 
+                size="4",
+                weight='bold',
+            ),
             width="100%",
             padding_x="0.5rem",
             padding_y="0.75rem",
             align="center",
-            style={
-                "_hover": {
-                    "bg": rx.color("accent", 4),
-                    "color": rx.color("accent", 11),
-                },
-                "border-radius": "0.5em",
-            },
         ),
         on_click=on_click,
         underline="none",
@@ -35,7 +34,6 @@ def sidebar_bottom_profile() -> rx.Component:
                         "sparkles",
                         width="2.25em",
                         height="auto",
-                        border_radius="25%",
                     ),
                     rx.heading(
                         "Text2SQL", size="7", weight="bold"
@@ -46,7 +44,7 @@ def sidebar_bottom_profile() -> rx.Component:
                     width="100%",
                 ),
                 rx.vstack(
-                    sidebar_item("AI问答", "bot", rx.redirect("/account")),
+                    sidebar_item("AI问答", "bot", rx.redirect("/chat")),
                     sidebar_item("知识库", "square-library", rx.redirect("/account")),
                     sidebar_item("AI配置", "sliders-horizontal", rx.redirect("/account")),
                     sidebar_item("问答记录", "message_circle", rx.redirect("/account")),
@@ -57,10 +55,13 @@ def sidebar_bottom_profile() -> rx.Component:
                 rx.vstack(
                     rx.vstack(
                         sidebar_item(
-                            "个人中心", "settings", rx.redirect("/account")
+                            "个人中心", "user-round-cog", rx.redirect("/account")
                         ),
                         sidebar_item(
-                            "退出登录", "log-out", AuthState.logout
+                            "系统设置", "settings", rx.redirect("/settings")
+                        ),
+                        sidebar_item(
+                            "退出登录", "power", AuthState.logout
                         ),
                         spacing="1",
                         width="100%",
@@ -70,7 +71,6 @@ def sidebar_bottom_profile() -> rx.Component:
                         rx.icon_button(
                             rx.icon("user"),
                             size="3",
-                            radius="full",
                             on_click=rx.redirect("/account")
                         ),
                         rx.vstack(
@@ -79,11 +79,13 @@ def sidebar_bottom_profile() -> rx.Component:
                                     AuthState.username,
                                     size="3",
                                     weight="bold",
+                                    color=rx.color("gray", 11)
                                 ),
                                 rx.text(
                                     AuthState.email,
                                     size="2",
                                     weight="medium",
+                                    color=rx.color("gray", 11)
                                 ),
                                 width="100%",
                             ),

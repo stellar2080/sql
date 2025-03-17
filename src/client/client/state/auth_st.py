@@ -26,7 +26,7 @@ class AuthState(rx.State):
     @rx.event
     def auth_success_redirect(self):
         self.authsuccess_dialog_open_change()
-        return rx.redirect("/account")
+        return rx.redirect("/chat")
     
     @rx.event
     def check_auth_dialog_open_change(self):
