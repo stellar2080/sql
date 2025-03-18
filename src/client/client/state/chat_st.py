@@ -1,5 +1,5 @@
 import reflex as rx
-from .auth_st import AuthState
+from .base_st import BaseState
 
 class QA(rx.Base):
     """A question and answer pair."""
@@ -11,7 +11,7 @@ DEFAULT_CHATS = {
     "Intros": [],
 }
 
-class ChatState(AuthState):
+class ChatState(BaseState):
 
     chats: dict[str, list[QA]] = DEFAULT_CHATS
 
@@ -70,8 +70,7 @@ class ChatState(AuthState):
 
         messages = messages[:-1]
 
-        self.chats[self.current_chat][-1].answer = "水水水水水水水水水水水水水水水水水水水" + \
-        "水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水水"
+        self.chats[self.current_chat][-1].answer = "我不知道。"
             
         # # Stream the results, yielding after every word.
         # for item in session:

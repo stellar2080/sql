@@ -2,7 +2,7 @@
 
 import reflex as rx
 from .components.alert_dialog import alert_dialog
-from state.auth_st import AuthState
+from state.base_st import BaseState
 from .components.theme_wrap import theme_wrap
 
 def login():
@@ -74,7 +74,7 @@ def login():
                         ),
                         padding="32px",
                         width="100%",
-                        on_submit=AuthState.login,
+                        on_submit=BaseState.login,
                         reset_on_submit=False,
                     ),
                     rx.text(
@@ -96,19 +96,19 @@ def login():
                 width="500px",
             ),
             alert_dialog(
-                description=AuthState.auth_dialog_description,
-                on_click=AuthState.auth_dialog_open_change,
-                open=AuthState.auth_dialog_open
+                description=BaseState.base_dialog_description,
+                on_click=BaseState.base_dialog_open_change,
+                open=BaseState.base_dialog_open
             ),
             alert_dialog(
-                description=AuthState.auth_dialog_description,
-                on_click=AuthState.auth_success_redirect,
-                open=AuthState.authsuccess_dialog_open
+                description=BaseState.base_dialog_description,
+                on_click=BaseState.auth_success_redirect,
+                open=BaseState.auth_success_dialog_open
             ),
             alert_dialog(
-                description=AuthState.auth_dialog_description,
-                on_click=AuthState.check_auth_dialog_open_change,
-                open=AuthState.check_auth_dialog_open
+                description=BaseState.base_dialog_description,
+                on_click=BaseState.check_login_dialog_open_change,
+                open=BaseState.check_login_dialog_open
             ),
             width="100%",
             height="100vh",

@@ -1,6 +1,6 @@
 import reflex as rx
 
-from state.settings_st import SettingsState
+from state.base_st import BaseState
 
 
 def scaling_picker() -> rx.Component:
@@ -18,8 +18,8 @@ def scaling_picker() -> rx.Component:
                     "110%",
                 ],
                 size="3",
-                value=SettingsState.scaling,
-                on_change=SettingsState.set_scaling,
+                value=BaseState.scaling,
+                on_change=BaseState.set_scaling,
             ),
             width="100%",
         ),

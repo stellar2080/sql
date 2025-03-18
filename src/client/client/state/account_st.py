@@ -6,9 +6,9 @@ from sqlmodel import select
 
 from utils.email_utils import send_email, validate_email
 from db_model import User
-from .auth_st import AuthState
+from .base_st import BaseState
 
-class AccountState(AuthState):
+class AccountState(BaseState):
     email_sent: str = ""
     send_time: datetime.datetime = datetime.datetime(1970, 1, 1, 0, 0, 0)
     countdown: int = 0

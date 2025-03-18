@@ -7,7 +7,7 @@ import reflex as rx
 from sqlmodel import select
 
 from utils.email_utils import send_email, validate_email
-from db_model import User
+from db_model import User, Settings
 
 class SignupState(rx.State):
     email: str = ""
@@ -53,6 +53,10 @@ class SignupState(rx.State):
         elif not validate_email(email=self.email):
             self.signup_dialog_description = "邮箱格式错误"
             return self.signup_dialog_open_change()
+        with rx.session() as session:
+            if session.exec(select(User).where(User.email == self.email)).first():
+                self.signup_dialog_description = "邮箱已被注册"
+                return self.signup_dialog_open_change()
         self.send_time = datetime.datetime.now()
         self.captcha = send_email(msg_to=self.email)
         print(self.captcha)
@@ -122,7 +126,15 @@ class SignupState(rx.State):
             user = User(
                 user_id=random_id, username=username, email=email, password=hashed_password
             )
+            settings = Settings(
+                user_id=random_id, 
+                accent_color = "violet", 
+                gray_color = "gray",
+                radius = "large",
+                scaling = "100%",
+            )
             session.add(user)
+            session.add(settings)
             session.commit()
         self.signup_dialog_description = "注册成功，点击确定返回登录页面"
         self.reset_countdown()

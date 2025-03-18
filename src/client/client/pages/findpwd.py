@@ -47,7 +47,7 @@ def findpwd():
                                         placeholder="验证码",
                                         name="captcha",
                                         size="3",
-                                        width="70%",
+                                        width="60%",
                                     ),
                                     rx.button(
                                         rx.cond(
@@ -59,7 +59,7 @@ def findpwd():
                                         on_click=FindpwdState.send_email,
                                         size="3",
                                         disabled=FindpwdState.countdown > 0,
-                                        width="30%",
+                                        width="40%",
                                     ),
                                     direction="row",
                                     align="center",

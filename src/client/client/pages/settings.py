@@ -2,13 +2,13 @@
 
 import reflex as rx
 
-from state.settings_st import SettingsState
+from state.base_st import BaseState
 from .components.sidebar import sidebar_bottom_profile
 from .components.color_picker import primary_color_picker, secondary_color_picker
 from .components.radius_picker import radius_picker
 from .components.scaling_picker import scaling_picker
 from .components.theme_wrap import theme_wrap
-from .components.appearance_picker import appearance_picker
+from .components.alert_dialog import alert_dialog
 
 
 def settings() -> rx.Component:
@@ -22,7 +22,6 @@ def settings() -> rx.Component:
                             "系统设置", 
                             size="5"
                         ),
-                        appearance_picker(),
                         rx.vstack(
                             rx.hstack(
                                 rx.icon("palette"),
@@ -45,6 +44,27 @@ def settings() -> rx.Component:
                         ),
                         radius_picker(),
                         scaling_picker(),
+                        rx.flex(
+                            rx.button(
+                                "恢复默认",
+                                on_click=BaseState.reset_settings,
+                                size='3'
+                            ),
+                            rx.button(
+                                "保存设置",
+                                on_click=BaseState.summit_settings,
+                                size='3'
+                            ),
+                            direction='row',
+                            width='100%',
+                            spacing='5'
+                        ),
+                        rx.text(
+                            "可前往各个页面预览效果，若不保存设置，退出登录后将丢失更改",
+                            text_align="center",
+                            font_size=".75em",
+                            color=rx.color("gray", 10),
+                        ),
                         spacing="7",
                         direction='column',
                         align='center',
@@ -56,6 +76,16 @@ def settings() -> rx.Component:
                 position="sticky",
                 left="15%",
                 width="85%",
+            ),
+            alert_dialog(
+                description=BaseState.base_dialog_description,
+                on_click=BaseState.settings_reset_open_change,
+                open=BaseState.settings_reset_open
+            ),
+            alert_dialog(
+                description=BaseState.base_dialog_description,
+                on_click=BaseState.settings_saved_open_change,
+                open=BaseState.settings_saved_open
             ),
         )
     )

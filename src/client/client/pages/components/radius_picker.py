@@ -1,6 +1,6 @@
 import reflex as rx
 
-from state.settings_st import SettingsState
+from state.base_st import BaseState
 
 def radius_picker() -> rx.Component:
     return (
@@ -19,8 +19,8 @@ def radius_picker() -> rx.Component:
                     "full",
                 ],
                 size="3",
-                value=SettingsState.radius,
-                on_change=SettingsState.set_radius,
+                value=BaseState.radius,
+                on_change=BaseState.set_radius,
             ),
             width="100%",
         ),

@@ -1,5 +1,5 @@
 import reflex as rx
-from state.auth_st import AuthState
+from state.base_st import BaseState
 
 def sidebar_item(
     text: str, icon: str, on_click: property, 
@@ -61,7 +61,7 @@ def sidebar_bottom_profile() -> rx.Component:
                             "系统设置", "settings", rx.redirect("/settings")
                         ),
                         sidebar_item(
-                            "退出登录", "power", AuthState.logout
+                            "退出登录", "power", BaseState.logout
                         ),
                         spacing="1",
                         width="100%",
@@ -76,13 +76,13 @@ def sidebar_bottom_profile() -> rx.Component:
                         rx.vstack(
                             rx.box(
                                 rx.text(
-                                    AuthState.username,
+                                    BaseState.username,
                                     size="3",
                                     weight="bold",
                                     color=rx.color("gray", 11)
                                 ),
                                 rx.text(
-                                    AuthState.email,
+                                    BaseState.email,
                                     size="2",
                                     weight="medium",
                                     color=rx.color("gray", 11)

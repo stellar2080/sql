@@ -66,7 +66,7 @@ def signup():
                                         placeholder="输入验证码",
                                         name="captcha",
                                         size="3",
-                                        width="70%",
+                                        width="60%",
                                     ),
                                     rx.button(
                                         rx.cond(
@@ -78,7 +78,7 @@ def signup():
                                         on_click=SignupState.send_email,
                                         size="3",
                                         disabled=SignupState.countdown > 0,
-                                        width="30%",
+                                        width="40%",
                                     ),
                                     direction="row",
                                     align="center",

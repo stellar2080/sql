@@ -1,7 +1,7 @@
 import reflex as rx
 from reflex.components.radix.themes.base import LiteralAccentColor, LiteralGrayColor
 
-from state.settings_st import SettingsState
+from state.base_st import BaseState
 
 box_shadow_style = "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)"
 color_box_size = ["2.25rem", "2.25rem", "2.5rem"]
@@ -39,7 +39,7 @@ def _display_primary_color(color: list) -> rx.Component:
     return rx.tooltip(
         rx.box(
             rx.cond(
-                color[0].lower() == SettingsState.accent_color.lower(),
+                color[0].lower() == BaseState.accent_color.lower(),
                 rx.box(
                     rx.icon("check", color=rx.color("gray", 12)),
                     bg=color[1],
@@ -55,7 +55,7 @@ def _display_primary_color(color: list) -> rx.Component:
                     style=color_picker_style,
                 ),
             ),
-            on_click=SettingsState.setvar("accent_color", color[0].lower()),
+            on_click=BaseState.setvar("accent_color", color[0].lower()),
         ),
         content=color[0],
     )
@@ -65,7 +65,7 @@ def _display_secondary_color(colors: list) -> rx.Component:
     return rx.tooltip(
         rx.box(
             rx.cond(
-                colors[0].lower() == SettingsState.gray_color.lower(),
+                colors[0].lower() == BaseState.gray_color.lower(),
                 rx.box(
                     rx.icon("check", color=rx.color("gray", 12)),
                     bg=colors[1],
@@ -81,7 +81,7 @@ def _display_secondary_color(colors: list) -> rx.Component:
                     style=color_picker_style,
                 ),
             ),
-            on_click=SettingsState.setvar("gray_color", colors[0].lower()),
+            on_click=BaseState.setvar("gray_color", colors[0].lower()),
         ),
         content=colors[0],
     )
