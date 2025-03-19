@@ -3,14 +3,15 @@ import os
 from .llm_base import LLM_Base
 from dashscope import Generation
 
-from utils.const import TEMPERATURE, MAX_LENGTH, TOP_K, TOP_P
-
-
 class Tongyi(LLM_Base):
     def __init__(self, config):
         super().__init__()
         self.model = config['model']
         self.api_key = os.environ.get('DASHSCOPE_API_KEY')
+        self.TEMPERATURE = config.get('TEMPERATURE')
+        self.TOP_K = config.get('TOP_K')
+        self.TOP_P = config.get('TOP_P')
+        self.MAX_LENGTH = config.get('MAX_LENGTH')
 
     def call(self, messages):
         response = Generation.call(
@@ -18,10 +19,10 @@ class Tongyi(LLM_Base):
             api_key=self.api_key,
             messages=messages,
             result_format='message',
-            max_tokens=MAX_LENGTH,
-            temperature=TEMPERATURE,
-            top_k=TOP_K,
-            top_p=TOP_P
+            max_tokens=self.MAX_LENGTH,
+            temperature=self.TEMPERATURE,
+            top_k=self.TOP_K,
+            top_p=self.TOP_P
         )
         print(response)
         return response

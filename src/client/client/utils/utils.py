@@ -8,12 +8,9 @@ import time
 import uuid
 from typing import Union
 import json
-from datasketch import MinHash, MinHashLSH
 import ast
 import numpy as np
 from chromadb.utils import embedding_functions
-
-from utils.const import F_LSH_THRESHOLD
 
 def system_message(message: str):
     return {'role': 'system', 'content': message}
@@ -120,34 +117,6 @@ def timeout(time_args):
             return result
         return wrapper
     return _timeout
-
-def lsh(query_list: list, target_list: list) -> dict:
-
-    query_results = {}
-
-    lsh = MinHashLSH(threshold=F_LSH_THRESHOLD, num_perm=128)
-    n_gram = 3
-
-    for i, target in enumerate(target_list):
-        minhash = MinHash(num_perm=128)
-        target = target.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
-        grams = [target[j:j+n_gram] for j in range(len(target) - n_gram + 1)]
-        for gram in grams:
-            minhash.update(gram.encode('utf-8'))
-        lsh.insert(i, minhash)
-
-    for query_str in query_list:
-        query_minhash = MinHash(num_perm=128)
-        query_str_copy = query_str.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
-        query_grams = [query_str_copy[j:j+n_gram] for j in range(len(query_str_copy) - n_gram + 1)]
-        for gram in query_grams:
-            query_minhash.update(gram.encode('utf-8'))
-
-        idx_list = lsh.query(query_minhash)
-        if len(idx_list) > 0:
-            query_results[query_str] = [target_list[idx] for idx in idx_list]
-
-    return query_results
 
 def get_subsequence_similarity(entity1, entity2):
     entity1 = entity1.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')

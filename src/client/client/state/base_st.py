@@ -1,7 +1,7 @@
 import bcrypt
 import reflex as rx
 from sqlmodel import select, or_
-from db_model import User, Settings
+from db_model import User, Settings, AIConfig
 
 class BaseState(rx.State):
 
@@ -73,6 +73,23 @@ class BaseState(rx.State):
         self.reset()
         return rx.redirect("/login")
     
+    @rx.var
+    def logged_in(self) -> bool:
+        return self.user_id is not None
+
+    @rx.event
+    def check_login(self):
+        if not self.logged_in:
+            self.base_dialog_description = "您还未登录，请先登录"
+            self.check_login_dialog_open_change()
+            return rx.redirect("/login")
+        if not self.settings_loaded:
+            self.settings_loaded = not self.settings_loaded
+            return self.load_settings()
+        if not self.ai_config_loaded:
+            self.ai_config_loaded = not self.ai_config_loaded
+            return self.load_ai_config()
+
     accent_color: str = "violet"
     gray_color: str = "gray"
     radius: str = "large"
@@ -145,17 +162,92 @@ class BaseState(rx.State):
             session.commit()
         self.base_dialog_description = "保存设置成功"
         return self.settings_saved_open_change()
+    
+    MAX_ITERATIONS: int = 8
+    DO_SAMPLE: bool = False
+    TEMPERATURE: float = 0.1
+    TOP_K: int = 3
+    TOP_P: float = 0.1
+    MAX_LENGTH: int = 8192
+    N_RESULTS: int = 3
+    E_HINT_THRESHOLD: float = 0.30
+    E_COL_THRESHOLD: float = 0.30
+    E_VAL_THRESHOLD: float = 0.30
+    E_COL_STRONG_THRESHOLD: float = 0.48
+    E_VAL_STRONG_THRESHOLD: float = 0.48
+    F_HINT_THRESHOLD: float = 0.80
+    F_LSH_THRESHOLD: float = 0.40
+    F_COL_THRESHOLD: float = 0.60
+    F_VAL_THRESHOLD: float = 0.60
+    F_COL_STRONG_THRESHOLD: float = 0.85
+    F_VAL_STRONG_THRESHOLD: float = 0.85
+    G_HINT_THRESHOLD: float = 0.30
+    LLM_HOST: str = 'localhost'
+    LLM_PORT: int = 6006
 
-    @rx.var
-    def logged_in(self) -> bool:
-        return self.user_id is not None
+    ai_config_loaded: bool = False
+
+    ai_config_reset_open: bool = False
+    ai_config_saved_open: bool = False
+    
+    @rx.event
+    def ai_config_reset_open_change(self):
+        self.ai_config_reset_open = not self.ai_config_reset_open
 
     @rx.event
-    def check_login(self):
-        if not self.logged_in:
-            self.base_dialog_description = "您还未登录，请先登录"
-            self.check_login_dialog_open_change()
-            return rx.redirect("/login")
-        if not self.settings_loaded:
-            self.settings_loaded = not self.settings_loaded
-            return self.load_settings()
+    def ai_config_saved_open_change(self):
+        self.ai_config_saved_open = not self.ai_config_saved_open
+
+    @rx.event
+    def reset_ai_config(self):
+        self.MAX_ITERATIONS = 8
+        self.DO_SAMPLE = False
+        self.TEMPERATURE = 0.1
+        self.TOP_K = 3
+        self.TOP_P = 0.1
+        self.MAX_LENGTH = 8192
+        self.N_RESULTS = 3
+        self.E_HINT_THRESHOLD = 0.30
+        self.E_COL_THRESHOLD = 0.30
+        self.E_VAL_THRESHOLD = 0.30
+        self.E_COL_STRONG_THRESHOLD = 0.48
+        self.E_VAL_STRONG_THRESHOLD = 0.48
+        self.F_HINT_THRESHOLD = 0.80
+        self.F_LSH_THRESHOLD = 0.40
+        self.F_COL_THRESHOLD = 0.60
+        self.F_VAL_THRESHOLD = 0.60
+        self.F_COL_STRONG_THRESHOLD = 0.85
+        self.F_VAL_STRONG_THRESHOLD = 0.85
+        self.G_HINT_THRESHOLD = 0.30
+        self.LLM_HOST = 'localhost'
+        self.LLM_PORT = 6006
+
+    @rx.event()
+    def load_ai_config(self):
+        with rx.session() as session:
+            ai_config = session.exec(
+                select(AIConfig).where(
+                    AIConfig.user_id == self.user_id,
+                )
+            ).first()
+            self.MAX_ITERATIONS = ai_config.MAX_ITERATIONS
+            self.DO_SAMPLE = ai_config.DO_SAMPLE
+            self.TEMPERATURE = ai_config.TEMPERATURE
+            self.TOP_K = ai_config.TOP_K
+            self.TOP_P = ai_config.TOP_P
+            self.MAX_LENGTH = ai_config.MAX_LENGTH
+            self.N_RESULTS = ai_config.N_RESULTS
+            self.E_HINT_THRESHOLD = ai_config.E_HINT_THRESHOLD
+            self.E_COL_THRESHOLD = ai_config.E_COL_THRESHOLD
+            self.E_VAL_THRESHOLD = ai_config.E_VAL_THRESHOLD
+            self.E_COL_STRONG_THRESHOLD = ai_config.E_COL_STRONG_THRESHOLD
+            self.E_VAL_STRONG_THRESHOLD = ai_config.E_VAL_STRONG_THRESHOLD
+            self.F_HINT_THRESHOLD = ai_config.F_HINT_THRESHOLD
+            self.F_LSH_THRESHOLD = ai_config.F_LSH_THRESHOLD
+            self.F_COL_THRESHOLD = ai_config.F_COL_THRESHOLD
+            self.F_VAL_THRESHOLD = ai_config.F_VAL_THRESHOLD
+            self.F_COL_STRONG_THRESHOLD = ai_config.F_COL_STRONG_THRESHOLD
+            self.F_VAL_STRONG_THRESHOLD = ai_config.F_VAL_STRONG_THRESHOLD
+            self.G_HINT_THRESHOLD = ai_config.G_HINT_THRESHOLD
+            self.LLM_HOST = ai_config.LLM_HOST
+            self.LLM_PORT = ai_config.LLM_PORT

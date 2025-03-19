@@ -1,6 +1,6 @@
 from agent.agent_base import Agent_Base
 from llm.llm_base import LLM_Base
-from utils.const import G_HINT_THRESHOLD, GENERATOR, REVISER
+from utils.const import GENERATOR, REVISER
 from utils.template import generator_template_p1, generator_hint_template, generator_template_p2
 from utils.utils import parse_list, parse_sql, user_message, get_response_content, timeout
 from vectordb.vectordb import VectorDB
@@ -13,6 +13,7 @@ class Generator(Agent_Base):
         super().__init__()
         self.platform = config.get('platform','')
         self.user_id = config.get('user_id','')
+        self.G_HINT_THRESHOLD = config.get('G_HINT_THRESHOLD')
 
     def get_rela_tips(
         self,
@@ -29,7 +30,7 @@ class Generator(Agent_Base):
         tip_list = [
             document for distance, document in sorted(
                 zip(distances, documents), key=lambda x: x[0]
-            ) if 1 - distance > G_HINT_THRESHOLD
+            ) if 1 - distance > self.G_HINT_THRESHOLD
         ]
         return tip_list
 

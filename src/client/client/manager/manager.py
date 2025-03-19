@@ -9,7 +9,7 @@ from agent.reviser import Reviser
 from llm.tongyi import Tongyi
 from vectordb.vectordb import VectorDB
 from utils.utils import deterministic_uuid, parse_list
-from utils.const import MANAGER, REVISER, MAX_ITERATIONS, FILTER, GENERATOR, EXTRACTOR
+from utils.const import MANAGER, EXTRACTOR, FILTER, GENERATOR, REVISER
 
 special_chars = "'_,."
 word = Word(alphas + nums + special_chars)
@@ -27,10 +27,10 @@ expr = Group(
 class Manager:
     def __init__(self,config=None):
         if config is None:
-            config = {}
+            raise Exception('Please provide config.')
         self.platform = config.get('platform',None)
         if self.platform is None:
-            raise Exception('Plz provide platform.')
+            raise Exception('Please provide platform.')
         elif self.platform == 'Api':
             self.llm = Api(config)
         elif self.platform == 'Tongyi':
@@ -52,6 +52,8 @@ class Manager:
         self.message = None
 
         self.user_id = config.get('user_id',None)
+
+        self.MAX_ITERATIONS = config.get('MAX_ITERATIONS')
 
     def message_init(self):
         self.message = {
@@ -194,7 +196,7 @@ class Manager:
         else:
             raise Exception("Please provide a question or a message")
 
-        for i in range(1, MAX_ITERATIONS+1):
+        for i in range(1, self.MAX_ITERATIONS+1):
             # print("ITERATION {}".format(i))
             # print("MESSAGE: " + str(self.message))
             if i == 0 and self.message["message_to"] is None:

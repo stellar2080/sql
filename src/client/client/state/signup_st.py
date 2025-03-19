@@ -7,7 +7,7 @@ import reflex as rx
 from sqlmodel import select
 
 from utils.email_utils import send_email, validate_email
-from db_model import User, Settings
+from db_model import User, Settings, AIConfig
 
 class SignupState(rx.State):
     email: str = ""
@@ -133,8 +133,33 @@ class SignupState(rx.State):
                 radius = "large",
                 scaling = "100%",
             )
+            ai_config = AIConfig(
+                user_id=random_id,
+                MAX_ITERATIONS = 8,
+                DO_SAMPLE = False,
+                TEMPERATURE = 0.1,
+                TOP_K = 3,
+                TOP_P = 0.1,
+                MAX_LENGTH = 8192,
+                N_RESULTS = 3,
+                E_HINT_THRESHOLD = 0.30,
+                E_COL_THRESHOLD = 0.30,
+                E_VAL_THRESHOLD = 0.30,
+                E_COL_STRONG_THRESHOLD = 0.48,
+                E_VAL_STRONG_THRESHOLD = 0.48,
+                F_HINT_THRESHOLD = 0.80,
+                F_LSH_THRESHOLD = 0.40,
+                F_COL_THRESHOLD = 0.60,
+                F_VAL_THRESHOLD = 0.60,
+                F_COL_STRONG_THRESHOLD = 0.85,
+                F_VAL_STRONG_THRESHOLD = 0.85,
+                G_HINT_THRESHOLD = 0.30,
+                LLM_HOST = 'localhost',
+                LLM_PORT = 6006,
+            )
             session.add(user)
             session.add(settings)
+            session.add(ai_config)
             session.commit()
         self.signup_dialog_description = "注册成功，点击确定返回登录页面"
         self.reset_countdown()
