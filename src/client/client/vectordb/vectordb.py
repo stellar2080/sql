@@ -4,7 +4,6 @@ from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 
 from utils.utils import deterministic_uuid
-from utils.const import N_RESULTS_KEY
 
 class VectorDB(VectorDB_Base):
     def __init__(
@@ -20,6 +19,7 @@ class VectorDB(VectorDB_Base):
 
         default_ef = embedding_functions.DefaultEmbeddingFunction()
         self.embedding_function = config.get("embedding_function", default_ef)
+        self.N_RESULTS_KEY = config.get("N_RESULTS_KEY", 3)
 
         self.chroma_client = None
 
@@ -161,7 +161,7 @@ class VectorDB(VectorDB_Base):
 
         if extracts is None:
             extracts = 'documents'
-        n_results = N_RESULTS_KEY if not n_results else n_results
+        n_results = self.N_RESULTS_KEY if not n_results else n_results
         return self.extract_query_results(
             self.document_collection.query(
                 query_texts=query_texts,
@@ -190,7 +190,7 @@ class VectorDB(VectorDB_Base):
 
         if extracts is None:
             extracts = 'documents'
-        n_results = N_RESULTS_KEY if not n_results else n_results
+        n_results = self.N_RESULTS_KEY if not n_results else n_results
         return self.extract_query_results(
             self.key_collection.query(
                 query_texts=query_texts,
@@ -219,7 +219,7 @@ class VectorDB(VectorDB_Base):
 
         if extracts is None:
             extracts = 'documents'
-        n_results = N_RESULTS_KEY if not n_results else n_results
+        n_results = self.N_RESULTS_KEY if not n_results else n_results
         return self.extract_query_results(
             self.tip_collection.query(
                 query_texts=query_texts,

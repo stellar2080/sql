@@ -1,7 +1,7 @@
 from llm.llm_base import LLM_Base
-from utils.const import E_HINT_THRESHOLD, E_COL_THRESHOLD, E_COL_STRONG_THRESHOLD, E_VAL_THRESHOLD, E_VAL_STRONG_THRESHOLD, EXTRACTOR, FILTER
+from utils.const import EXTRACTOR, FILTER
 from utils.template import extractor_template, extractor_hint_template
-from utils.utils import get_cos_similarity, get_embedding, get_embedding_list, user_message, get_response_content, timeout, parse_list
+from utils.utils import get_cos_similarity, get_embedding_list, user_message, get_response_content, timeout, parse_list
 from agent.agent_base import Agent_Base
 from vectordb.vectordb import VectorDB
 
@@ -12,6 +12,11 @@ class Extractor(Agent_Base):
     ):
         super().__init__()
         self.platform = config['platform']
+        self.E_HINT_THRESHOLD = config.get('E_HINT_THRESHOLD')
+        self.E_COL_THRESHOLD = config.get('E_COL_THRESHOLD')
+        self.E_VAL_THRESHOLD = config.get('E_VAL_THRESHOLD')
+        self.E_COL_STRONG_THRESHOLD = config.get('E_COL_STRONG_THRESHOLD')
+        self.E_VAL_STRONG_THRESHOLD = config.get('E_VAL_STRONG_THRESHOLD')
 
     def get_rela_hint_keys(
         self,
@@ -25,7 +30,7 @@ class Extractor(Agent_Base):
         filtered_keys = [
             (1 - distance, document)
             for distance, document in zip(distances, documents)
-            if 1 - distance > E_HINT_THRESHOLD
+            if 1 - distance > self.E_HINT_THRESHOLD
         ]
         filtered_keys.sort(key=lambda x: x[0], reverse=True)
         hint_key_list = [
@@ -107,7 +112,7 @@ class Extractor(Agent_Base):
 
         filtered_schema = [
             column for column in schema
-            if column[4][0] > E_COL_THRESHOLD or column[4][1] > E_COL_THRESHOLD
+            if column[4][0] > self.E_COL_THRESHOLD or column[4][1] > self.E_COL_THRESHOLD
         ]
         
         sort_schema = sorted(
@@ -123,15 +128,15 @@ class Extractor(Agent_Base):
             comment_cos_similarity = column[4][1]
             col_name = column[1]   
             comment = column[3]    
-            if name_cos_similarity > E_COL_THRESHOLD:
+            if name_cos_similarity > self.E_COL_THRESHOLD:
                 column_set.add(col_name)
-                if name_cos_similarity > E_COL_STRONG_THRESHOLD:
+                if name_cos_similarity > self.E_COL_STRONG_THRESHOLD:
                     # print(col_name, name_cos_similarity)
                     strong_rala_set.add(col_name)
 
-            if comment_cos_similarity > E_COL_THRESHOLD:
+            if comment_cos_similarity > self.E_COL_THRESHOLD:
                 column_set.add(comment)
-                if comment_cos_similarity > E_COL_STRONG_THRESHOLD:
+                if comment_cos_similarity > self.E_COL_STRONG_THRESHOLD:
                     # print(comment, comment_cos_similarity)
                     strong_rala_set.add(comment)
 
@@ -161,9 +166,9 @@ class Extractor(Agent_Base):
                 value_embeddings = embeddings[1:]
                 for enum, value in enumerate(value_list, start=0):
                     cos_similarity = get_cos_similarity(vec1=question_embedding, vec2=value_embeddings[enum])
-                    if cos_similarity > E_VAL_THRESHOLD:
+                    if cos_similarity > self.E_VAL_THRESHOLD:
                         value_set.add(value)
-                        if cos_similarity > E_VAL_STRONG_THRESHOLD:
+                        if cos_similarity > self.E_VAL_STRONG_THRESHOLD:
                             strong_rala_set.add(value)
 
         return value_set, strong_rala_set

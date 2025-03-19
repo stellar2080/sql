@@ -7,7 +7,7 @@ from .components.theme_wrap import theme_wrap
 
 def message(qa: QA) -> rx.Component:
     return rx.box(
-        rx.box(
+        rx.box(          
             rx.flex(
                 rx.badge(
                     rx.flex(

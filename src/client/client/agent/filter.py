@@ -1,17 +1,24 @@
 from llm.llm_base import LLM_Base
-from utils.const import F_COL_STRONG_THRESHOLD, F_VAL_STRONG_THRESHOLD, FILTER, GENERATOR, F_HINT_THRESHOLD, F_COL_THRESHOLD, F_VAL_THRESHOLD
+from utils.const import FILTER, GENERATOR
 from utils.template import filter_template, filter_hint_template
 from utils.utils import parse_json, user_message, get_response_content, timeout, \
-    get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list, lsh
+    get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list
 from agent.agent_base import Agent_Base
 from vectordb.vectordb import VectorDB
 import spacy
+from datasketch import MinHash, MinHashLSH
 
 class Filter(Agent_Base):
     def __init__(self, config):
         super().__init__()
         self.platform = config.get('platform','')
         self.user_id = config.get('user_id','')
+        self.F_HINT_THRESHOLD = config.get('F_HINT_THRESHOLD')
+        self.F_LSH_THRESHOLD = config.get('F_LSH_THRESHOLD')
+        self.F_COL_THRESHOLD = config.get('F_COL_THRESHOLD')
+        self.F_VAL_THRESHOLD = config.get('F_VAL_THRESHOLD')
+        self.F_COL_STRONG_THRESHOLD = config.get('F_COL_STRONG_THRESHOLD')
+        self.F_VAL_STRONG_THRESHOLD = config.get('F_VAL_STRONG_THRESHOLD')
 
     def parse_nouns(
         self,
@@ -33,7 +40,7 @@ class Filter(Agent_Base):
         threshold: float = None,
     ) -> list:
         if threshold is None:
-            threshold = F_HINT_THRESHOLD
+            threshold = self.F_HINT_THRESHOLD
         hint_list = []
         hint_ids = vectordb.get_related_key(
             user_id=self.user_id,
@@ -196,7 +203,7 @@ class Filter(Agent_Base):
         threshold: float = None
     ) -> set:
         if threshold is None:
-            threshold = F_COL_THRESHOLD
+            threshold = self.F_COL_THRESHOLD
 
         entitys_length = len(entity_list)
         nouns_length = len(noun_list)
@@ -239,21 +246,21 @@ class Filter(Agent_Base):
                 if name_sub_similarity > threshold:
                     schema_dict[tbl_name][col_name][5] = True
                     tbl_name_selected.add(tbl_name)
-                    if name_sub_similarity > F_COL_STRONG_THRESHOLD:
+                    if name_sub_similarity > self.F_COL_STRONG_THRESHOLD:
                         # print(col_name, name_cos_similarity)
                         strong_rela_set.add((tbl_name,col_name))
 
                 if name_cos_similarity > threshold:
                     schema_dict[tbl_name][col_name][5] = True
                     tbl_name_selected.add(tbl_name)
-                    if name_cos_similarity > F_COL_STRONG_THRESHOLD:
+                    if name_cos_similarity > self.F_COL_STRONG_THRESHOLD:
                         # print(col_name, name_cos_similarity)
                         strong_rela_set.add((tbl_name,col_name))
 
                 if comment_cos_similarity > threshold:
                     schema_dict[tbl_name][col_name][5] = True
                     tbl_name_selected.add(tbl_name)
-                    if comment_cos_similarity > F_COL_STRONG_THRESHOLD:
+                    if comment_cos_similarity > self.F_COL_STRONG_THRESHOLD:
                         strong_rela_set.add((tbl_name,col_name))
 
         if noun_list:
@@ -290,24 +297,52 @@ class Filter(Agent_Base):
                         if name_sub_similarity > low_threshold:
                             schema_dict[tbl_name][col_name][5] = True
                             tbl_name_selected.add(tbl_name)
-                            if name_sub_similarity > F_COL_STRONG_THRESHOLD:
+                            if name_sub_similarity > self.F_COL_STRONG_THRESHOLD:
                                 # print(col_name, name_cos_similarity)
                                 strong_rela_set.add((tbl_name,col_name))
 
                         if name_cos_similarity > low_threshold:
                             schema_dict[tbl_name][col_name][5] = True
                             tbl_name_selected.add(tbl_name)
-                            if name_cos_similarity > F_COL_STRONG_THRESHOLD:
+                            if name_cos_similarity > self.F_COL_STRONG_THRESHOLD:
                                 # print(col_name, name_cos_similarity)
                                 strong_rela_set.add((tbl_name,col_name))
 
                         if comment_cos_similarity > low_threshold:
                             schema_dict[tbl_name][col_name][5] = True
                             tbl_name_selected.add(tbl_name)
-                            if comment_cos_similarity > F_COL_STRONG_THRESHOLD:
+                            if comment_cos_similarity > self.F_COL_STRONG_THRESHOLD:
                                 strong_rela_set.add((tbl_name,col_name))
 
         return strong_rela_set
+
+    def lsh(self, query_list: list, target_list: list) -> dict:
+
+        query_results = {}
+
+        lsh = MinHashLSH(threshold=self.F_LSH_THRESHOLD, num_perm=128)
+        n_gram = 3
+
+        for i, target in enumerate(target_list):
+            minhash = MinHash(num_perm=128)
+            target = target.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+            grams = [target[j:j+n_gram] for j in range(len(target) - n_gram + 1)]
+            for gram in grams:
+                minhash.update(gram.encode('utf-8'))
+            lsh.insert(i, minhash)
+
+        for query_str in query_list:
+            query_minhash = MinHash(num_perm=128)
+            query_str_copy = query_str.lower().replace(' ', '').replace('_', '').replace('-','').rstrip('s')
+            query_grams = [query_str_copy[j:j+n_gram] for j in range(len(query_str_copy) - n_gram + 1)]
+            for gram in query_grams:
+                query_minhash.update(gram.encode('utf-8'))
+
+            idx_list = lsh.query(query_minhash)
+            if len(idx_list) > 0:
+                query_results[query_str] = [target_list[idx] for idx in idx_list]
+
+        return query_results
 
 
     def get_related_value(
@@ -320,7 +355,7 @@ class Filter(Agent_Base):
         threshold: float = None
     ) -> set:
         if threshold is None:
-            threshold = F_VAL_THRESHOLD
+            threshold = self.F_VAL_THRESHOLD
         strong_rela_set = set()
         cur = db_conn.cursor()
 
@@ -333,7 +368,7 @@ class Filter(Agent_Base):
                 value_list = [value_data[0] for value_data in value_datas]
 
                 related_value_list = []
-                query_results = lsh(entity_list,value_list)
+                query_results = self.lsh(entity_list,value_list)
                 if query_results != {}:
                     for entity, values in query_results.items():
                         embedding_list = get_embedding_list([entity] + values)
@@ -343,7 +378,8 @@ class Filter(Agent_Base):
                             # print(entity, value, subsequence_similarity, cos_similarity)
                             if subsequence_similarity > threshold or cos_similarity > threshold:
                                 related_value_list.append(value)
-                                if subsequence_similarity > F_VAL_STRONG_THRESHOLD or cos_similarity > F_VAL_STRONG_THRESHOLD:
+                                if subsequence_similarity > self.F_VAL_STRONG_THRESHOLD \
+                                or cos_similarity > self.F_VAL_STRONG_THRESHOLD:
                                     strong_rela_set.add((tbl_name,col_name))
                 if noun_list:
                     low_threshold = threshold - 0.25
@@ -358,7 +394,8 @@ class Filter(Agent_Base):
                             # print(noun, value, subsequence_similarity, cos_similarity)
                             if subsequence_similarity > low_threshold or cos_similarity > low_threshold:
                                 related_value_list.append(value)
-                                if subsequence_similarity > F_VAL_STRONG_THRESHOLD or cos_similarity > F_VAL_STRONG_THRESHOLD:
+                                if subsequence_similarity > self.F_VAL_STRONG_THRESHOLD \
+                                or cos_similarity > self.F_VAL_STRONG_THRESHOLD:
                                     strong_rela_set.add((tbl_name,col_name))
                 # print(related_value_list)
                 if len(related_value_list) != 0:

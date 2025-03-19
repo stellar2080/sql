@@ -8,7 +8,15 @@ import torch
 current_dir = os.path.dirname(os.path.abspath(__file__))
 CLIENT_PATH = os.path.dirname(current_dir)
 sys.path.append(CLIENT_PATH)
-from utils.const import MAX_LENGTH, DO_SAMPLE, TEMPERATURE, TOP_K, TOP_P, LLM_HOST, LLM_PORT
+
+DO_SAMPLE = False
+TEMPERATURE = 0.1
+TOP_K = 3
+TOP_P = 0.1
+MAX_LENGTH = 8192
+
+LLM_HOST = 'localhost'
+LLM_PORT = 6006
 
 # from modelscope import snapshot_download
 # model_dir = snapshot_download('Qwen/Qwen2.5-7B-Instruct-GPTQ-Int4', cache_dir='/home/stellar/model', revision='master') 

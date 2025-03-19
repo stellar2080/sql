@@ -19,7 +19,34 @@ manager = Manager(
         'vectordb_path': os.path.join(ROOT_PATH, 'src','client','chromadb'),
         'vectordb_client': 'http',
         'vectordb_host': 'localhost',
-        'vectordb_port': '8000'
+        'vectordb_port': '8000',
+        'MAX_ITERATIONS': 8,
+
+        'DO_SAMPLE': False,
+        'TEMPERATURE': 0.1,
+        'TOP_K': 3,
+        'TOP_P': 0.1,
+        'MAX_LENGTH': 8192,
+
+        'N_RESULTS_KEY': 3,
+
+        'E_HINT_THRESHOLD': 0.30,
+        'E_COL_THRESHOLD': 0.30,
+        'E_VAL_THRESHOLD': 0.30,
+        'E_COL_STRONG_THRESHOLD': 0.48,
+        'E_VAL_STRONG_THRESHOLD': 0.48,
+
+        'F_HINT_THRESHOLD': 0.80,
+        'F_LSH_THRESHOLD': 0.40,
+        'F_COL_THRESHOLD': 0.60,
+        'F_VAL_THRESHOLD': 0.60,
+        'F_COL_STRONG_THRESHOLD': 0.85,
+        'F_VAL_STRONG_THRESHOLD': 0.85,
+
+        'G_HINT_THRESHOLD': 0.30,
+
+        'LLM_HOST': 'localhost',
+        'LLM_PORT': 6006,
     },
 )
 
@@ -52,7 +79,7 @@ manager = Manager(
 #             print(e)
 
 message = {
-    "question": "I want the net profit margin of all bank",
+    "question": "I want the name of all bank",
     "entity": None,
     "dialect": "sqlite",
     "schema": None,
