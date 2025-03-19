@@ -17,32 +17,224 @@ def ai_config() -> rx.Component:
                     rx.flex(
                         rx.heading(
                             "AI配置", 
-                            size="5"
+                            size="6"
                         ),
                         rx.vstack(
                             rx.hstack(
-                                rx.icon("palette"),
-                                rx.heading("主题颜色", size="6"),
+                                rx.icon("cog"),
+                                rx.heading(
+                                    "最大修正轮次", 
+                                    size="5"
+                                ),
+                                rx.tooltip(
+                                    rx.icon("info", size=18),
+                                    content='''
+                                        Reviser智能体的最大执行轮次，若值为0，则不调用Reviser
+                                    ''',
+                                ),
+                                rx.spacer(),
+                                rx.heading(
+                                    BaseState.MAX_ITERATIONS,
+                                    size='5',
+                                ),
                                 align="center",
+                                width='100%'
+                            ),
+                            rx.hstack(
+                                rx.slider(
+                                    default_value=BaseState.MAX_ITERATIONS,
+                                    size='3',
+                                    min=0,
+                                    max=10,
+                                    step=1,
+                                    on_change=BaseState.set_MAX_ITERATIONS.throttle(100),
+                                    width='90%'
+                                ),
+                                width='100%',
+                                align='center'
+                            ),
+                            spacing="4",
+                            width="100%",
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "采样输出", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制是否进行采样输出。
+                                    如果打开，那么LLM会根据每个词的概率进行随机选择。
+                                    如果关闭，那么LLM会直接选择概率最高的词。
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.switch(
+                                size='3',
+                                on_change=BaseState.set_DO_SAMPLE
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.vstack(
+                            rx.hstack(
+                                rx.icon("cog"),
+                                rx.heading(
+                                    "采样温度", 
+                                    size="5"
+                                ),
+                                rx.tooltip(
+                                    rx.icon("info", size=18),
+                                    content='''
+                                        采样温度，控制模型生成文本的多样性。
+                                        temperature越高，生成的文本更多样，反之，生成的文本更确定。
+                                        取值范围：[0, 2)
+                                    ''',
+                                ),
+                                rx.spacer(),
+                                rx.heading(
+                                    BaseState.TEMPERATURE,
+                                    size='5',
+                                ),
+                                align="center",
+                                width='100%'
+                            ),
+                            rx.hstack(
+                                rx.slider(
+                                    default_value=BaseState.TEMPERATURE,
+                                    size='3',
+                                    min=0.00,
+                                    max=1.99,
+                                    step=0.01,
+                                    on_change=BaseState.set_TEMPERATURE.throttle(100),
+                                    width='90%'
+                                ),
+                                width='100%',
+                                align='center'
                             ),
                             spacing="4",
                             width="100%",
                         ),
                         rx.vstack(
                             rx.hstack(
-                                rx.icon("blend"),
-                                rx.heading("辅助颜色", size="6"),
+                                rx.icon("cog"),
+                                rx.heading(
+                                    "TOP_K", 
+                                    size="5"
+                                ),
+                                rx.tooltip(
+                                    rx.icon("info", size=18),
+                                    content='''
+                                        生成过程中采样候选集的大小。例如，取值为50时，仅将单次生成中得分最高的50个Token组成随机采样的候选集。
+                                        取值越大，生成的随机性越高；取值越小，生成的确定性越高。
+                                        取值为大于100时，表示不启用top_k策略，此时仅有top_p策略生效。
+                                        取值需要大于或等于0。
+                                    ''',
+                                ),
+                                rx.spacer(),
+                                rx.heading(
+                                    BaseState.TOP_K,
+                                    size='5',
+                                ),
                                 align="center",
+                                width='100%'
+                            ),
+                            rx.hstack(
+                                rx.slider(
+                                    default_value=BaseState.TOP_K,
+                                    size='3',
+                                    min=0,
+                                    max=200,
+                                    step=1,
+                                    on_change=BaseState.set_TOP_K.throttle(100),
+                                    width='90%'
+                                ),
+                                width='100%',
+                                align='center'
+                            ),
+                            spacing="4",
+                            width="100%",
+                        ),
+                        rx.vstack(
+                            rx.hstack(
+                                rx.icon("cog"),
+                                rx.heading(
+                                    "TOP_P", 
+                                    size="5"
+                                ),
+                                rx.tooltip(
+                                    rx.icon("info", size=18),
+                                    content='''
+                                        核采样的概率阈值，控制模型生成文本的多样性。
+                                        top_p越高，生成的文本更多样。反之，生成的文本更确定。
+                                        取值范围：(0,1.0]
+                                    ''',
+                                ),
+                                rx.spacer(),
+                                rx.heading(
+                                    BaseState.TOP_P,
+                                    size='5',
+                                ),
+                                align="center",
+                                width='100%'
+                            ),
+                            rx.hstack(
+                                rx.slider(
+                                    default_value=BaseState.TOP_P,
+                                    size='3',
+                                    min=0.01,
+                                    max=1.00,
+                                    step=0.01,
+                                    on_change=BaseState.set_TOP_P.throttle(100),
+                                    width='90%'
+                                ),
+                                width='100%',
+                                align='center'
+                            ),
+                            spacing="4",
+                            width="100%",
+                        ),
+                        rx.vstack(
+                            rx.hstack(
+                                rx.icon("cog"),
+                                rx.heading(
+                                    "最大Token数", 
+                                    size="5"
+                                ),
+                                rx.tooltip(
+                                    rx.icon("info", size=18),
+                                    content='''
+                                        本次请求返回的最大Token数。
+                                        max_tokens 的设置不会影响大模型的生成过程，如果模型生成的 Token 数超过max_tokens，本次请求会返回截断后的内容。
+                                    ''',
+                                ),
+                                rx.spacer(),
+                                rx.heading(
+                                    BaseState.MAX_TOKENS,
+                                    size='5',
+                                ),
+                                align="center",
+                                width='100%'
+                            ),
+                            rx.hstack(
+                                rx.slider(
+                                    default_value=BaseState.MAX_TOKENS,
+                                    size='3',
+                                    min=100,
+                                    max=8192,
+                                    step=1,
+                                    on_change=BaseState.set_MAX_TOKENS.throttle(100),
+                                    width='90%'
+                                ),
+                                width='100%',
+                                align='center'
                             ),
                             spacing="4",
                             width="100%",
                         ),
                         rx.flex(
-                            rx.button(
-                                "恢复默认",
-                                on_click=BaseState.reset_settings,
-                                size='3'
-                            ),
                             rx.button(
                                 "保存设置",
                                 on_click=BaseState.summit_settings,
@@ -50,10 +242,11 @@ def ai_config() -> rx.Component:
                             ),
                             direction='row',
                             width='100%',
-                            spacing='5'
+                            spacing='5',
+                            justify='end'
                         ),
                         rx.text(
-                            "可前往各个页面预览效果，若不保存设置，退出登录后将丢失更改",
+                            "调整参数后，可在AI问答页面进行问答查看效果，若不保存设置，退出登录后将丢失更改",
                             text_align="center",
                             font_size=".75em",
                             color=rx.color("gray", 10),
@@ -61,7 +254,8 @@ def ai_config() -> rx.Component:
                         spacing="7",
                         direction='column',
                         align='center',
-                        justify='center'
+                        justify='center',
+                        width='50%'
                     ),
                     width="100%",
                     height="100vh",
@@ -72,13 +266,8 @@ def ai_config() -> rx.Component:
             ),
             alert_dialog(
                 description=BaseState.base_dialog_description,
-                on_click=BaseState.settings_reset_open_change,
-                open=BaseState.settings_reset_open
-            ),
-            alert_dialog(
-                description=BaseState.base_dialog_description,
-                on_click=BaseState.settings_saved_open_change,
-                open=BaseState.settings_saved_open
+                on_click=BaseState.base_dialog_open_change,
+                open=BaseState.base_dialog_open
             ),
         )
     )

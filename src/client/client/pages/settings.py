@@ -20,12 +20,12 @@ def settings() -> rx.Component:
                     rx.flex(
                         rx.heading(
                             "系统设置", 
-                            size="5"
+                            size="6"
                         ),
                         rx.vstack(
                             rx.hstack(
                                 rx.icon("palette"),
-                                rx.heading("主题颜色", size="6"),
+                                rx.heading("主题颜色", size="5"),
                                 align="center",
                             ),
                             primary_color_picker(),
@@ -35,7 +35,7 @@ def settings() -> rx.Component:
                         rx.vstack(
                             rx.hstack(
                                 rx.icon("blend"),
-                                rx.heading("辅助颜色", size="6"),
+                                rx.heading("辅助颜色", size="5"),
                                 align="center",
                             ),
                             secondary_color_picker(),

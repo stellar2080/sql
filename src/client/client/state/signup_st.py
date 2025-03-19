@@ -135,12 +135,12 @@ class SignupState(rx.State):
             )
             ai_config = AIConfig(
                 user_id=random_id,
-                MAX_ITERATIONS = 8,
+                MAX_ITERATIONS = 3,
                 DO_SAMPLE = False,
                 TEMPERATURE = 0.1,
                 TOP_K = 3,
                 TOP_P = 0.1,
-                MAX_LENGTH = 8192,
+                MAX_TOKENS = 8192,
                 N_RESULTS = 3,
                 E_HINT_THRESHOLD = 0.30,
                 E_COL_THRESHOLD = 0.30,

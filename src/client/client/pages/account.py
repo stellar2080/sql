@@ -221,7 +221,10 @@ def account():
             rx.box( 
                 rx.center(  
                     rx.flex(
-                        rx.heading("个人中心", size="5"),
+                        rx.heading(
+                            "个人中心",
+                            size="6"
+                        ),
                         rx.flex(
                             rx.flex(
                                 rx.icon("user"),

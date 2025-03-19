@@ -1,3 +1,4 @@
+import typing
 import bcrypt
 import reflex as rx
 from sqlmodel import select, or_
@@ -127,7 +128,7 @@ class BaseState(rx.State):
         self.gray_color = "gray"
         self.radius = "large"
         self.scaling = "100%"
-        self.base_dialog_description = "恢复默认设置成功，记得保存设置"
+        self.base_dialog_description = "恢复默认设置成功，不要忘了保存设置"
         self.settings_reset_open_change()
         
     @rx.event
@@ -163,12 +164,12 @@ class BaseState(rx.State):
         self.base_dialog_description = "保存设置成功"
         return self.settings_saved_open_change()
     
-    MAX_ITERATIONS: int = 8
+    MAX_ITERATIONS: int = 3
     DO_SAMPLE: bool = False
     TEMPERATURE: float = 0.1
     TOP_K: int = 3
     TOP_P: float = 0.1
-    MAX_LENGTH: int = 8192
+    MAX_TOKENS: int = 8192
     N_RESULTS: int = 3
     E_HINT_THRESHOLD: float = 0.30
     E_COL_THRESHOLD: float = 0.30
@@ -189,7 +190,7 @@ class BaseState(rx.State):
 
     ai_config_reset_open: bool = False
     ai_config_saved_open: bool = False
-    
+
     @rx.event
     def ai_config_reset_open_change(self):
         self.ai_config_reset_open = not self.ai_config_reset_open
@@ -197,30 +198,6 @@ class BaseState(rx.State):
     @rx.event
     def ai_config_saved_open_change(self):
         self.ai_config_saved_open = not self.ai_config_saved_open
-
-    @rx.event
-    def reset_ai_config(self):
-        self.MAX_ITERATIONS = 8
-        self.DO_SAMPLE = False
-        self.TEMPERATURE = 0.1
-        self.TOP_K = 3
-        self.TOP_P = 0.1
-        self.MAX_LENGTH = 8192
-        self.N_RESULTS = 3
-        self.E_HINT_THRESHOLD = 0.30
-        self.E_COL_THRESHOLD = 0.30
-        self.E_VAL_THRESHOLD = 0.30
-        self.E_COL_STRONG_THRESHOLD = 0.48
-        self.E_VAL_STRONG_THRESHOLD = 0.48
-        self.F_HINT_THRESHOLD = 0.80
-        self.F_LSH_THRESHOLD = 0.40
-        self.F_COL_THRESHOLD = 0.60
-        self.F_VAL_THRESHOLD = 0.60
-        self.F_COL_STRONG_THRESHOLD = 0.85
-        self.F_VAL_STRONG_THRESHOLD = 0.85
-        self.G_HINT_THRESHOLD = 0.30
-        self.LLM_HOST = 'localhost'
-        self.LLM_PORT = 6006
 
     @rx.event()
     def load_ai_config(self):
@@ -235,7 +212,7 @@ class BaseState(rx.State):
             self.TEMPERATURE = ai_config.TEMPERATURE
             self.TOP_K = ai_config.TOP_K
             self.TOP_P = ai_config.TOP_P
-            self.MAX_LENGTH = ai_config.MAX_LENGTH
+            self.MAX_TOKENS = ai_config.MAX_TOKENS
             self.N_RESULTS = ai_config.N_RESULTS
             self.E_HINT_THRESHOLD = ai_config.E_HINT_THRESHOLD
             self.E_COL_THRESHOLD = ai_config.E_COL_THRESHOLD
@@ -251,3 +228,87 @@ class BaseState(rx.State):
             self.G_HINT_THRESHOLD = ai_config.G_HINT_THRESHOLD
             self.LLM_HOST = ai_config.LLM_HOST
             self.LLM_PORT = ai_config.LLM_PORT
+
+    @rx.event
+    def set_MAX_ITERATIONS(self, MAX_ITERATIONS: list[typing.Union[int, float]]):
+        self.MAX_ITERATIONS = MAX_ITERATIONS[0]
+
+    @rx.event
+    def set_DO_SAMPLE(self, DO_SAMPLE: bool):
+        self.DO_SAMPLE = DO_SAMPLE
+
+    @rx.event
+    def set_TEMPERATURE(self, TEMPERATURE: list[typing.Union[int, float]]):
+        self.TEMPERATURE = TEMPERATURE[0]
+
+    @rx.event
+    def set_TOP_K(self, TOP_K: list[typing.Union[int, float]]):
+        self.TOP_K = TOP_K[0]
+
+    @rx.event
+    def set_TOP_P(self, TOP_P: list[typing.Union[int, float]]):
+        self.TOP_P = TOP_P[0]
+
+    @rx.event
+    def set_MAX_TOKENS(self, MAX_TOKENS: list[typing.Union[int, float]]):
+        self.MAX_TOKENS = MAX_TOKENS[0]
+
+    @rx.event
+    def set_N_RESULTS(self, N_RESULTS: int):
+        self.N_RESULTS = N_RESULTS
+
+    @rx.event
+    def set_E_HINT_THRESHOLD(self, E_HINT_THRESHOLD: float):
+        self.E_HINT_THRESHOLD = E_HINT_THRESHOLD
+
+    @rx.event
+    def set_E_COL_THRESHOLD(self, E_COL_THRESHOLD: float):
+        self.E_COL_THRESHOLD = E_COL_THRESHOLD
+
+    @rx.event
+    def set_E_VAL_THRESHOLD(self, E_VAL_THRESHOLD: float):
+        self.E_VAL_THRESHOLD = E_VAL_THRESHOLD
+
+    @rx.event
+    def set_E_COL_STRONG_THRESHOLD(self, E_COL_STRONG_THRESHOLD: float):
+        self.E_COL_STRONG_THRESHOLD = E_COL_STRONG_THRESHOLD
+
+    @rx.event
+    def set_E_VAL_STRONG_THRESHOLD(self, E_VAL_STRONG_THRESHOLD: float):
+        self.E_VAL_STRONG_THRESHOLD = E_VAL_STRONG_THRESHOLD
+
+    @rx.event
+    def set_F_HINT_THRESHOLD(self, F_HINT_THRESHOLD: float):
+        self.F_HINT_THRESHOLD = F_HINT_THRESHOLD
+
+    @rx.event
+    def set_F_LSH_THRESHOLD(self, F_LSH_THRESHOLD: float):
+        self.F_LSH_THRESHOLD = F_LSH_THRESHOLD
+
+    @rx.event
+    def set_F_COL_THRESHOLD(self, F_COL_THRESHOLD: float):
+        self.F_COL_THRESHOLD = F_COL_THRESHOLD
+
+    @rx.event
+    def set_F_VAL_THRESHOLD(self, F_VAL_THRESHOLD: float):
+        self.F_VAL_THRESHOLD = F_VAL_THRESHOLD
+
+    @rx.event
+    def set_F_COL_STRONG_THRESHOLD(self, F_COL_STRONG_THRESHOLD: float):
+        self.F_COL_STRONG_THRESHOLD = F_COL_STRONG_THRESHOLD
+
+    @rx.event
+    def set_F_VAL_STRONG_THRESHOLD(self, F_VAL_STRONG_THRESHOLD: float):
+        self.F_VAL_STRONG_THRESHOLD = F_VAL_STRONG_THRESHOLD
+
+    @rx.event
+    def set_G_HINT_THRESHOLD(self, G_HINT_THRESHOLD: float):
+        self.G_HINT_THRESHOLD = G_HINT_THRESHOLD
+
+    @rx.event
+    def set_LLM_HOST(self, LLM_HOST: str):
+        self.LLM_HOST = LLM_HOST
+
+    @rx.event
+    def set_LLM_PORT(self, LLM_PORT: int):
+        self.LLM_PORT = LLM_PORT

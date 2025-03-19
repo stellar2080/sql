@@ -11,7 +11,7 @@ class Tongyi(LLM_Base):
         self.TEMPERATURE = config.get('TEMPERATURE')
         self.TOP_K = config.get('TOP_K')
         self.TOP_P = config.get('TOP_P')
-        self.MAX_LENGTH = config.get('MAX_LENGTH')
+        self.MAX_TOKENS = config.get('MAX_TOKENS')
 
     def call(self, messages):
         response = Generation.call(
@@ -19,7 +19,7 @@ class Tongyi(LLM_Base):
             api_key=self.api_key,
             messages=messages,
             result_format='message',
-            max_tokens=self.MAX_LENGTH,
+            max_tokens=self.MAX_TOKENS,
             temperature=self.TEMPERATURE,
             top_k=self.TOP_K,
             top_p=self.TOP_P

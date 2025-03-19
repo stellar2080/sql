@@ -11,7 +11,7 @@ class Api(LLM_Base):
         self.TEMPERATURE = config.get('TEMPERATURE')
         self.TOP_K = config.get('TOP_K')
         self.TOP_P = config.get('TOP_P')
-        self.MAX_LENGTH = config.get('MAX_LENGTH')
+        self.MAX_TOKENS = config.get('MAX_TOKENS')
 
     def call(self,messages):
         headers = {'Content-Type': 'application/json'}
@@ -21,7 +21,7 @@ class Api(LLM_Base):
             'TEMPERATURE': self.TEMPERATURE,
             'TOP_K': self.TOP_K,
             'TOP_P': self.TOP_P,
-            'MAX_LENGTH': self.MAX_LENGTH,
+            'MAX_TOKENS': self.MAX_TOKENS,
         }
         response = requests.post(
             url=f'http://{self.LLM_HOST}:{self.LLM_PORT}', 

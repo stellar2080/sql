@@ -34,13 +34,13 @@ async def create_item(request: Request):
     TEMPERATURE = json_post_list.get('TEMPERATURE')
     TOP_K = json_post_list.get('TOP_K')
     TOP_P = json_post_list.get('TOP_P')
-    MAX_LENGTH = json_post_list.get('MAX_LENGTH')
+    MAX_TOKENS = json_post_list.get('MAX_TOKENS')
 
     text = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
     model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
     generated_ids = model.generate(
         input_ids=model_inputs.input_ids,
-        max_length=MAX_LENGTH,
+        max_length=MAX_TOKENS,
         do_sample=DO_SAMPLE,
         temperature=TEMPERATURE,
         top_k=TOP_K,

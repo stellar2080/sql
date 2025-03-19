@@ -26,7 +26,7 @@ class AIConfig(rx.Model, table=True):
     TEMPERATURE: float
     TOP_K: int
     TOP_P: float
-    MAX_LENGTH: int
+    MAX_TOKENS: int
     N_RESULTS: int
     E_HINT_THRESHOLD: float
     E_COL_THRESHOLD: float

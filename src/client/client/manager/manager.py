@@ -195,13 +195,13 @@ class Manager:
             self.message = message
         else:
             raise Exception("Please provide a question or a message")
+        
+        if self.message["message_to"] is None:
+            self.message["message_to"] = EXTRACTOR
 
-        for i in range(1, self.MAX_ITERATIONS+1):
-            # print("ITERATION {}".format(i))
+        iteration = 0
+        while iteration < self.MAX_ITERATIONS:
             # print("MESSAGE: " + str(self.message))
-            if i == 0 and self.message["message_to"] is None:
-                self.message["message_to"] = EXTRACTOR
-
             if self.message["message_to"] == MANAGER:
                 # print("The message is begin processed by manager...")
                 break
@@ -231,4 +231,6 @@ class Manager:
                     llm=self.llm, 
                     db_conn=self.db_conn
                 )
+                iteration += 1
+
         return self.message
