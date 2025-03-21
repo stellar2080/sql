@@ -12,7 +12,7 @@ os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 manager = Manager(
     config={
         'user_id': '1',
-        'platform': 'Api',
+        'platform': 'Custom',
         # 'platform': 'Tongyi',
         # 'model': 'deepseek-v3',
         'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
@@ -33,8 +33,8 @@ manager = Manager(
         'E_COL_STRONG_THRESHOLD': 0.48,
         'E_VAL_STRONG_THRESHOLD': 0.48,
         'F_HINT_THRESHOLD': 0.80,
-        'F_LSH_THRESHOLD': 0.40,
         'F_COL_THRESHOLD': 0.60,
+        'F_LSH_THRESHOLD': 0.40,
         'F_VAL_THRESHOLD': 0.60,
         'F_COL_STRONG_THRESHOLD': 0.85,
         'F_VAL_STRONG_THRESHOLD': 0.85,

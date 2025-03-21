@@ -1,60 +1,43 @@
 """The AI config page."""
 
 import reflex as rx
-
 from state.base_st import BaseState
 from .components.sidebar import sidebar_bottom_profile
 from .components.theme_wrap import theme_wrap
 from .components.alert_dialog import alert_dialog
 
-
 def ai_config() -> rx.Component:
     return theme_wrap(
         rx.box( 
             sidebar_bottom_profile(),
-            rx.box(
-                rx.center(
-                    rx.flex(
+            rx.center(
+                rx.form(
+                    rx.vstack(
                         rx.heading(
                             "AI配置", 
                             size="6"
                         ),
-                        rx.vstack(
-                            rx.hstack(
-                                rx.icon("cog"),
-                                rx.heading(
-                                    "最大修正轮次", 
-                                    size="5"
-                                ),
-                                rx.tooltip(
-                                    rx.icon("info", size=18),
-                                    content='''
-                                        Reviser智能体的最大执行轮次，若值为0，则不调用Reviser
-                                    ''',
-                                ),
-                                rx.spacer(),
-                                rx.heading(
-                                    BaseState.MAX_ITERATIONS,
-                                    size='5',
-                                ),
-                                align="center",
-                                width='100%'
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "最大修正轮次", 
+                                size="5"
                             ),
-                            rx.hstack(
-                                rx.slider(
-                                    default_value=BaseState.MAX_ITERATIONS,
-                                    size='3',
-                                    min=0,
-                                    max=10,
-                                    step=1,
-                                    on_change=BaseState.set_MAX_ITERATIONS.throttle(100),
-                                    width='90%'
-                                ),
-                                width='100%',
-                                align='center'
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    Reviser智能体的最大执行轮次，若值为0，则不调用Reviser，
+                                    值范围：[0,10]，整数
+                                ''',
                             ),
-                            spacing="4",
-                            width="100%",
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_MAX_ITERATIONS,
+                                name='MAX_ITERATIONS'
+                            ),
+                            align="center",
+                            width='100%'
                         ),
                         rx.hstack(
                             rx.icon("cog"),
@@ -73,192 +56,463 @@ def ai_config() -> rx.Component:
                             rx.spacer(),
                             rx.switch(
                                 size='3',
-                                on_change=BaseState.set_DO_SAMPLE
+                                default_checked=BaseState.DO_SAMPLE,
+                                name='DO_SAMPLE'
                             ),
                             align="center",
                             width='100%'
                         ),
-                        rx.vstack(
-                            rx.hstack(
-                                rx.icon("cog"),
-                                rx.heading(
-                                    "采样温度", 
-                                    size="5"
-                                ),
-                                rx.tooltip(
-                                    rx.icon("info", size=18),
-                                    content='''
-                                        采样温度，控制模型生成文本的多样性。
-                                        temperature越高，生成的文本更多样，反之，生成的文本更确定。
-                                        取值范围：[0, 2)
-                                    ''',
-                                ),
-                                rx.spacer(),
-                                rx.heading(
-                                    BaseState.TEMPERATURE,
-                                    size='5',
-                                ),
-                                align="center",
-                                width='100%'
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "TEMPERATURE", 
+                                size="5"
                             ),
-                            rx.hstack(
-                                rx.slider(
-                                    default_value=BaseState.TEMPERATURE,
-                                    size='3',
-                                    min=0.00,
-                                    max=1.99,
-                                    step=0.01,
-                                    on_change=BaseState.set_TEMPERATURE.throttle(100),
-                                    width='90%'
-                                ),
-                                width='100%',
-                                align='center'
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    采样温度，控制模型生成文本的多样性。
+                                    temperature越高，生成的文本更多样，反之，生成的文本更确定。
+                                    取值范围：[0, 2)，小数
+                                ''',
                             ),
-                            spacing="4",
-                            width="100%",
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_TEMPERATURE,
+                                name='TEMPERATURE'
+                            ),
+                            align="center",
+                            width='100%'
                         ),
-                        rx.vstack(
-                            rx.hstack(
-                                rx.icon("cog"),
-                                rx.heading(
-                                    "TOP_K", 
-                                    size="5"
-                                ),
-                                rx.tooltip(
-                                    rx.icon("info", size=18),
-                                    content='''
-                                        生成过程中采样候选集的大小。例如，取值为50时，仅将单次生成中得分最高的50个Token组成随机采样的候选集。
-                                        取值越大，生成的随机性越高；取值越小，生成的确定性越高。
-                                        取值为大于100时，表示不启用top_k策略，此时仅有top_p策略生效。
-                                        取值需要大于或等于0。
-                                    ''',
-                                ),
-                                rx.spacer(),
-                                rx.heading(
-                                    BaseState.TOP_K,
-                                    size='5',
-                                ),
-                                align="center",
-                                width='100%'
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "TOP_K", 
+                                size="5"
                             ),
-                            rx.hstack(
-                                rx.slider(
-                                    default_value=BaseState.TOP_K,
-                                    size='3',
-                                    min=0,
-                                    max=200,
-                                    step=1,
-                                    on_change=BaseState.set_TOP_K.throttle(100),
-                                    width='90%'
-                                ),
-                                width='100%',
-                                align='center'
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    生成过程中采样候选集的大小。例如，取值为50时，仅将单次生成中得分最高的50个Token组成随机采样的候选集。
+                                    取值越大，生成的随机性越高；取值越小，生成的确定性越高。
+                                    取值大于100时，表示不启用top_k策略，此时仅有top_p策略生效。
+                                    取值范围：(0,101]，整数
+                                ''',
                             ),
-                            spacing="4",
-                            width="100%",
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_TOP_K,
+                                name='TOP_K'
+                            ),
+                            align="center",
+                            width='100%'
                         ),
-                        rx.vstack(
-                            rx.hstack(
-                                rx.icon("cog"),
-                                rx.heading(
-                                    "TOP_P", 
-                                    size="5"
-                                ),
-                                rx.tooltip(
-                                    rx.icon("info", size=18),
-                                    content='''
-                                        核采样的概率阈值，控制模型生成文本的多样性。
-                                        top_p越高，生成的文本更多样。反之，生成的文本更确定。
-                                        取值范围：(0,1.0]
-                                    ''',
-                                ),
-                                rx.spacer(),
-                                rx.heading(
-                                    BaseState.TOP_P,
-                                    size='5',
-                                ),
-                                align="center",
-                                width='100%'
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "TOP_P", 
+                                size="5"
                             ),
-                            rx.hstack(
-                                rx.slider(
-                                    default_value=BaseState.TOP_P,
-                                    size='3',
-                                    min=0.01,
-                                    max=1.00,
-                                    step=0.01,
-                                    on_change=BaseState.set_TOP_P.throttle(100),
-                                    width='90%'
-                                ),
-                                width='100%',
-                                align='center'
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    核采样的概率阈值，控制模型生成文本的多样性。
+                                    top_p越高，生成的文本更多样。反之，生成的文本更确定。
+                                    取值范围：(0,1.0]，小数
+                                ''',
                             ),
-                            spacing="4",
-                            width="100%",
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_TOP_P,
+                                name='TOP_P'
+                            ),
+                            align="center",
+                            width='100%'
                         ),
-                        rx.vstack(
-                            rx.hstack(
-                                rx.icon("cog"),
-                                rx.heading(
-                                    "最大Token数", 
-                                    size="5"
-                                ),
-                                rx.tooltip(
-                                    rx.icon("info", size=18),
-                                    content='''
-                                        本次请求返回的最大Token数。
-                                        max_tokens 的设置不会影响大模型的生成过程，如果模型生成的 Token 数超过max_tokens，本次请求会返回截断后的内容。
-                                    ''',
-                                ),
-                                rx.spacer(),
-                                rx.heading(
-                                    BaseState.MAX_TOKENS,
-                                    size='5',
-                                ),
-                                align="center",
-                                width='100%'
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "MAX_TOKENS", 
+                                size="5"
                             ),
-                            rx.hstack(
-                                rx.slider(
-                                    default_value=BaseState.MAX_TOKENS,
-                                    size='3',
-                                    min=100,
-                                    max=8192,
-                                    step=1,
-                                    on_change=BaseState.set_MAX_TOKENS.throttle(100),
-                                    width='90%'
-                                ),
-                                width='100%',
-                                align='center'
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    本次请求返回的最大Token数。
+                                    max_tokens 的设置不会影响大模型的生成过程，如果模型生成的 Token 数超过max_tokens，本次请求会返回截断后的内容。
+                                    取值范围：[100,8192]，整数
+                                ''',
                             ),
-                            spacing="4",
-                            width="100%",
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_MAX_TOKENS,
+                                name='MAX_TOKENS'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "N_RESULTS", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制向量检索返回的相似度最高的元素个数，
+                                    取值范围：[1,10]，整数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_N_RESULTS,
+                                name='N_RESULTS'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "E_HINT_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制extractor智能体检索知识库的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_E_HINT_THRESHOLD,
+                                name='E_HINT_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "E_COL_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制extractor智能体检索列名的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_E_COL_THRESHOLD,
+                                name='E_COL_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "E_VAL_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制extractor智能体检索列值的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_E_VAL_THRESHOLD,
+                                name='E_VAL_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "E_COL_STRONG_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    在extractor智能体处理过程中，如果某列名和问题的相似度超过该阈值，则会视为与问题强关联的元素，
+                                    强关联元素将直接加入下一轮次智能体的处理，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_E_COL_STRONG_THRESHOLD,
+                                name='E_COL_STRONG_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "E_VAL_STRONG_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    在extractor智能体处理过程中，如果某列值和问题的相似度超过该阈值，则会视为与问题强关联的元素，
+                                    强关联元素将直接加入下一轮次智能体的处理，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_E_VAL_STRONG_THRESHOLD,
+                                name='E_VAL_STRONG_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "F_HINT_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制filter智能体检索知识库的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_F_HINT_THRESHOLD,
+                                name='F_HINT_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "F_COL_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制filter智能体检索列名的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_F_COL_THRESHOLD,
+                                name='F_COL_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "F_LSH_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制filter智能体LSH算法检索列值的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_F_LSH_THRESHOLD,
+                                name='F_LSH_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "F_VAL_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制filter智能体检索列值的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_F_VAL_THRESHOLD,
+                                name='F_VAL_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "F_COL_STRONG_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    在filter智能体处理过程中，如果某列名和问题的相似度超过该阈值，则会视为与问题强关联的元素，
+                                    强关联元素将直接加入下一轮次智能体的处理，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_F_COL_STRONG_THRESHOLD,
+                                name='F_COL_STRONG_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "F_VAL_STRONG_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    在filter智能体处理过程中，如果某列值和问题的相似度超过该阈值，则会视为与问题强关联的元素，
+                                    强关联元素将直接加入下一轮次智能体的处理，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_F_VAL_STRONG_THRESHOLD,
+                                name='F_VAL_STRONG_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "G_HINT_THRESHOLD", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    控制generator智能体检索知识库的相似度阈值，
+                                    取值范围：(0,1.00]，小数
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_G_HINT_THRESHOLD,
+                                name='G_HINT_THRESHOLD'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "LLM_HOST", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    自部署大模型的host地址
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.LLM_HOST,
+                                name='LLM_HOST'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "LLM_PORT", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    自部署大模型的端口号
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_LLM_PORT,
+                                name='LLM_PORT'
+                            ),
+                            align="center",
+                            width='100%'
                         ),
                         rx.flex(
                             rx.button(
                                 "保存设置",
-                                on_click=BaseState.summit_settings,
+                                type='submit',
                                 size='3'
                             ),
                             direction='row',
                             width='100%',
                             spacing='5',
-                            justify='end'
+                            justify='start'
                         ),
                         rx.text(
-                            "调整参数后，可在AI问答页面进行问答查看效果，若不保存设置，退出登录后将丢失更改",
+                            "若不保存设置，新配置将不会生效",
                             text_align="center",
                             font_size=".75em",
                             color=rx.color("gray", 10),
                         ),
                         spacing="7",
-                        direction='column',
                         align='center',
                         justify='center',
-                        width='50%'
                     ),
-                    width="100%",
-                    height="100vh",
+                    min_height="100vh", 
+                    width="50%",
+                    padding_top="70px",
+                    padding_bottom="50px",
+                    on_submit=BaseState.save_ai_config,
                 ),
                 position="sticky",
                 left="15%",

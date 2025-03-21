@@ -2,7 +2,7 @@ from .llm_base import LLM_Base
 import requests
 import json
 
-class Api(LLM_Base):
+class Custom(LLM_Base):
     def __init__(self, config):
         super().__init__()
         self.LLM_HOST = config.get('LLM_HOST')

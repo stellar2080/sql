@@ -80,7 +80,7 @@ def chat_box() -> rx.Component:
         padding_x="4px",
         align_self="center",
         overflow="hidden",
-        padding_bottom="5em",
+        padding_bottom="1em",
     )
 
 
@@ -140,17 +140,20 @@ def chat():
     return theme_wrap(
         rx.box( 
             sidebar_bottom_profile(),
-            rx.box(
-                rc.vstack( 
-                    chat_box(),
-                    action_bar(),
-                    min_height="100vh",
-                    align_items="stretch",
-                    spacing="0",
+            rc.vstack( 
+                rx.heading(
+                    'AI问答',
+                    size='6'
                 ),
+                chat_box(),
+                action_bar(),
+                min_height="100vh",
+                align='center',
+                spacing="0",
                 position="sticky",
                 left="15%",
                 width="85%",
+                padding_top="70px",
             ),
         )
     )

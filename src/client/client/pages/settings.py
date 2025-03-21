@@ -15,63 +15,60 @@ def settings() -> rx.Component:
     return theme_wrap(
         rx.box( 
             sidebar_bottom_profile(),
-            rx.box(
-                rx.center(
-                    rx.flex(
-                        rx.heading(
-                            "系统设置", 
-                            size="6"
-                        ),
-                        rx.vstack(
-                            rx.hstack(
-                                rx.icon("palette"),
-                                rx.heading("主题颜色", size="5"),
-                                align="center",
-                            ),
-                            primary_color_picker(),
-                            spacing="4",
-                            width="100%",
-                        ),
-                        rx.vstack(
-                            rx.hstack(
-                                rx.icon("blend"),
-                                rx.heading("辅助颜色", size="5"),
-                                align="center",
-                            ),
-                            secondary_color_picker(),
-                            spacing="4",
-                            width="100%",
-                        ),
-                        radius_picker(),
-                        scaling_picker(),
-                        rx.flex(
-                            rx.button(
-                                "恢复默认",
-                                on_click=BaseState.reset_settings,
-                                size='3'
-                            ),
-                            rx.button(
-                                "保存设置",
-                                on_click=BaseState.summit_settings,
-                                size='3'
-                            ),
-                            direction='row',
-                            width='100%',
-                            spacing='5'
-                        ),
-                        rx.text(
-                            "可前往各个页面预览效果，若不保存设置，退出登录后将丢失更改",
-                            text_align="center",
-                            font_size=".75em",
-                            color=rx.color("gray", 10),
-                        ),
-                        spacing="7",
-                        direction='column',
-                        align='center',
-                        justify='center'
+            rx.center(
+                rx.flex(
+                    rx.heading(
+                        "系统设置", 
+                        size="6"
                     ),
-                    width="100%",
-                    height="100vh",
+                    rx.vstack(
+                        rx.hstack(
+                            rx.icon("palette"),
+                            rx.heading("主题颜色", size="5"),
+                            align="center",
+                        ),
+                        primary_color_picker(),
+                        spacing="4",
+                        width="100%",
+                    ),
+                    rx.vstack(
+                        rx.hstack(
+                            rx.icon("blend"),
+                            rx.heading("辅助颜色", size="5"),
+                            align="center",
+                        ),
+                        secondary_color_picker(),
+                        spacing="4",
+                        width="100%",
+                    ),
+                    radius_picker(),
+                    scaling_picker(),
+                    rx.flex(
+                        rx.button(
+                            "恢复默认",
+                            on_click=BaseState.reset_settings,
+                            size='3'
+                        ),
+                        rx.button(
+                            "保存设置",
+                            on_click=BaseState.save_settings,
+                            size='3'
+                        ),
+                        direction='row',
+                        width='100%',
+                        spacing='5'
+                    ),
+                    rx.text(
+                        "可前往各个页面预览效果，若不保存设置，退出登录后将丢失更改",
+                        text_align="center",
+                        font_size=".75em",
+                        color=rx.color("gray", 10),
+                    ),
+                    spacing="7",
+                    direction='column',
+                    align='center',
+                    justify='center',
+                    padding_top="70px"
                 ),
                 position="sticky",
                 left="15%",

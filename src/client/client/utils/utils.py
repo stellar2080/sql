@@ -3,6 +3,7 @@ import difflib
 import functools
 import hashlib
 import queue
+import re
 import threading
 import time
 import uuid
@@ -24,7 +25,7 @@ def assistant_message(message: str):
 def get_response_content(response, platform):
     if platform == "Tongyi":
         return response.output.choices[0].message.content
-    elif platform == "Api":
+    elif platform == "Custom":
         return response['response']
 
 def deterministic_uuid(content: Union[str, bytes]) -> str:
@@ -139,3 +140,11 @@ def get_embedding(_str: str):
 def get_embedding_list(_list: list):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()
     return embedding_func([item.lower().replace('_',' ').replace('-',' ') for item in _list])
+
+def is_valid_ipv4(ip):
+    pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
+    return re.match(pattern, ip) is not None
+
+def is_float(s):
+    pattern = r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
+    return bool(re.match(pattern, s))

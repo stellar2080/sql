@@ -1,12 +1,12 @@
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
 
 from utils.db_utils import connect_to_sqlite
-from llm.api import Api
+from llm.custom import Custom
+from llm.tongyi import Tongyi
 from agent.extractor import Extractor
 from agent.filter import Filter
 from agent.generator import Generator
 from agent.reviser import Reviser
-from llm.tongyi import Tongyi
 from vectordb.vectordb import VectorDB
 from utils.utils import deterministic_uuid, parse_list
 from utils.const import MANAGER, EXTRACTOR, FILTER, GENERATOR, REVISER
@@ -31,8 +31,8 @@ class Manager:
         self.platform = config.get('platform',None)
         if self.platform is None:
             raise Exception('Please provide platform.')
-        elif self.platform == 'Api':
-            self.llm = Api(config)
+        elif self.platform == 'Custom':
+            self.llm = Custom(config)
         elif self.platform == 'Tongyi':
             self.llm = Tongyi(config)
 

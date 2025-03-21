@@ -34,8 +34,8 @@ class AIConfig(rx.Model, table=True):
     E_COL_STRONG_THRESHOLD: float
     E_VAL_STRONG_THRESHOLD: float
     F_HINT_THRESHOLD: float
-    F_LSH_THRESHOLD: float
     F_COL_THRESHOLD: float
+    F_LSH_THRESHOLD: float
     F_VAL_THRESHOLD: float
     F_COL_STRONG_THRESHOLD: float
     F_VAL_STRONG_THRESHOLD: float
