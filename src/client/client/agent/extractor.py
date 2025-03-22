@@ -1,9 +1,9 @@
-from llm.llm_base import LLM_Base
-from utils.const import EXTRACTOR, FILTER
-from utils.template import extractor_template, extractor_hint_template
-from utils.utils import get_cos_similarity, get_embedding_list, user_message, get_response_content, timeout, parse_list
-from agent.agent_base import Agent_Base
-from vectordb.vectordb import VectorDB
+from client.llm.llm_base import LLM_Base
+from client.utils.const import EXTRACTOR, FILTER
+from client.utils.template import extractor_template, extractor_hint_template
+from client.utils.utils import get_cos_similarity, get_embedding_list, user_message, get_response_content, timeout, parse_list
+from client.agent.agent_base import Agent_Base
+from client.vectordb.vectordb import VectorDB
 
 class Extractor(Agent_Base):
     def __init__(

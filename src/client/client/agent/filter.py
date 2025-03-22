@@ -1,10 +1,10 @@
-from llm.llm_base import LLM_Base
-from utils.const import FILTER, GENERATOR
-from utils.template import filter_template, filter_hint_template
-from utils.utils import parse_json, user_message, get_response_content, timeout, \
+from client.llm.llm_base import LLM_Base
+from client.utils.const import FILTER, GENERATOR
+from client.utils.template import filter_template, filter_hint_template
+from client.utils.utils import parse_json, user_message, get_response_content, timeout, \
     get_subsequence_similarity, get_embedding_list, get_cos_similarity, parse_list
-from agent.agent_base import Agent_Base
-from vectordb.vectordb import VectorDB
+from client.agent.agent_base import Agent_Base
+from client.vectordb.vectordb import VectorDB
 import spacy
 from datasketch import MinHash, MinHashLSH
 

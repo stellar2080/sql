@@ -1,5 +1,5 @@
 import reflex as rx
-from state.findpwd_st import FindpwdState
+from client.state.findpwd_st import FindpwdState
 from .components.alert_dialog import alert_dialog
 from .components.theme_wrap import theme_wrap
 
@@ -27,7 +27,7 @@ def findpwd():
                                     rx.input.slot(rx.icon("mail")),
                                     placeholder="输入邮箱",
                                     name="email",
-                                    on_blur=lambda x: FindpwdState.set_email(x),
+                                    on_change=lambda x: FindpwdState.set_email(x),
                                     size="3",
                                 ),
                                 direction='column',

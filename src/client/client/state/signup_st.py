@@ -6,8 +6,8 @@ import bcrypt
 import reflex as rx
 from sqlmodel import select
 
-from utils.email_utils import send_email, validate_email
-from db_model import User, Settings, AIConfig
+from client.utils.email_utils import send_email, validate_email
+from client.db_model import User, Settings, AIConfig
 
 class SignupState(rx.State):
     email: str = ""
@@ -135,6 +135,11 @@ class SignupState(rx.State):
             )
             ai_config = AIConfig(
                 user_id=random_id,
+                platform = 'Tongyi',
+                model = 'deepseek-v3',
+                api_key='',
+                LLM_HOST = 'localhost',
+                LLM_PORT = 6006,
                 MAX_ITERATIONS = 3,
                 DO_SAMPLE = False,
                 TEMPERATURE = 0.1,
@@ -154,8 +159,6 @@ class SignupState(rx.State):
                 F_COL_STRONG_THRESHOLD = 0.85,
                 F_VAL_STRONG_THRESHOLD = 0.85,
                 G_HINT_THRESHOLD = 0.30,
-                LLM_HOST = 'localhost',
-                LLM_PORT = 6006,
             )
             session.add(user)
             session.add(settings)

@@ -1,5 +1,5 @@
 import reflex as rx
-from state.account_st import AccountState
+from client.state.account_st import AccountState
 from .components.alert_dialog import alert_dialog
 from .components.sidebar import sidebar_bottom_profile
 from .components.theme_wrap import theme_wrap
@@ -79,7 +79,7 @@ def change_email() -> rx.Component:
                         rx.input.slot(rx.icon("mail")),
                         placeholder="新邮箱",
                         name="email",
-                        on_blur=lambda x: AccountState.set_email_sent(x),
+                        on_change=lambda x: AccountState.set_email_sent(x),
                         size="3",
                         width='100%'
                     ),

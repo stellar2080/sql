@@ -2,7 +2,7 @@
 
 import reflex as rx
 from .components.alert_dialog import alert_dialog
-from state.signup_st import SignupState
+from client.state.signup_st import SignupState
 from .components.theme_wrap import theme_wrap
 
 def signup():
@@ -46,7 +46,7 @@ def signup():
                                     rx.input.slot(rx.icon("mail")),
                                     placeholder="输入邮箱",
                                     name="email",
-                                    on_blur=lambda x: SignupState.set_email(x),
+                                    on_change=lambda x: SignupState.set_email(x),
                                     size="3",
                                 ),
                                 direction='column',

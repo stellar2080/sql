@@ -1,5 +1,5 @@
 import reflex as rx
-from state.base_st import BaseState
+from client.state.base_st import BaseState
 
 def sidebar_item(
     text: str, icon: str, on_click: property, 

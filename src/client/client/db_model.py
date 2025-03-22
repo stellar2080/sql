@@ -1,4 +1,3 @@
-import datetime
 from sqlmodel import Field
 
 import reflex as rx
@@ -21,6 +20,11 @@ class Settings(rx.Model, table=True):
 class AIConfig(rx.Model, table=True):
 
     user_id: str = Field(primary_key=True)
+    platform: str
+    model: str
+    api_key: str
+    LLM_HOST: str
+    LLM_PORT: int
     MAX_ITERATIONS: int
     DO_SAMPLE: bool
     TEMPERATURE: float
@@ -40,5 +44,3 @@ class AIConfig(rx.Model, table=True):
     F_COL_STRONG_THRESHOLD: float
     F_VAL_STRONG_THRESHOLD: float
     G_HINT_THRESHOLD: float
-    LLM_HOST: str
-    LLM_PORT: int

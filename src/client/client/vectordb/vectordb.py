@@ -3,7 +3,7 @@ from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 
-from utils.utils import deterministic_uuid
+from client.utils.utils import deterministic_uuid
 
 class VectorDB(VectorDB_Base):
     def __init__(
@@ -12,22 +12,17 @@ class VectorDB(VectorDB_Base):
     ):
         super().__init__(config)
 
-        path = config.get("vectordb_path", None)
         curr_client = config.get("vectordb_client", "persistent")
-        host = config.get("vectordb_host", None)
-        port = config.get("vectordb_port", None)
-
-        default_ef = embedding_functions.DefaultEmbeddingFunction()
-        self.embedding_function = config.get("embedding_function", default_ef)
-        self.N_RESULTS = config.get("N_RESULTS")
 
         self.chroma_client = None
-
         if curr_client == "persistent":
+            path = config.get("vectordb_path", None)
             self.chroma_client = chromadb.PersistentClient(
                 path=path, settings=Settings(anonymized_telemetry=False)
             )
         elif curr_client == "http":
+            host = config.get("vectordb_host", None)
+            port = config.get("vectordb_port", None)
             self.chroma_client = chromadb.HttpClient(host=host, port=port)
         elif curr_client == "ephemeral":
             self.chroma_client = chromadb.EphemeralClient(
@@ -35,6 +30,10 @@ class VectorDB(VectorDB_Base):
             )
         else:
             raise TypeError(f"Unknown client type or it is unsupported: {curr_client}")
+
+        default_ef = embedding_functions.DefaultEmbeddingFunction()
+        self.embedding_function = config.get("embedding_function", default_ef)
+        self.N_RESULTS = config.get("N_RESULTS")
 
         self.document_collection = self.chroma_client.get_or_create_collection(
             name="document",

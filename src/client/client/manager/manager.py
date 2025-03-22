@@ -1,15 +1,15 @@
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
 
-from utils.db_utils import connect_to_sqlite
-from llm.custom import Custom
-from llm.tongyi import Tongyi
-from agent.extractor import Extractor
-from agent.filter import Filter
-from agent.generator import Generator
-from agent.reviser import Reviser
-from vectordb.vectordb import VectorDB
-from utils.utils import deterministic_uuid, parse_list
-from utils.const import MANAGER, EXTRACTOR, FILTER, GENERATOR, REVISER
+from client.utils.db_utils import connect_to_sqlite
+from client.llm.custom import Custom
+from client.llm.tongyi import Tongyi
+from client.agent.extractor import Extractor
+from client.agent.filter import Filter
+from client.agent.generator import Generator
+from client.agent.reviser import Reviser
+from client.vectordb.vectordb import VectorDB
+from client.utils.utils import deterministic_uuid, parse_list
+from client.utils.const import MANAGER, EXTRACTOR, FILTER, GENERATOR, REVISER
 
 special_chars = "'_,."
 word = Word(alphas + nums + special_chars)
@@ -36,23 +36,48 @@ class Manager:
         elif self.platform == 'Tongyi':
             self.llm = Tongyi(config)
 
-        self.url = config.get("db_path", '.')
-        self.check_same_thread = config.get("check_same_thread", False)
-        self.db_conn, self.dialect = connect_to_sqlite(
-            self.url, 
-            self.check_same_thread
-        )
-        
         self.extractor = Extractor(config)
         self.filter = Filter(config)
         self.generator = Generator(config)
         self.reviser = Reviser(config)
         self.vectordb = VectorDB(config)
 
+        self.target_db_path = config.get("target_db_path", '.')
+        self.check_same_thread = config.get("check_same_thread", False)
+        self.db_conn, self.dialect = connect_to_sqlite(
+            self.target_db_path, 
+            self.check_same_thread
+        )
+        
         self.message = None
 
         self.user_id = config.get('user_id',None)
 
+        self.MAX_ITERATIONS = config.get('MAX_ITERATIONS')
+
+    def set_config(self, config: dict):
+        self.platform = config.get('platform',None)
+        if self.platform is None:
+            raise Exception('Please provide platform.')
+        elif self.platform == 'Custom':
+            self.llm = Custom(config)
+        elif self.platform == 'Tongyi':
+            self.llm = Tongyi(config)
+
+        self.extractor = Extractor(config)
+        self.filter = Filter(config)
+        self.generator = Generator(config)
+        self.reviser = Reviser(config)
+        self.vectordb = VectorDB(config)
+
+        self.target_db_path = config.get("target_db_path", '.')
+        self.check_same_thread = config.get("check_same_thread", False)
+        self.db_conn, self.dialect = connect_to_sqlite(
+            self.target_db_path, 
+            self.check_same_thread
+        )
+        
+        self.user_id = config.get('user_id',None)
         self.MAX_ITERATIONS = config.get('MAX_ITERATIONS')
 
     def message_init(self):

@@ -1,4 +1,4 @@
-from state.base_st import BaseState
+from client.state.base_st import BaseState
 import reflex as rx
 
 def theme_wrap(component: rx.Component) -> rx.Component:

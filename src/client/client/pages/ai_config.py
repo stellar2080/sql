@@ -1,7 +1,7 @@
 """The AI config page."""
 
 import reflex as rx
-from state.base_st import BaseState
+from client.state.base_st import BaseState
 from .components.sidebar import sidebar_bottom_profile
 from .components.theme_wrap import theme_wrap
 from .components.alert_dialog import alert_dialog
@@ -16,6 +16,116 @@ def ai_config() -> rx.Component:
                         rx.heading(
                             "AI配置", 
                             size="6"
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "platform", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    目前支持通义千问和自定义，选择通义千问请填写model和api_key，选择自定义请填写LLM_HOST和LLM_PORT
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.select(
+                                ["Tongyi", "Custom"],
+                                size='3',
+                                default_value=BaseState.platform,
+                                name='platform',
+                                width='25%'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "model", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    选择要调用的模型
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.select(
+                                ["deepseek-v3","qwen-max","qwen-plus"],
+                                size='3',
+                                default_value=BaseState.model,
+                                name='model',
+                                width='25%'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "api_key", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    大模型平台的api_key
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.api_key,
+                                name='api_key',
+                                width='60%'
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "LLM_HOST", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    自部署大模型的host地址
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.LLM_HOST,
+                                name='LLM_HOST',
+                            ),
+                            align="center",
+                            width='100%'
+                        ),
+                        rx.hstack(
+                            rx.icon("cog"),
+                            rx.heading(
+                                "LLM_PORT", 
+                                size="5"
+                            ),
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content='''
+                                    自部署大模型的端口号
+                                ''',
+                            ),
+                            rx.spacer(),
+                            rx.input(
+                                size='3',
+                                default_value=BaseState.get_LLM_PORT,
+                                name='LLM_PORT'
+                            ),
+                            align="center",
+                            width='100%'
                         ),
                         rx.hstack(
                             rx.icon("cog"),
@@ -445,48 +555,6 @@ def ai_config() -> rx.Component:
                             align="center",
                             width='100%'
                         ),
-                        rx.hstack(
-                            rx.icon("cog"),
-                            rx.heading(
-                                "LLM_HOST", 
-                                size="5"
-                            ),
-                            rx.tooltip(
-                                rx.icon("info", size=18),
-                                content='''
-                                    自部署大模型的host地址
-                                ''',
-                            ),
-                            rx.spacer(),
-                            rx.input(
-                                size='3',
-                                default_value=BaseState.LLM_HOST,
-                                name='LLM_HOST'
-                            ),
-                            align="center",
-                            width='100%'
-                        ),
-                        rx.hstack(
-                            rx.icon("cog"),
-                            rx.heading(
-                                "LLM_PORT", 
-                                size="5"
-                            ),
-                            rx.tooltip(
-                                rx.icon("info", size=18),
-                                content='''
-                                    自部署大模型的端口号
-                                ''',
-                            ),
-                            rx.spacer(),
-                            rx.input(
-                                size='3',
-                                default_value=BaseState.get_LLM_PORT,
-                                name='LLM_PORT'
-                            ),
-                            align="center",
-                            width='100%'
-                        ),
                         rx.flex(
                             rx.button(
                                 "保存设置",
@@ -525,4 +593,3 @@ def ai_config() -> rx.Component:
             ),
         )
     )
-            

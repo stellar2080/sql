@@ -15,7 +15,7 @@ manager = Manager(
         'platform': 'Custom',
         # 'platform': 'Tongyi',
         # 'model': 'deepseek-v3',
-        'db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
+        'target_db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
         'vectordb_path': os.path.join(ROOT_PATH, 'src','client','chromadb'),
         'vectordb_client': 'http',
         'vectordb_host': 'localhost',

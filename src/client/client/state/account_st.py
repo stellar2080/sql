@@ -4,8 +4,8 @@ import bcrypt
 import reflex as rx
 from sqlmodel import select
 
-from utils.email_utils import send_email, validate_email
-from db_model import User
+from client.utils.email_utils import send_email, validate_email
+from client.db_model import User
 from .base_st import BaseState
 
 class AccountState(BaseState):

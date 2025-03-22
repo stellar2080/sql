@@ -1,10 +1,10 @@
 from typing_extensions import override
 
-from llm.llm_base import LLM_Base
-from utils.const import REVISER, MANAGER
-from utils.template import reviser_template_p1, reviser_template_p2, reviser_hint_template
-from utils.utils import parse_sql, user_message, get_response_content, timeout
-from agent.agent_base import Agent_Base
+from client.llm.llm_base import LLM_Base
+from client.utils.const import REVISER, MANAGER
+from client.utils.template import reviser_template_p1, reviser_template_p2, reviser_hint_template
+from client.utils.utils import parse_sql, user_message, get_response_content, timeout
+from client.agent.agent_base import Agent_Base
 
 
 class Reviser(Agent_Base):

@@ -1,7 +1,7 @@
 import reflex as rx
 from reflex.components.radix.themes.base import LiteralAccentColor, LiteralGrayColor
 
-from state.base_st import BaseState
+from client.state.base_st import BaseState
 
 box_shadow_style = "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)"
 color_box_size = ["2.25rem", "2.25rem", "2.5rem"]

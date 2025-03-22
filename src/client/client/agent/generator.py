@@ -1,9 +1,9 @@
-from agent.agent_base import Agent_Base
-from llm.llm_base import LLM_Base
-from utils.const import GENERATOR, REVISER
-from utils.template import generator_template_p1, generator_hint_template, generator_template_p2
-from utils.utils import parse_list, parse_sql, user_message, get_response_content, timeout
-from vectordb.vectordb import VectorDB
+from client.agent.agent_base import Agent_Base
+from client.llm.llm_base import LLM_Base
+from client.utils.const import GENERATOR, REVISER
+from client.utils.template import generator_template_p1, generator_hint_template, generator_template_p2
+from client.utils.utils import parse_list, parse_sql, user_message, get_response_content, timeout
+from client.vectordb.vectordb import VectorDB
 
 class Generator(Agent_Base):
     def __init__(

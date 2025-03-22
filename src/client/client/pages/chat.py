@@ -2,7 +2,7 @@ import reflex as rx
 import reflex_chakra as rc
 from .components.sidebar import sidebar_bottom_profile
 from .components.loading_icon import loading_icon
-from state.chat_st import QA, ChatState
+from client.state.chat_st import QA, ChatState
 from .components.theme_wrap import theme_wrap
 
 def message(qa: QA) -> rx.Component:

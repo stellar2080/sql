@@ -2,7 +2,7 @@
 
 import reflex as rx
 from .components.alert_dialog import alert_dialog
-from state.base_st import BaseState
+from client.state.base_st import BaseState
 from .components.theme_wrap import theme_wrap
 
 def login():

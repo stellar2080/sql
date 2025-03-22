@@ -1,12 +1,7 @@
-import os
-import sys
 import reflex as rx
 
-CLIENT_PATH = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(CLIENT_PATH)
-
-from pages import *
-from state.base_st import BaseState
+from client.pages import *
+from client.state.base_st import BaseState
 
 app = rx.App()
 

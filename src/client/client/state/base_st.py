@@ -1,9 +1,11 @@
-import typing
+import os
 import bcrypt
 import reflex as rx
 from sqlmodel import select, or_
-from db_model import User, Settings, AIConfig
-from utils.utils import is_valid_ipv4, is_float
+from client.db_model import User, Settings, AIConfig
+from client.utils.utils import is_valid_ipv4, is_float
+from client.manager.manager import Manager
+from rxconfig import target_db_path
 
 class BaseState(rx.State):
 
@@ -87,10 +89,13 @@ class BaseState(rx.State):
             return rx.redirect("/login")
         if not self.settings_loaded:
             self.settings_loaded = not self.settings_loaded
-            return self.load_settings()
+            self.load_settings()
         if not self.ai_config_loaded:
             self.ai_config_loaded = not self.ai_config_loaded
-            return self.load_ai_config()
+            self.load_ai_config()
+        if not self.manager_inited:
+            self.manager_inited = not self.manager_inited
+            self.init_manager()
 
     accent_color: str = "violet"
     gray_color: str = "gray"
@@ -165,6 +170,11 @@ class BaseState(rx.State):
         self.base_dialog_description = "保存设置成功"
         return self.settings_saved_open_change()
     
+    platform: str = 'Tongyi'
+    model: str = 'qwen-max'
+    api_key: str = ''
+    LLM_HOST: str = 'localhost'
+    LLM_PORT: int = 6006
     MAX_ITERATIONS: int = 3
     DO_SAMPLE: bool = False
     TEMPERATURE: float = 0.1
@@ -184,8 +194,6 @@ class BaseState(rx.State):
     F_COL_STRONG_THRESHOLD: float = 0.85
     F_VAL_STRONG_THRESHOLD: float = 0.85
     G_HINT_THRESHOLD: float = 0.30
-    LLM_HOST: str = 'localhost'
-    LLM_PORT: int = 6006
 
     ai_config_loaded: bool = False
 
@@ -273,6 +281,11 @@ class BaseState(rx.State):
                     AIConfig.user_id == self.user_id,
                 )
             ).first()
+            self.platform = ai_config.platform
+            self.model = ai_config.model
+            self.api_key = ai_config.api_key
+            self.LLM_HOST = ai_config.LLM_HOST
+            self.LLM_PORT = ai_config.LLM_PORT
             self.MAX_ITERATIONS = ai_config.MAX_ITERATIONS
             self.DO_SAMPLE = ai_config.DO_SAMPLE
             self.TEMPERATURE = ai_config.TEMPERATURE
@@ -292,11 +305,50 @@ class BaseState(rx.State):
             self.F_COL_STRONG_THRESHOLD = ai_config.F_COL_STRONG_THRESHOLD
             self.F_VAL_STRONG_THRESHOLD = ai_config.F_VAL_STRONG_THRESHOLD
             self.G_HINT_THRESHOLD = ai_config.G_HINT_THRESHOLD
-            self.LLM_HOST = ai_config.LLM_HOST
-            self.LLM_PORT = ai_config.LLM_PORT
-    
+
+
     @rx.event
     def save_ai_config(self, form_data: dict):
+        platform = form_data.get('platform')
+        model = form_data.get('model')
+        api_key = form_data.get('api_key')
+        LLM_HOST = form_data.get('LLM_HOST')
+        LLM_PORT = form_data.get('LLM_PORT')
+
+        if platform == 'Tongyi':
+            api_key = form_data.get('api_key')
+            if api_key == '':
+                self.base_dialog_description = "请输入api_key"
+                return self.base_dialog_open_change()
+            
+            if not (is_valid_ipv4(LLM_HOST) or LLM_HOST.lower() == 'localhost' or LLM_HOST == ''):
+                self.base_dialog_description = "请输入正确的ip地址或将ip地址置空"
+                return self.base_dialog_open_change()
+
+            if LLM_PORT.isdigit():
+                LLM_PORT = int(LLM_PORT)
+                if LLM_PORT < 0 or LLM_PORT > 65535:
+                    self.base_dialog_description = "端口号范围应为：[0, 65535]"
+                    return self.base_dialog_open_change()
+            elif LLM_PORT == '':
+                LLM_PORT = -1
+            else:
+                self.base_dialog_description = "请输入正确的端口号或将端口号置空"
+                return self.base_dialog_open_change()
+            
+        elif platform == 'Custom':
+            if not (is_valid_ipv4(LLM_HOST) or LLM_HOST.lower() == 'localhost'):
+                self.base_dialog_description = "请输入正确的ip地址"
+                return self.base_dialog_open_change()
+            
+            if not LLM_PORT.isdigit():
+                self.base_dialog_description = "请输入正确的端口号"
+                return self.base_dialog_open_change()
+            LLM_PORT = int(LLM_PORT)
+            if LLM_PORT < 0 or LLM_PORT > 65535:
+                self.base_dialog_description = "端口号范围应为：[0, 65535]"
+                return self.base_dialog_open_change()
+
         MAX_ITERATIONS = form_data.get('MAX_ITERATIONS')
         if not MAX_ITERATIONS.isdigit():
             self.base_dialog_description = "最大修正轮次的取值应为整数"
@@ -461,18 +513,11 @@ class BaseState(rx.State):
             self.base_dialog_description = "G_HINT_THRESHOLD的取值范围应为：(0,1.00]"
             return self.base_dialog_open_change()
 
-        LLM_HOST = form_data.get('LLM_HOST')
-        if not (is_valid_ipv4(LLM_HOST) or LLM_HOST.lower() == 'localhost'):
-            self.base_dialog_description = "请输入正确的ip地址"
-            return self.base_dialog_open_change()     
-        
-        LLM_PORT = form_data.get('LLM_PORT')
-        if not LLM_PORT.isdigit():
-            self.base_dialog_description = "请输入正确的端口号"
-            return self.base_dialog_open_change()
-        else:
-            LLM_PORT = int(LLM_PORT)
-        
+        self.platform = platform
+        self.model = model
+        self.api_key = api_key
+        self.LLM_HOST = LLM_HOST
+        self.LLM_PORT = LLM_PORT
         self.MAX_ITERATIONS = MAX_ITERATIONS
         self.DO_SAMPLE = DO_SAMPLE
         self.TEMPERATURE = TEMPERATURE
@@ -492,8 +537,6 @@ class BaseState(rx.State):
         self.F_COL_STRONG_THRESHOLD = F_COL_STRONG_THRESHOLD
         self.F_VAL_STRONG_THRESHOLD = F_VAL_STRONG_THRESHOLD
         self.G_HINT_THRESHOLD = G_HINT_THRESHOLD
-        self.LLM_HOST = LLM_HOST
-        self.LLM_PORT = LLM_PORT
 
         with rx.session() as session:
             ai_config = session.exec(
@@ -501,6 +544,11 @@ class BaseState(rx.State):
                     AIConfig.user_id == self.user_id
                 )
             ).first()
+            ai_config.platform = platform
+            ai_config.model = model
+            ai_config.api_key = api_key
+            ai_config.LLM_HOST = LLM_HOST
+            ai_config.LLM_PORT = LLM_PORT
             ai_config.MAX_ITERATIONS = MAX_ITERATIONS
             ai_config.DO_SAMPLE = DO_SAMPLE
             ai_config.TEMPERATURE = TEMPERATURE
@@ -520,11 +568,46 @@ class BaseState(rx.State):
             ai_config.F_COL_STRONG_THRESHOLD = F_COL_STRONG_THRESHOLD
             ai_config.F_VAL_STRONG_THRESHOLD = F_VAL_STRONG_THRESHOLD
             ai_config.G_HINT_THRESHOLD = G_HINT_THRESHOLD
-            ai_config.LLM_HOST = LLM_HOST
-            ai_config.LLM_PORT = LLM_PORT
             session.add(ai_config)
             session.commit()
         self.base_dialog_description = "保存设置成功"
         return self.base_dialog_open_change()
 
+    _manager: Manager = None
 
+    manager_inited: bool = False
+
+    @rx.event
+    def init_manager(self):
+        self._manager = Manager(
+            config={
+                'user_id': self.user_id,
+                'platform': self.platform,
+                'model': self.model,
+                'LLM_HOST': self.LLM_HOST,
+                'LLM_PORT': self.LLM_PORT,
+                'target_db_path': target_db_path,
+                'vectordb_client': 'http',
+                'vectordb_host': 'localhost',
+                'vectordb_port': '8000',
+                'MAX_ITERATIONS': self.MAX_ITERATIONS,
+                'DO_SAMPLE': self.DO_SAMPLE,
+                'TEMPERATURE': self.TEMPERATURE,
+                'TOP_K': self.TOP_K,
+                'TOP_P': self.TOP_P,
+                'MAX_TOKENS': self.MAX_TOKENS,
+                'N_RESULTS': self.N_RESULTS,
+                'E_HINT_THRESHOLD': self.E_HINT_THRESHOLD,
+                'E_COL_THRESHOLD': self.E_COL_THRESHOLD,
+                'E_VAL_THRESHOLD': self.E_VAL_THRESHOLD,
+                'E_COL_STRONG_THRESHOLD': self.E_COL_STRONG_THRESHOLD,
+                'E_VAL_STRONG_THRESHOLD': self.E_VAL_STRONG_THRESHOLD,
+                'F_HINT_THRESHOLD': self.F_HINT_THRESHOLD,
+                'F_COL_THRESHOLD': self.F_COL_THRESHOLD,
+                'F_LSH_THRESHOLD': self.F_LSH_THRESHOLD,
+                'F_VAL_THRESHOLD': self.F_VAL_THRESHOLD,
+                'F_COL_STRONG_THRESHOLD': self.F_COL_STRONG_THRESHOLD,
+                'F_VAL_STRONG_THRESHOLD': self.F_VAL_STRONG_THRESHOLD,
+                'G_HINT_THRESHOLD': self.G_HINT_THRESHOLD,
+            },
+        )

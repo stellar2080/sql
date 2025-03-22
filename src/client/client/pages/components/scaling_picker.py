@@ -1,6 +1,6 @@
 import reflex as rx
 
-from state.base_st import BaseState
+from client.state.base_st import BaseState
 
 
 def scaling_picker() -> rx.Component:
