@@ -30,12 +30,12 @@ async def create_item(request: Request):
     json_post = json.dumps(json_post_raw)  
     json_post_list = json.loads(json_post)  
     messages = json_post_list.get('messages')  
+    MAX_TOKENS = json_post_list.get('MAX_TOKENS')
     DO_SAMPLE = json_post_list.get('DO_SAMPLE')
     TEMPERATURE = json_post_list.get('TEMPERATURE')
     TOP_K = json_post_list.get('TOP_K')
     TOP_P = json_post_list.get('TOP_P')
-    MAX_TOKENS = json_post_list.get('MAX_TOKENS')
-
+ 
     text = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
     model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
     generated_ids = model.generate(
