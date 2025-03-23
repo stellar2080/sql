@@ -53,16 +53,12 @@ class ChatState(BaseState):
             },
         )
 
-    async def process_question(self, form_data):
+    @rx.event(background=True)
+    async def AI_process_question(self, form_data):
         question = form_data["question"]
         if not question or question == "":
             return
-
-        model = self.AI_process_question
-        async for value in model(question):
-            yield value
-
-    async def AI_process_question(self, question: str):
+        
         qa = QA(
             question=question, 
             answer_text='', 
@@ -70,16 +66,27 @@ class ChatState(BaseState):
             text_loading=True,
             table_loading=True,
         )
-        self.current_chat.append(qa)
-        self.processing = True
-        await asyncio.sleep(0)
+        async with self:
+            self.current_chat.append(qa)
+            self.current_chat[-1].answer_text = '正在生成SQL...'
+            self.current_chat[-1].text_loading=False
+            self.processing = True
+
         last_qa = self.current_chat[-1]
         manager = self.init_manager()
         message = await manager.chat(last_qa.question)
+        # await asyncio.sleep(5)
+        # message = {
+        #     'sql': '123',
+        #     'sql_result': {
+        #         'cols': ['c1'],
+        #         'rows': [(1,),(2,)]
+        #     }
+        # }
 
-        self.current_chat[-1].answer_text = message.get('sql')
-        self.current_chat[-1].text_loading=False
-        await asyncio.sleep(0)
+        async with self:
+            self.current_chat[-1].answer_text = message.get('sql')
+
         sql_result = message.get('sql_result')
         cols = sql_result.get('cols')
         rows = sql_result.get('rows')
@@ -87,7 +94,8 @@ class ChatState(BaseState):
             data=rows,
             columns=cols
         )
-        self.current_chat[-1].table_datas = df
-        self.current_chat[-1].table_loading=False
-        self.processing = False
+        async with self:
+            self.current_chat[-1].table_datas = df
+            self.current_chat[-1].table_loading=False
+            self.processing = False
         

@@ -120,7 +120,7 @@ def action_bar() -> rx.Component:
                     ),
                     align_items="center",
                 ),
-                on_submit=ChatState.process_question,
+                on_submit=ChatState.AI_process_question,
                 reset_on_submit=True,
             ),
             rx.text(

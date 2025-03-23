@@ -70,7 +70,7 @@ manager = Manager(
 
 async def test(manager: Manager):
     message = {
-        "question": "I want the name of all bank",
+        "question": "I want the current ratio of all bank",
         "entity": None,
         "dialect": "sqlite",
         "schema": None,
