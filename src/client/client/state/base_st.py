@@ -4,8 +4,6 @@ import reflex as rx
 from sqlmodel import select, or_
 from client.db_model import User, Settings, AIConfig
 from client.utils.utils import is_valid_ipv4, is_float
-from client.manager.manager import Manager
-from rxconfig import target_db_path
 
 class BaseState(rx.State):
 
@@ -15,6 +13,7 @@ class BaseState(rx.State):
     password: str = None
 
     base_dialog_description: str = ""
+    
     base_dialog_open: bool = False
     auth_success_dialog_open: bool = False
     check_login_dialog_open: bool = False
@@ -70,6 +69,8 @@ class BaseState(rx.State):
                 self.email = user.email
                 self.password = user.password
                 self.base_dialog_description = "登录成功，欢迎回来，" + self.username
+                self.load_settings()
+                self.load_ai_config()
                 return self.auth_success_dialog_open_change()
 
     @rx.event
@@ -87,22 +88,11 @@ class BaseState(rx.State):
             self.base_dialog_description = "您还未登录，请先登录"
             self.check_login_dialog_open_change()
             return rx.redirect("/login")
-        if not self.settings_loaded:
-            self.settings_loaded = not self.settings_loaded
-            self.load_settings()
-        if not self.ai_config_loaded:
-            self.ai_config_loaded = not self.ai_config_loaded
-            self.load_ai_config()
-        if not self.manager_inited:
-            self.manager_inited = not self.manager_inited
-            self.init_manager()
-
+            
     accent_color: str = "violet"
     gray_color: str = "gray"
     radius: str = "large"
     scaling: str = "100%"
-    
-    settings_loaded: bool = False
 
     settings_reset_open: bool = False
     settings_saved_open: bool = False
@@ -127,16 +117,7 @@ class BaseState(rx.State):
             self.gray_color = settings.gray_color
             self.radius = settings.radius
             self.scaling = settings.scaling
-
-    @rx.event
-    def reset_settings(self):
-        self.accent_color = "violet"
-        self.gray_color = "gray"
-        self.radius = "large"
-        self.scaling = "100%"
-        self.base_dialog_description = "恢复默认设置成功，不要忘了保存设置"
-        self.settings_reset_open_change()
-        
+   
     @rx.event
     def set_accent_color(self, accent_color: str):
         self.accent_color = accent_color
@@ -152,6 +133,15 @@ class BaseState(rx.State):
     @rx.event
     def set_scaling(self, scaling: str):
         self.scaling = scaling
+
+    @rx.event
+    def reset_settings(self):
+        self.accent_color = "violet"
+        self.gray_color = "gray"
+        self.radius = "large"
+        self.scaling = "100%"
+        self.base_dialog_description = "恢复默认设置成功，不要忘了保存设置"
+        self.settings_reset_open_change()
 
     @rx.event
     def save_settings(self):
@@ -194,8 +184,6 @@ class BaseState(rx.State):
     F_COL_STRONG_THRESHOLD: float = 0.85
     F_VAL_STRONG_THRESHOLD: float = 0.85
     G_HINT_THRESHOLD: float = 0.30
-
-    ai_config_loaded: bool = False
 
     @rx.var
     def get_MAX_ITERATIONS(self) -> str:
@@ -572,42 +560,3 @@ class BaseState(rx.State):
             session.commit()
         self.base_dialog_description = "保存设置成功"
         return self.base_dialog_open_change()
-
-    _manager: Manager = None
-
-    manager_inited: bool = False
-
-    @rx.event
-    def init_manager(self):
-        self._manager = Manager(
-            config={
-                'user_id': self.user_id,
-                'platform': self.platform,
-                'model': self.model,
-                'LLM_HOST': self.LLM_HOST,
-                'LLM_PORT': self.LLM_PORT,
-                'target_db_path': target_db_path,
-                'vectordb_client': 'http',
-                'vectordb_host': 'localhost',
-                'vectordb_port': '8000',
-                'MAX_ITERATIONS': self.MAX_ITERATIONS,
-                'DO_SAMPLE': self.DO_SAMPLE,
-                'TEMPERATURE': self.TEMPERATURE,
-                'TOP_K': self.TOP_K,
-                'TOP_P': self.TOP_P,
-                'MAX_TOKENS': self.MAX_TOKENS,
-                'N_RESULTS': self.N_RESULTS,
-                'E_HINT_THRESHOLD': self.E_HINT_THRESHOLD,
-                'E_COL_THRESHOLD': self.E_COL_THRESHOLD,
-                'E_VAL_THRESHOLD': self.E_VAL_THRESHOLD,
-                'E_COL_STRONG_THRESHOLD': self.E_COL_STRONG_THRESHOLD,
-                'E_VAL_STRONG_THRESHOLD': self.E_VAL_STRONG_THRESHOLD,
-                'F_HINT_THRESHOLD': self.F_HINT_THRESHOLD,
-                'F_COL_THRESHOLD': self.F_COL_THRESHOLD,
-                'F_LSH_THRESHOLD': self.F_LSH_THRESHOLD,
-                'F_VAL_THRESHOLD': self.F_VAL_THRESHOLD,
-                'F_COL_STRONG_THRESHOLD': self.F_COL_STRONG_THRESHOLD,
-                'F_VAL_STRONG_THRESHOLD': self.F_VAL_STRONG_THRESHOLD,
-                'G_HINT_THRESHOLD': self.G_HINT_THRESHOLD,
-            },
-        )

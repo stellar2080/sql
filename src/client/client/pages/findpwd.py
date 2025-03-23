@@ -1,11 +1,11 @@
 import reflex as rx
 from client.state.findpwd_st import FindpwdState
 from .components.alert_dialog import alert_dialog
-from .components.theme_wrap import theme_wrap
+from .components.theme_wrap import theme_wrap_out
 
 
 def findpwd():
-    return theme_wrap(
+    return theme_wrap_out(
         rx.center(
             rx.card(
                 rx.flex(

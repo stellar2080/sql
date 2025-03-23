@@ -1,22 +1,20 @@
+import datetime
 import json
 import os
 import sys
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-CLIENT_PATH = os.path.dirname(current_dir)
+CLIENT_PATH = os.path.dirname(os.path.dirname(current_dir))
 sys.path.append(CLIENT_PATH)
-ROOT_PATH = os.path.dirname(os.path.dirname(os.path.dirname(CLIENT_PATH)))
-from manager.manager import Manager
+from client.manager.manager import Manager
 os.environ["DASHSCOPE_API_KEY"] = "sk-9536a97947b641ad9e287da238ba3abb"
 
 manager = Manager(
     config={
         'user_id': '1',
-        'platform': 'Custom',
-        # 'platform': 'Tongyi',
-        # 'model': 'deepseek-v3',
-        'target_db_path': os.path.join(ROOT_PATH,"dataset","Bank_Financials.sqlite"),
-        'vectordb_path': os.path.join(ROOT_PATH, 'src','client','chromadb'),
+        'platform': 'Tongyi',
+        'model': 'deepseek-v3',
+        'target_db_path': os.path.join(CLIENT_PATH,"dataset","Bank_Financials.sqlite"),
         'vectordb_client': 'http',
         'vectordb_host': 'localhost',
         'vectordb_port': '8000',
@@ -39,14 +37,12 @@ manager = Manager(
         'F_COL_STRONG_THRESHOLD': 0.85,
         'F_VAL_STRONG_THRESHOLD': 0.85,
         'G_HINT_THRESHOLD': 0.30,
-        'LLM_HOST': 'localhost',
-        'LLM_PORT': 6006,
     },
 )
 
-# with open(os.path.join(ROOT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
+# with open(os.path.join(CLIENT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
 #     for line in f:
-#         manager.add_to_vectordb(line.strip(),'1.txt')
+#         manager.add_to_vectordb(line.strip(),'repository.txt')
         
 # with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev_proc.json')) as f:
 #     data = json.load(f)

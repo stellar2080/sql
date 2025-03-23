@@ -10,25 +10,22 @@ def message(qa: QA) -> rx.Component:
         rx.box(          
             rx.flex(
                 rx.badge(
-                    rx.flex(
-                        rx.icon("user", size=25),
-                        direction="row",
-                        align="center",
-                    ),
-                    size="2",
+                    rx.icon("user", size=25),
+                    size="3",
                     color=rx.color("gray", 12)
                 ),
-                rx.markdown(
-                    qa.question,
-                    background_color=rx.color("gray", 4),
-                    color=rx.color("gray", 12),
-                    display="inline-block", 
-                    padding_x="1em", 
-                    padding_y='0.1em',
-                    max_width=["30em", "30em", "50em", "50em", "50em", "50em"],
+                rx.box(
+                    rx.text(
+                        qa.question, 
+                        padding="1em",
+                        box_shadow="rgba(0, 0, 0, 0.15) 0px 2px 8px",
+                        max_width="72em",
+                        display="inline-block",
+                        background_color=rx.color("gray", 4),
+                    ),
                 ),
                 direction='row',
-                align='center',
+                align='start',
                 spacing='4'
             ),
             text_align="left",
@@ -37,25 +34,33 @@ def message(qa: QA) -> rx.Component:
         rx.box(
             rx.flex(
                 rx.badge(
-                    rx.flex(
-                        rx.icon("sparkles", size=25),
-                        direction="row",
-                        align="center",
-                    ),
-                    size="2",
+                    rx.icon("sparkles", size=25),
+                    size="3",
                     color=rx.color("gray", 12)
                 ),
-                rx.markdown(
-                    qa.answer,
-                    background_color=rx.color("accent", 4),
-                    color=rx.color("gray", 12),
-                    display="inline-block", 
-                    padding_x="1em", 
-                    padding_y='0.1em',
-                    max_width=["30em", "30em", "50em", "50em", "50em", "50em"]
+                rx.skeleton(
+                    rx.vstack(
+                        rx.text(
+                            qa.answer_text,
+                            padding="1em",
+                            box_shadow="rgba(0, 0, 0, 0.15) 0px 2px 8px",
+                            max_width="72em",
+                            display="inline-block",
+                            background_color=rx.color("accent", 8),
+                        ),
+                        rx.box(
+                            rx.data_table(
+                                data=qa.table_datas,
+                                pagination=True,
+                                sort=True,        
+                            ),
+                            max_width="72em",
+                        ),
+                    ),
+                    loading=qa.last
                 ),
                 direction='row',
-                align='center',
+                align='start',
                 spacing='4'
             ),
             text_align="left",
@@ -69,14 +74,14 @@ def chat_box() -> rx.Component:
     return rx.vstack(
         rx.box(
             rx.foreach(
-                ChatState.chats[ChatState.current_chat], message
+                ChatState.current_chat, message
             ), 
             width="100%"
         ),
         py="8",
         flex="1",
         width="100%",
-        max_width="50em",
+        max_width="80em",
         padding_x="4px",
         align_self="center",
         overflow="hidden",
@@ -88,30 +93,28 @@ def action_bar() -> rx.Component:
     return rx.center(
         rx.vstack(
             rc.form(
-                rc.form_control(
-                    rx.hstack(
-                        rx.input(
-                            rx.input.slot(
-                                rx.tooltip(
-                                    rx.icon("info", size=18),
-                                    content="输入你要转换成SQL的问题。",
-                                )
-                            ),
-                            placeholder="输入你的问题...",
-                            id="question",
-                            width=["15em", "20em", "45em", "50em", "50em", "50em"],
+                rx.hstack(
+                    rx.input(
+                        rx.input.slot(
+                            rx.tooltip(
+                                rx.icon("info", size=18),
+                                content="输入你要转换成SQL的问题。",
+                            )
                         ),
-                        rx.button(
-                            rx.cond(
-                                ChatState.processing,
-                                loading_icon(height="1em"),
-                                rx.text("发送"),
-                            ),
-                            type="submit",
-                        ),
-                        align_items="center",
+                        placeholder="输入你的问题...",
+                        id="question",
+                        width=["15em", "20em", "45em", "50em", "50em", "50em"],
                     ),
-                    is_disabled=ChatState.processing,
+                    rx.button(
+                        rx.cond(
+                            ChatState.processing,
+                            loading_icon(height="1em"),
+                            rx.text("发送"),
+                        ),
+                        disabled=ChatState.processing,
+                        type="submit",
+                    ),
+                    align_items="center",
                 ),
                 on_submit=ChatState.process_question,
                 reset_on_submit=True,

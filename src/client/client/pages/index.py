@@ -1,8 +1,8 @@
 import reflex as rx
-from .components.theme_wrap import theme_wrap
+from .components.theme_wrap import theme_wrap_out
 
 def index():
-    return theme_wrap(
+    return theme_wrap_out(
         rx.center(
             rx.card(
                 rx.flex(

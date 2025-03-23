@@ -11,19 +11,6 @@ from client.vectordb.vectordb import VectorDB
 from client.utils.utils import deterministic_uuid, parse_list
 from client.utils.const import MANAGER, EXTRACTOR, FILTER, GENERATOR, REVISER
 
-special_chars = "'_,."
-word = Word(alphas + nums + special_chars)
-identifier = Combine(word + ZeroOrMore(White(" ") + word))
-eq_1 = Word("=")
-operator_1 = oneOf("+ - * /")
-lparen_1 = Word("(")
-rparen_1 = Word(")")
-expr = Group(
-    identifier + eq_1 + OneOrMore(
-        Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
-    )
-)
-
 class Manager:
     def __init__(self,config=None):
         if config is None:
@@ -97,6 +84,18 @@ class Manager:
         s: str
     ):
         try:
+            special_chars = "'_,."
+            word = Word(alphas + nums + special_chars)
+            identifier = Combine(word + ZeroOrMore(White(" ") + word))
+            eq_1 = Word("=")
+            operator_1 = oneOf("+ - * /")
+            lparen_1 = Word("(")
+            rparen_1 = Word(")")
+            expr = Group(
+                identifier + eq_1 + OneOrMore(
+                    Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
+                )
+            )
             result_list = expr.parseString(s)[0]
             return result_list
         except Exception as e:
