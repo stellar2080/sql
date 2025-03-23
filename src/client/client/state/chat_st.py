@@ -30,13 +30,11 @@ class ChatState(BaseState):
                 'LLM_HOST': self.LLM_HOST,
                 'LLM_PORT': self.LLM_PORT,
                 'target_db_path': target_db_path,
-                'vectordb_client': 'http',
                 'vectordb_host': 'localhost',
                 'vectordb_port': '8000',
                 'MAX_ITERATIONS': self.MAX_ITERATIONS,
                 'DO_SAMPLE': self.DO_SAMPLE,
                 'TEMPERATURE': self.TEMPERATURE,
-                'TOP_K': self.TOP_K,
                 'TOP_P': self.TOP_P,
                 'MAX_TOKENS': self.MAX_TOKENS,
                 'N_RESULTS': self.N_RESULTS,
@@ -77,7 +75,7 @@ class ChatState(BaseState):
         await asyncio.sleep(0)
         last_qa = self.current_chat[-1]
         manager = self.init_manager()
-        message = manager.chat(last_qa.question)
+        message = await manager.chat(last_qa.question)
 
         self.current_chat[-1].answer_text = message.get('sql')
         self.current_chat[-1].text_loading=False

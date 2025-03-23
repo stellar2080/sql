@@ -33,7 +33,6 @@ async def create_item(request: Request):
     MAX_TOKENS = json_post_list.get('MAX_TOKENS')
     DO_SAMPLE = json_post_list.get('DO_SAMPLE')
     TEMPERATURE = json_post_list.get('TEMPERATURE')
-    TOP_K = json_post_list.get('TOP_K')
     TOP_P = json_post_list.get('TOP_P')
  
     text = tokenizer.apply_chat_template(messages,tokenize=False,add_generation_prompt=True)
@@ -43,7 +42,6 @@ async def create_item(request: Request):
         max_length=MAX_TOKENS,
         do_sample=DO_SAMPLE,
         temperature=TEMPERATURE,
-        top_k=TOP_K,
         top_p=TOP_P
     ) 
     generated_ids = [

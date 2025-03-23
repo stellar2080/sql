@@ -15,12 +15,12 @@ class Generator(Agent_Base):
         self.user_id = config.get('user_id','')
         self.G_HINT_THRESHOLD = config.get('G_HINT_THRESHOLD')
 
-    def get_rela_tips(
+    async def get_rela_tips(
         self,
         question: str,
         vectordb: VectorDB,
     ) -> list:
-        tips = vectordb.get_related_tip(
+        tips = await vectordb.get_related_tip(
             query_texts=question, 
             user_id=self.user_id, 
             extracts=['distances', 'documents']
@@ -66,13 +66,13 @@ class Generator(Agent_Base):
         return prompt
 
     @timeout(90)
-    def get_generator_sql(
+    async def get_generator_sql(
         self,
         prompt: str,
         llm: LLM_Base
     ) -> str:
         llm_message = [user_message(prompt)]
-        response = llm.call(messages=llm_message)
+        response = await llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
         print("="*10,"ANSWER","="*10)
         print(answer)
@@ -80,7 +80,7 @@ class Generator(Agent_Base):
         return sql
 
 
-    def chat(
+    async def chat(
         self,
         message: dict,
         llm: LLM_Base = None,
@@ -93,11 +93,11 @@ class Generator(Agent_Base):
             # print("The message is being processed by " + GENERATOR + "...")
             question = message['question']
             hint_list = message["hint"]
-            tip_list = self.get_rela_tips(question=question, vectordb=vectordb)
+            tip_list = await self.get_rela_tips(question=question, vectordb=vectordb)
             hint_str = self.get_hint_str(hint_list=hint_list, tip_list=tip_list)
             message['hint'] = hint_str
             prompt = self.create_generator_prompt(message=message)
-            sql = self.get_generator_sql(prompt=prompt, llm=llm)
+            sql = await self.get_generator_sql(prompt=prompt, llm=llm)
             message["sql"] = sql
             message["message_to"] = REVISER
             return message

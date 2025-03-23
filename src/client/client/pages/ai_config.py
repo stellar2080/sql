@@ -198,30 +198,6 @@ def ai_config() -> rx.Component:
                         rx.hstack(
                             rx.icon("cog"),
                             rx.heading(
-                                "TOP_K", 
-                                size="5"
-                            ),
-                            rx.tooltip(
-                                rx.icon("info", size=18),
-                                content='''
-                                    生成过程中采样候选集的大小。例如，取值为50时，仅将单次生成中得分最高的50个Token组成随机采样的候选集。
-                                    取值越大，生成的随机性越高；取值越小，生成的确定性越高。
-                                    取值大于100时，表示不启用top_k策略，此时仅有top_p策略生效。
-                                    取值范围：(0,101]，整数
-                                ''',
-                            ),
-                            rx.spacer(),
-                            rx.input(
-                                size='3',
-                                default_value=BaseState.get_TOP_K,
-                                name='TOP_K'
-                            ),
-                            align="center",
-                            width='100%'
-                        ),
-                        rx.hstack(
-                            rx.icon("cog"),
-                            rx.heading(
                                 "TOP_P", 
                                 size="5"
                             ),

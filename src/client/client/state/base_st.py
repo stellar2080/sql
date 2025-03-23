@@ -168,7 +168,6 @@ class BaseState(rx.State):
     MAX_ITERATIONS: int = 3
     DO_SAMPLE: bool = False
     TEMPERATURE: float = 0.1
-    TOP_K: int = 3
     TOP_P: float = 0.1
     MAX_TOKENS: int = 8192
     N_RESULTS: int = 3
@@ -192,10 +191,6 @@ class BaseState(rx.State):
     @rx.var
     def get_TEMPERATURE(self) -> str:
         return str(self.TEMPERATURE)
-
-    @rx.var
-    def get_TOP_K(self) -> str:
-        return str(self.TOP_K)
 
     @rx.var
     def get_TOP_P(self) -> str:
@@ -277,7 +272,6 @@ class BaseState(rx.State):
             self.MAX_ITERATIONS = ai_config.MAX_ITERATIONS
             self.DO_SAMPLE = ai_config.DO_SAMPLE
             self.TEMPERATURE = ai_config.TEMPERATURE
-            self.TOP_K = ai_config.TOP_K
             self.TOP_P = ai_config.TOP_P
             self.MAX_TOKENS = ai_config.MAX_TOKENS
             self.N_RESULTS = ai_config.N_RESULTS
@@ -355,15 +349,6 @@ class BaseState(rx.State):
         TEMPERATURE = float(TEMPERATURE)
         if TEMPERATURE < 0 or TEMPERATURE >= 2.0:
             self.base_dialog_description = "TEMPERATURE的取值范围应为：[0, 2.0)"
-            return self.base_dialog_open_change()
-        
-        TOP_K = form_data.get('TOP_K')
-        if not TOP_K.isdigit():
-            self.base_dialog_description = "TOP_K的取值应为整数"
-            return self.base_dialog_open_change()
-        TOP_K = int(TOP_K)
-        if TOP_K <= 0 or TOP_K > 101:
-            self.base_dialog_description = "TOP_K的取值范围应为：(0,101]"
             return self.base_dialog_open_change()
         
         TOP_P = form_data.get('TOP_P')
@@ -509,7 +494,6 @@ class BaseState(rx.State):
         self.MAX_ITERATIONS = MAX_ITERATIONS
         self.DO_SAMPLE = DO_SAMPLE
         self.TEMPERATURE = TEMPERATURE
-        self.TOP_K = TOP_K
         self.TOP_P = TOP_P
         self.MAX_TOKENS = MAX_TOKENS
         self.N_RESULTS = N_RESULTS
@@ -540,7 +524,6 @@ class BaseState(rx.State):
             ai_config.MAX_ITERATIONS = MAX_ITERATIONS
             ai_config.DO_SAMPLE = DO_SAMPLE
             ai_config.TEMPERATURE = TEMPERATURE
-            ai_config.TOP_K = TOP_K
             ai_config.TOP_P = TOP_P
             ai_config.MAX_TOKENS = MAX_TOKENS
             ai_config.N_RESULTS = N_RESULTS

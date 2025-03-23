@@ -1,6 +1,5 @@
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
 
-from client.utils.db_utils import connect_to_sqlite
 from client.llm.custom import Custom
 from client.llm.tongyi import Tongyi
 from client.agent.extractor import Extractor
@@ -29,42 +28,12 @@ class Manager:
         self.reviser = Reviser(config)
         self.vectordb = VectorDB(config)
 
-        self.target_db_path = config.get("target_db_path", '.')
-        self.check_same_thread = config.get("check_same_thread", False)
-        self.db_conn, self.dialect = connect_to_sqlite(
-            self.target_db_path, 
-            self.check_same_thread
-        )
+        self.dialect = "sqlite"
         
         self.message = None
 
         self.user_id = config.get('user_id',None)
 
-        self.MAX_ITERATIONS = config.get('MAX_ITERATIONS')
-
-    def set_config(self, config: dict):
-        self.platform = config.get('platform',None)
-        if self.platform is None:
-            raise Exception('Please provide platform.')
-        elif self.platform == 'Custom':
-            self.llm = Custom(config)
-        elif self.platform == 'Tongyi':
-            self.llm = Tongyi(config)
-
-        self.extractor = Extractor(config)
-        self.filter = Filter(config)
-        self.generator = Generator(config)
-        self.reviser = Reviser(config)
-        self.vectordb = VectorDB(config)
-
-        self.target_db_path = config.get("target_db_path", '.')
-        self.check_same_thread = config.get("check_same_thread", False)
-        self.db_conn, self.dialect = connect_to_sqlite(
-            self.target_db_path, 
-            self.check_same_thread
-        )
-        
-        self.user_id = config.get('user_id',None)
         self.MAX_ITERATIONS = config.get('MAX_ITERATIONS')
 
     def message_init(self):
@@ -207,7 +176,7 @@ class Manager:
 
         return key_zip, tip_zip
     
-    def chat(
+    async def chat(
         self,
         question: str = None,
         message: dict = None,
@@ -230,30 +199,27 @@ class Manager:
                 # print("The message is begin processed by manager...")
                 break
             elif self.message["message_to"] == EXTRACTOR:
-                self.message = self.extractor.chat(
+                self.message = await self.extractor.chat(
                     message=self.message, 
                     llm=self.llm, 
                     vectordb=self.vectordb, 
-                    db_conn=self.db_conn
                 )
             elif self.message["message_to"] == FILTER:
-                self.message = self.filter.chat(
+                self.message = await self.filter.chat(
                     message=self.message, 
                     llm=self.llm, 
                     vectordb=self.vectordb, 
-                    db_conn=self.db_conn
                 )
             elif self.message["message_to"] == GENERATOR:
-                self.message = self.generator.chat(
+                self.message = await self.generator.chat(
                     message=self.message, 
                     llm=self.llm, 
                     vectordb=self.vectordb
                 )
             elif self.message["message_to"] == REVISER:
-                self.message = self.reviser.chat(
+                self.message = await self.reviser.chat(
                     message=self.message, 
                     llm=self.llm, 
-                    db_conn=self.db_conn
                 )
                 iteration += 1
 

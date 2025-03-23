@@ -141,7 +141,6 @@ class SignupState(rx.State):
                 MAX_ITERATIONS = 3,
                 DO_SAMPLE = False,
                 TEMPERATURE = 0.1,
-                TOP_K = 3,
                 TOP_P = 0.1,
                 MAX_TOKENS = 8192,
                 N_RESULTS = 3,

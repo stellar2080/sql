@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 import difflib
 import functools
@@ -24,7 +25,7 @@ def assistant_message(message: str):
 
 def get_response_content(response, platform):
     if platform == "Tongyi":
-        return response.output.choices[0].message.content
+        return response.choices[0].message.content
     elif platform == "Custom":
         return response['response']
 
@@ -137,9 +138,15 @@ def get_embedding(_str: str):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()
     return embedding_func([_str.lower().replace('_',' ').replace('-',' ')])[0]
 
-def get_embedding_list(_list: list):
+async def get_embedding_list(_list: list):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()
-    return embedding_func([item.lower().replace('_',' ').replace('-',' ') for item in _list])
+    loop = asyncio.get_event_loop()
+    embeddings = await loop.run_in_executor(
+        None,
+        embedding_func,
+        [item.lower().replace('_', ' ').replace('-', ' ') for item in _list]
+    )
+    return embeddings
 
 def is_valid_ipv4(ip):
     pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'

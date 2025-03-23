@@ -28,7 +28,6 @@ class AIConfig(rx.Model, table=True):
     MAX_ITERATIONS: int
     DO_SAMPLE: bool
     TEMPERATURE: float
-    TOP_K: int
     TOP_P: float
     MAX_TOKENS: int
     N_RESULTS: int

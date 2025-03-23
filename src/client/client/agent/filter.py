@@ -1,3 +1,5 @@
+import asyncio
+import aiosqlite
 from client.llm.llm_base import LLM_Base
 from client.utils.const import FILTER, GENERATOR
 from client.utils.template import filter_template, filter_hint_template
@@ -13,6 +15,7 @@ class Filter(Agent_Base):
         super().__init__()
         self.platform = config.get('platform','')
         self.user_id = config.get('user_id','')
+        self.target_db_path = config.get("target_db_path")
         self.F_HINT_THRESHOLD = config.get('F_HINT_THRESHOLD')
         self.F_COL_THRESHOLD = config.get('F_COL_THRESHOLD')
         self.F_LSH_THRESHOLD = config.get('F_LSH_THRESHOLD')
@@ -20,20 +23,25 @@ class Filter(Agent_Base):
         self.F_COL_STRONG_THRESHOLD = config.get('F_COL_STRONG_THRESHOLD')
         self.F_VAL_STRONG_THRESHOLD = config.get('F_VAL_STRONG_THRESHOLD')
 
-    def parse_nouns(
+    async def parse_nouns(
         self,
         question: str
     ) -> list:
         noun_set = set()
         nlp = spacy.load('en_core_web_sm')
-        doc = nlp(question)
+        loop = asyncio.get_event_loop()
+        doc = await loop.run_in_executor(
+            None,
+            nlp,
+            question
+        )
         for token in doc:
             if token.pos_ == 'NOUN':
                 noun_set.add(token.text)
         noun_list = list(noun_set)
         return noun_list
 
-    def get_related_hint_list(
+    async def get_related_hint_list(
         self,
         entity_list: list,
         vectordb: VectorDB,
@@ -42,7 +50,7 @@ class Filter(Agent_Base):
         if threshold is None:
             threshold = self.F_HINT_THRESHOLD
         hint_list = []
-        hint_ids = vectordb.get_related_key(
+        hint_ids = await vectordb.get_related_key(
             user_id=self.user_id,
             query_texts=entity_list, 
             extracts=['distances', 'metadatas']
@@ -66,7 +74,7 @@ class Filter(Agent_Base):
                 for _, metadata in filtered_metadatas
             ]
             if filtered_ids:
-                doc_list = vectordb.get_doc_by_id(
+                doc_list = await vectordb.get_doc_by_id(
                     user_id=self.user_id,
                     embedding_ids=filtered_ids
                 )
@@ -91,7 +99,7 @@ class Filter(Agent_Base):
                 ]
                 
                 if filtered_ids:
-                    doc_list = vectordb.get_doc_by_id(
+                    doc_list = await vectordb.get_doc_by_id(
                         user_id=self.user_id,
                         embedding_ids=filtered_ids
                     )
@@ -120,78 +128,78 @@ class Filter(Agent_Base):
             entity_list = list(dict.fromkeys(entity_list))
         return hint_str, entity_list, proc_hint_list
 
-    def get_schema(
+    async def get_schema(
         self,
-        db_conn
     ) -> tuple[list,dict,list,list,list]:
-        cur = db_conn.cursor()
-        cur.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
-        tbl_datas = cur.fetchall()
+        async with aiosqlite.connect(self.target_db_path) as db:
+            cursor = await db.cursor()
+            await cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
+            tbl_datas = await cursor.fetchall()
 
-        schema = []
-        schema_dict = {}
-        tbl_name_list = []
-        col_name_list = []
-        comment_list = []
+            schema = []
+            schema_dict = {}
+            tbl_name_list = []
+            col_name_list = []
+            comment_list = []
 
-        for tbl_data in tbl_datas:
-            tbl_name = tbl_data[0]
-            sql_str = tbl_data[1]
-            schema_dict[tbl_name] = {}
-            tbl_name_list.append(tbl_name)
-            
-            cur.execute(f"PRAGMA table_info({tbl_name})")
-            col_datas = cur.fetchall()
-            columns = []
-            for col_data in col_datas:
-                is_primary_key = col_data[5]
-                col_name = col_data[1]
-                col_type = col_data[2]
-                col_name_list.append(col_name)
-                columns.append([tbl_name, col_name, col_type])
-                schema_dict[tbl_name][col_name] = [is_primary_key, col_type]
-            point_now = 0
-            num = 0
-            while True:
-                start = sql_str.find("-- ", point_now)
-                if start == -1:
-                    break
-                else:
-                    end = sql_str.find("\n", start)
-                    point_now = end + 2
-                    comment_str = sql_str[start + 3:end]
-                    Samples_idx = comment_str.find("Samples:")
-                    comment_str = comment_str if Samples_idx == -1 else comment_str[:Samples_idx - 1]
-                    comment_str = comment_str.replace("(in Yuan)", "")
-                    comment_str = comment_str.strip()
-                    comment_list.append(comment_str)
-                    columns[num].extend([comment_str,None])
-                    col_name = columns[num][1]
-                    schema_dict[tbl_name][col_name].extend([comment_str,None,None,False])
-                    num += 1
-            schema.extend(columns)
+            for tbl_data in tbl_datas:
+                tbl_name = tbl_data[0]
+                sql_str = tbl_data[1]
+                schema_dict[tbl_name] = {}
+                tbl_name_list.append(tbl_name)
+                
+                await cursor.execute(f"PRAGMA table_info({tbl_name})")
+                col_datas = await cursor.fetchall()
+                columns = []
+                for col_data in col_datas:
+                    is_primary_key = col_data[5]
+                    col_name = col_data[1]
+                    col_type = col_data[2]
+                    col_name_list.append(col_name)
+                    columns.append([tbl_name, col_name, col_type])
+                    schema_dict[tbl_name][col_name] = [is_primary_key, col_type]
+                point_now = 0
+                num = 0
+                while True:
+                    start = sql_str.find("-- ", point_now)
+                    if start == -1:
+                        break
+                    else:
+                        end = sql_str.find("\n", start)
+                        point_now = end + 2
+                        comment_str = sql_str[start + 3:end]
+                        Samples_idx = comment_str.find("Samples:")
+                        comment_str = comment_str if Samples_idx == -1 else comment_str[:Samples_idx - 1]
+                        comment_str = comment_str.replace("(in Yuan)", "")
+                        comment_str = comment_str.strip()
+                        comment_list.append(comment_str)
+                        columns[num].extend([comment_str,None])
+                        col_name = columns[num][1]
+                        schema_dict[tbl_name][col_name].extend([comment_str,None,None,False])
+                        num += 1
+                schema.extend(columns)
 
-        # schema [0 tbl_name,1 col_name,2 col_type,3 comment,4 similarity]
-        # schema_dict [0 is_primary_key,1 col_type,2 comment,3 value_list, 4 fk,5 ischosen]
-        return schema, schema_dict, tbl_name_list, col_name_list, comment_list
+            # schema [0 tbl_name,1 col_name,2 col_type,3 comment,4 similarity]
+            # schema_dict [0 is_primary_key,1 col_type,2 comment,3 value_list, 4 fk,5 ischosen]
+            return schema, schema_dict, tbl_name_list, col_name_list, comment_list
 
-    def add_fk_to_schema(
+    async def add_fk_to_schema(
         self,
         schema_dict: dict,
         tbl_name_list: list,
-        db_conn
     ):
-        cur = db_conn.cursor()
-        for tbl_name in tbl_name_list:
-            cur.execute(f"PRAGMA foreign_key_list({tbl_name})")
-            fk_datas = cur.fetchall()
-            for fk_data in fk_datas:
-                fk_col_name = fk_data[3]
-                ref_tbl_name = fk_data[2]
-                ref_col_name = fk_data[4]
-                schema_dict[tbl_name][fk_col_name][4] = (ref_tbl_name, ref_col_name)
+        async with aiosqlite.connect(self.target_db_path) as db:
+            cursor = await db.cursor()
+            for tbl_name in tbl_name_list:
+                await cursor.execute(f"PRAGMA foreign_key_list({tbl_name})")
+                fk_datas = await cursor.fetchall()
+                for fk_data in fk_datas:
+                    fk_col_name = fk_data[3]
+                    ref_tbl_name = fk_data[2]
+                    ref_col_name = fk_data[4]
+                    schema_dict[tbl_name][fk_col_name][4] = (ref_tbl_name, ref_col_name)
 
-    def get_related_column(
+    async def get_related_column(
         self, 
         entity_list: list,
         noun_list: list, 
@@ -208,7 +216,7 @@ class Filter(Agent_Base):
         entitys_length = len(entity_list)
         nouns_length = len(noun_list)
         cols_length = len(col_name_list)
-        embeddings = get_embedding_list(entity_list + noun_list + col_name_list + comment_list)
+        embeddings = await get_embedding_list(entity_list + noun_list + col_name_list + comment_list)
         entity_embeddings = embeddings[:entitys_length]
         noun_embeddings = embeddings[entitys_length:entitys_length+nouns_length]
         col_name_embeddings = embeddings[entitys_length+nouns_length:entitys_length+nouns_length+cols_length]
@@ -316,7 +324,7 @@ class Filter(Agent_Base):
 
         return strong_rela_set
 
-    def lsh(self, query_list: list, target_list: list) -> dict:
+    async def lsh(self, query_list: list, target_list: list) -> dict:
 
         query_results = {}
 
@@ -337,76 +345,81 @@ class Filter(Agent_Base):
             query_grams = [query_str_copy[j:j+n_gram] for j in range(len(query_str_copy) - n_gram + 1)]
             for gram in query_grams:
                 query_minhash.update(gram.encode('utf-8'))
-
-            idx_list = lsh.query(query_minhash)
+            loop = asyncio.get_event_loop()
+            idx_list = await loop.run_in_executor(
+                None,
+                lsh.query,
+                query_minhash
+            )
             if len(idx_list) > 0:
                 query_results[query_str] = [target_list[idx] for idx in idx_list]
 
         return query_results
 
 
-    def get_related_value(
+    async def get_related_value(
         self, 
         entity_list: list, 
         noun_list: list,
         schema_dict: dict,
         tbl_name_selected: set, 
-        db_conn,
         threshold: float = None
     ) -> set:
         if threshold is None:
             threshold = self.F_VAL_THRESHOLD
         strong_rela_set = set()
-        cur = db_conn.cursor()
+        
+        async with aiosqlite.connect(self.target_db_path) as db:
+            cursor = await db.cursor()
+            for tbl_name, col_datas in schema_dict.items():
+                for col_name, col_data in col_datas.items():
+                    col_type = col_data[1]
+                if col_type.lower() == 'text':
 
-        for tbl_name, col_datas in schema_dict.items():
-            for col_name, col_data in col_datas.items():
-                col_type = col_data[1]
-            if col_type.lower() == 'text':
-                cur.execute(f"SELECT {col_name} FROM {tbl_name}")
-                value_datas = cur.fetchall()
-                value_list = [value_data[0] for value_data in value_datas]
+                    await cursor.execute(f"SELECT {col_name} FROM {tbl_name}")
+                    value_datas = await cursor.fetchall()
+                    value_list = [value_data[0] for value_data in value_datas]
 
-                related_value_list = []
-                query_results = self.lsh(entity_list,value_list)
-                if query_results != {}:
-                    for entity, values in query_results.items():
-                        embedding_list = get_embedding_list([entity] + values)
-                        for enum, value in enumerate(values,start=1):
-                            subsequence_similarity = get_subsequence_similarity(entity, value)
-                            cos_similarity = get_cos_similarity(embedding_list[0], embedding_list[enum])
-                            # print(entity, value, subsequence_similarity, cos_similarity)
-                            if subsequence_similarity > threshold or cos_similarity > threshold:
-                                related_value_list.append(value)
-                                if subsequence_similarity > self.F_VAL_STRONG_THRESHOLD \
-                                or cos_similarity > self.F_VAL_STRONG_THRESHOLD:
-                                    strong_rela_set.add((tbl_name,col_name))
-                if noun_list:
-                    low_threshold = threshold - 0.25
-                    noun_length = len(noun_list)
-                    embeddings = get_embedding_list(noun_list + value_list)
-                    noun_embeddings = embeddings[:noun_length]
-                    value_embeddings = embeddings[noun_length:]
-                    for enum, noun in enumerate(noun_list,start=0):
-                        for vnum, value in enumerate(value_list,start=0):
-                            subsequence_similarity = get_subsequence_similarity(noun, value)
-                            cos_similarity = get_cos_similarity(noun_embeddings[enum], value_embeddings[vnum])
-                            # print(noun, value, subsequence_similarity, cos_similarity)
-                            if subsequence_similarity > low_threshold or cos_similarity > low_threshold:
-                                related_value_list.append(value)
-                                if subsequence_similarity > self.F_VAL_STRONG_THRESHOLD \
-                                or cos_similarity > self.F_VAL_STRONG_THRESHOLD:
-                                    strong_rela_set.add((tbl_name,col_name))
-                # print(related_value_list)
-                if len(related_value_list) != 0:
-                    distinct_value_list = list(dict.fromkeys(related_value_list))
-                    column_value_list = schema_dict[tbl_name][col_name][3]
-                    if column_value_list is None:
-                        schema_dict[tbl_name][col_name][3] = distinct_value_list
-                    else:
-                        schema_dict[tbl_name][col_name][3].extend(distinct_value_list)
-                    schema_dict[tbl_name][col_name][5] = True
-                    tbl_name_selected.add(tbl_name)
+                    related_value_list = []
+                    query_results = await self.lsh(entity_list,value_list)
+                    if query_results != {}:
+                        for entity, values in query_results.items():
+                            embedding_list = await get_embedding_list([entity] + values)
+                            for enum, value in enumerate(values,start=1):
+                                subsequence_similarity = get_subsequence_similarity(entity, value)
+                                cos_similarity = get_cos_similarity(embedding_list[0], embedding_list[enum])
+                                # print(entity, value, subsequence_similarity, cos_similarity)
+                                if subsequence_similarity > threshold or cos_similarity > threshold:
+                                    related_value_list.append(value)
+                                    if subsequence_similarity > self.F_VAL_STRONG_THRESHOLD \
+                                    or cos_similarity > self.F_VAL_STRONG_THRESHOLD:
+                                        strong_rela_set.add((tbl_name,col_name))
+                    if noun_list:
+                        low_threshold = threshold - 0.25
+                        noun_length = len(noun_list)
+                        embeddings = await get_embedding_list(noun_list + value_list)
+                        noun_embeddings = embeddings[:noun_length]
+                        value_embeddings = embeddings[noun_length:]
+                        for enum, noun in enumerate(noun_list,start=0):
+                            for vnum, value in enumerate(value_list,start=0):
+                                subsequence_similarity = get_subsequence_similarity(noun, value)
+                                cos_similarity = get_cos_similarity(noun_embeddings[enum], value_embeddings[vnum])
+                                # print(noun, value, subsequence_similarity, cos_similarity)
+                                if subsequence_similarity > low_threshold or cos_similarity > low_threshold:
+                                    related_value_list.append(value)
+                                    if subsequence_similarity > self.F_VAL_STRONG_THRESHOLD \
+                                    or cos_similarity > self.F_VAL_STRONG_THRESHOLD:
+                                        strong_rela_set.add((tbl_name,col_name))
+                    # print(related_value_list)
+                    if len(related_value_list) != 0:
+                        distinct_value_list = list(dict.fromkeys(related_value_list))
+                        column_value_list = schema_dict[tbl_name][col_name][3]
+                        if column_value_list is None:
+                            schema_dict[tbl_name][col_name][3] = distinct_value_list
+                        else:
+                            schema_dict[tbl_name][col_name][3].extend(distinct_value_list)
+                        schema_dict[tbl_name][col_name][5] = True
+                        tbl_name_selected.add(tbl_name)
 
         return strong_rela_set
     
@@ -469,13 +482,13 @@ class Filter(Agent_Base):
         return prompt
 
     @timeout(90)
-    def get_filter_ans(
+    async def get_filter_ans(
         self,
         prompt: str,
         llm: LLM_Base
     ) -> str:
         llm_message = [user_message(prompt)]
-        response = llm.call(messages=llm_message)
+        response = await llm.call(messages=llm_message)
         answer = get_response_content(response=response, platform=self.platform)
         print("="*10,"ANSWER","="*10)
         print(answer)
@@ -521,34 +534,33 @@ class Filter(Agent_Base):
                 or (fk is not None and tbl_name in tbl_name_selected):
                     col_data[5] = True
 
-    def chat(
+    async def chat(
         self,
         message: dict,
         llm: LLM_Base = None,
         vectordb: VectorDB = None,
-        db_conn = None
     ):
         if message["message_to"] != FILTER:
             raise Exception("The message should not be processed by " + FILTER +
                             ". It is sent to " + message["message_to"])
         else:
             # print("The message is being processed by " + FILTER + "...")
-            noun_list = self.parse_nouns(message['question'])
+            noun_list = await self.parse_nouns(message['question'])
             tbl_name_selected = set()
-            hint_list = self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
+            hint_list = await self.get_related_hint_list(entity_list=message['entity'],vectordb=vectordb)
             print(hint_list)
             hint_str, entity_list, proc_hint_list = self.process_hint_list(hint_list=hint_list, entity_list=message['entity'])
-            schema, schema_dict, tbl_name_list, col_name_list, comment_list = self.get_schema(db_conn=db_conn)
-            self.add_fk_to_schema(schema_dict=schema_dict,tbl_name_list=tbl_name_list,db_conn=db_conn)
-            strong_rela_set_p1 = self.get_related_column(
+            schema, schema_dict, tbl_name_list, col_name_list, comment_list = await self.get_schema()
+            await self.add_fk_to_schema(schema_dict=schema_dict,tbl_name_list=tbl_name_list)
+            strong_rela_set_p1 = await self.get_related_column(
                 entity_list=entity_list,noun_list=noun_list,schema=schema,schema_dict=schema_dict,col_name_list=col_name_list,comment_list=comment_list,tbl_name_selected=tbl_name_selected)
-            strong_rela_set_p2 = self.get_related_value(
-                entity_list=entity_list,noun_list=noun_list,schema_dict=schema_dict,tbl_name_selected=tbl_name_selected,db_conn=db_conn)
+            strong_rela_set_p2 = await self.get_related_value(
+                entity_list=entity_list,noun_list=noun_list,schema_dict=schema_dict,tbl_name_selected=tbl_name_selected)
             strong_rela_set = strong_rela_set_p1 | strong_rela_set_p2
             self.sel_pf_keys(schema_dict=schema_dict, tbl_name_selected=tbl_name_selected)
             schema_str = self.get_schema_str(schema_dict=schema_dict, tbl_name_selected=tbl_name_selected, need_type=False)
             prompt = self.create_filter_prompt(schema_str=schema_str, hint_str=hint_str, question=message['question'])
-            ans = self.get_filter_ans(prompt=prompt, llm=llm)
+            ans = await self.get_filter_ans(prompt=prompt, llm=llm)
             ans_json = parse_json(ans)
             self.prune_schema(ans_json=ans_json, schema_dict=schema_dict, tbl_name_selected=tbl_name_selected)
             self.add_strong_rela_column(schema_dict=schema_dict, strong_rela_set=strong_rela_set, tbl_name_selected=tbl_name_selected)

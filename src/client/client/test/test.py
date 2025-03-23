@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import os
@@ -16,13 +17,11 @@ manager = Manager(
         'model': 'deepseek-v3',
         'api_key': "sk-9536a97947b641ad9e287da238ba3abb",
         'target_db_path': os.path.join(CLIENT_PATH,"dataset","Bank_Financials.sqlite"),
-        'vectordb_client': 'http',
         'vectordb_host': 'localhost',
         'vectordb_port': '8000',
         'MAX_ITERATIONS': 3,
         'DO_SAMPLE': False,
         'TEMPERATURE': 0.1,
-        'TOP_K': 3,
         'TOP_P': 0.1,
         'MAX_TOKENS': 8192,
         'N_RESULTS': 3,
@@ -69,22 +68,20 @@ manager = Manager(
 # #         except Exception as e:
 # #             print(e)
 
-message = {
-    "question": "I want the name of all bank",
-    "entity": None,
-    "dialect": "sqlite",
-    "schema": None,
-    "hint": None,
-    "sql": None,
-    "sql_result": None,
-    "message_to": "extractor"
-}
-
-if __name__ == '__main__':
-    # message = manager.extractor.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
-    # message = manager.filter.chat(message=message, llm=manager.llm, vectordb=manager.vectordb, db_conn=manager.db_conn)
-    # message = manager.generator.chat(message=message, llm=manager.llm)
-    # message = manager.reviser.chat(message=message, llm=manager.llm, db_conn=manager.db_conn)
-    message = manager.chat(message=message)
+async def test(manager: Manager):
+    message = {
+        "question": "I want the name of all bank",
+        "entity": None,
+        "dialect": "sqlite",
+        "schema": None,
+        "hint": None,
+        "sql": None,
+        "sql_result": None,
+        "message_to": "extractor"
+    }
+    message = await manager.chat(message=message)
     print(message['sql'])
     print(message['sql_result'])
+
+if __name__ == '__main__':
+    asyncio.run(test(manager))
