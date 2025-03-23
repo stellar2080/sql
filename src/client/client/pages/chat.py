@@ -38,8 +38,8 @@ def message(qa: QA) -> rx.Component:
                     size="3",
                     color=rx.color("gray", 12)
                 ),
-                rx.skeleton(
-                    rx.vstack(
+                rx.vstack(
+                    rx.skeleton(
                         rx.text(
                             qa.answer_text,
                             padding="1em",
@@ -48,6 +48,9 @@ def message(qa: QA) -> rx.Component:
                             display="inline-block",
                             background_color=rx.color("accent", 8),
                         ),
+                        loading=qa.text_loading
+                    ),
+                    rx.skeleton(
                         rx.box(
                             rx.data_table(
                                 data=qa.table_datas,
@@ -56,8 +59,8 @@ def message(qa: QA) -> rx.Component:
                             ),
                             max_width="72em",
                         ),
-                    ),
-                    loading=qa.last
+                        loading=qa.table_loading
+                    )
                 ),
                 direction='row',
                 align='start',
@@ -113,6 +116,7 @@ def action_bar() -> rx.Component:
                         ),
                         disabled=ChatState.processing,
                         type="submit",
+                        width='10em'
                     ),
                     align_items="center",
                 ),

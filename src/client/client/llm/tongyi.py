@@ -7,7 +7,7 @@ class Tongyi(LLM_Base):
     def __init__(self, config):
         super().__init__()
         self.model = config['model']
-        self.api_key = os.environ.get('DASHSCOPE_API_KEY')
+        self.api_key = config.get('api_key')
         self.TEMPERATURE = config.get('TEMPERATURE')
         self.TOP_K = config.get('TOP_K')
         self.TOP_P = config.get('TOP_P')

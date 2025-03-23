@@ -76,20 +76,18 @@ class AccountState(BaseState):
         self.captcha = send_email(msg_to=self.email_sent)
         print(self.captcha)
         self.account_dialog_description = "验证码发送成功!"
-        yield self.account_dialog_open_change()
+        self.account_dialog_open_change()
         return AccountState.count
 
     @rx.event(background=True)
     async def count(self):
         async with self:
             self.countdown = 60
-            yield
         while True:
             async with self:
                 if self.countdown <= 0:
                     return
                 self.countdown -= 1
-                yield
             await asyncio.sleep(1)
 
     @rx.event

@@ -58,20 +58,18 @@ class FindpwdState(rx.State):
             self.captcha = send_email(msg_to=self.email)
             print(self.captcha)
             self.findpwd_dialog_description = "验证码发送成功!"
-            yield self.findpwd_dialog_open_change()
+            self.findpwd_dialog_open_change()
             return FindpwdState.count
 
     @rx.event(background=True)
     async def count(self):
         async with self:
             self.countdown = 60
-            yield
         while True:
             async with self:
                 if self.countdown <= 0:
                     return
                 self.countdown -= 1
-                yield
             await asyncio.sleep(1)
 
     @rx.event
