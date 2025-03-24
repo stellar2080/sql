@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from client.manager.manager import Manager
 from rxconfig import target_db_path
+from client.utils.const import EXTRACTOR, FILTER, GENERATOR, REVISER, MANAGER
 
 class QA(rx.Base):
 
@@ -68,25 +69,23 @@ class ChatState(BaseState):
         )
         async with self:
             self.current_chat.append(qa)
-            self.current_chat[-1].answer_text = '正在生成SQL...'
-            self.current_chat[-1].text_loading=False
-            self.processing = True
 
+            self.processing = True
+  
         last_qa = self.current_chat[-1]
-        manager = self.init_manager()
-        message = await manager.chat(last_qa.question)
-        # await asyncio.sleep(5)
-        # message = {
-        #     'sql': '123',
-        #     'sql_result': {
-        #         'cols': ['c1'],
-        #         'rows': [(1,),(2,)]
-        #     }
-        # }
 
         async with self:
-            self.current_chat[-1].answer_text = message.get('sql')
-
+            self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
+            self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
+            self.current_chat[-1].text_loading=False
+        await asyncio.sleep(5)
+        message = {
+            'sql': '123',
+            'sql_result': {
+                'cols': ['c1'],
+                'rows': [(1,),(2,)]
+            }
+        }
         sql_result = message.get('sql_result')
         cols = sql_result.get('cols')
         rows = sql_result.get('rows')
@@ -95,7 +94,47 @@ class ChatState(BaseState):
             columns=cols
         )
         async with self:
+            self.current_chat[-1].answer_text = message.get('sql')
             self.current_chat[-1].table_datas = df
             self.current_chat[-1].table_loading=False
             self.processing = False
+
+        # async with self:
+        #     self.current_chat[-1].answer_text += '正在初始化...\n'
+        #     self.current_chat[-1].text_loading=False 
+        # manager = self.init_manager()
+        # async with self:
+        #     self.current_chat[-1].answer_text += '初始化成功...\n'
+        # async_func =  manager.chat
+        # async for message in async_func(last_qa.question):
+        #     if message.get('message_to') == EXTRACTOR:
+        #         async with self:
+        #             self.current_chat[-1].answer_text += '智能体：'+EXTRACTOR+'正在提取实体...\n'
+        #     elif message.get('message_to') == FILTER:
+        #         async with self:
+        #             self.current_chat[-1].answer_text += '智能体：'+EXTRACTOR + '已提取来自问题，知识库和数据库的可能的实体：\n'
+        #             self.current_chat[-1].answer_text += str(message.get('entity')) + '\n'
+        #             self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在选取数据库的表和列...\n'
+        #     elif message.get('message_to') == GENERATOR:
+        #         async with self:
+        #             self.current_chat[-1].answer_text += '智能体：'+FILTER + '已选取数据库的表和列：\n'
+        #             self.current_chat[-1].answer_text += str(message.get('schema')) + '\n'
+        #             self.current_chat[-1].answer_text += '智能体：'+GENERATOR+'正在生成SQL...\n'
+        #     elif message.get('message_to') == REVISER:
+        #         async with self:
+        #             self.current_chat[-1].answer_text += '智能体：'+GENERATOR + '已生成SQL：\n'
+        #             self.current_chat[-1].answer_text += message.get('sql') + '\n'
+        #             self.current_chat[-1].answer_text += '智能体：'+REVISER+'正在执行和修正SQL...\n'
+        #     elif message.get('message_to') == MANAGER:
+        #         sql_result = message.get('sql_result')
+        #         cols = sql_result.get('cols')
+        #         rows = sql_result.get('rows')
+        #         df = pd.DataFrame(
+        #             data=rows,
+        #             columns=cols
+        #         )
+        #         async with self:
+        #             self.current_chat[-1].table_datas = df
+        #             self.current_chat[-1].table_loading=False
+        #             self.processing = False
         

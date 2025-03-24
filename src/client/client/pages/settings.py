@@ -16,34 +16,47 @@ def settings() -> rx.Component:
         rx.box( 
             sidebar_bottom_profile(),
             rx.center(
-                rx.flex(
+                rx.vstack(
                     rx.heading(
                         "系统设置", 
                         size="6"
                     ),
-                    rx.vstack(
-                        rx.hstack(
-                            rx.icon("palette"),
-                            rx.heading("主题颜色", size="5"),
-                            align="center",
+                    rx.scroll_area(
+                        rx.vstack(
+                            rx.vstack(
+                                rx.hstack(
+                                    rx.icon("palette"),
+                                    rx.heading("主题颜色", size="5"),
+                                    align="center",
+                                ),
+                                primary_color_picker(),
+                                spacing="4",
+                                width="100%",
+                            ),
+                            rx.vstack(
+                                rx.hstack(
+                                    rx.icon("blend"),
+                                    rx.heading("辅助颜色", size="5"),
+                                    align="center",
+                                ),
+                                secondary_color_picker(),
+                                spacing="4",
+                                width="100%",
+                            ),
+                            radius_picker(),
+                            scaling_picker(),
+                            spacing="7",
+                            align='center',
+                            justify='center',   
                         ),
-                        primary_color_picker(),
-                        spacing="4",
+                        type="hover",
+                        scrollbars="vertical",
+                        height=600,
                         width="100%",
+                        padding_x='2em',
+                        padding_y='1em'
                     ),
-                    rx.vstack(
-                        rx.hstack(
-                            rx.icon("blend"),
-                            rx.heading("辅助颜色", size="5"),
-                            align="center",
-                        ),
-                        secondary_color_picker(),
-                        spacing="4",
-                        width="100%",
-                    ),
-                    radius_picker(),
-                    scaling_picker(),
-                    rx.flex(
+                    rx.hstack(
                         rx.button(
                             "恢复默认",
                             on_click=BaseState.reset_settings,
@@ -54,9 +67,9 @@ def settings() -> rx.Component:
                             on_click=BaseState.save_settings,
                             size='3'
                         ),
-                        direction='row',
                         width='100%',
-                        spacing='5'
+                        spacing='5',
+                        justify='center'
                     ),
                     rx.text(
                         "可前往各个页面预览效果，若不保存设置，退出登录后将丢失更改",
@@ -64,8 +77,7 @@ def settings() -> rx.Component:
                         font_size=".75em",
                         color=rx.color("gray", 10),
                     ),
-                    spacing="7",
-                    direction='column',
+                    spacing="6",
                     align='center',
                     justify='center',
                     padding_top="70px"

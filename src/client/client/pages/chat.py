@@ -19,10 +19,12 @@ def message(qa: QA) -> rx.Component:
                         qa.question, 
                         padding="1em",
                         box_shadow="rgba(0, 0, 0, 0.15) 0px 2px 8px",
-                        max_width="72em",
                         display="inline-block",
                         background_color=rx.color("gray", 4),
-                    ),
+                        white_space='pre',
+                        text_wrap='pretty',
+                        max_width="72em",
+                    ),  
                 ),
                 direction='row',
                 align='start',
@@ -40,13 +42,17 @@ def message(qa: QA) -> rx.Component:
                 ),
                 rx.vstack(
                     rx.skeleton(
-                        rx.text(
-                            qa.answer_text,
-                            padding="1em",
-                            box_shadow="rgba(0, 0, 0, 0.15) 0px 2px 8px",
-                            max_width="72em",
-                            display="inline-block",
-                            background_color=rx.color("accent", 8),
+                        rx.box(
+                            rx.text(
+                                qa.answer_text,
+                                padding="1em",
+                                box_shadow="rgba(0, 0, 0, 0.15) 0px 2px 8px",    
+                                display="inline-block",
+                                background_color=rx.color("accent", 8),
+                                white_space='pre',
+                                text_wrap='pretty',
+                                max_width="72em",
+                            ),
                         ),
                         loading=qa.text_loading
                     ),
@@ -88,7 +94,7 @@ def chat_box() -> rx.Component:
         padding_x="4px",
         align_self="center",
         overflow="hidden",
-        padding_bottom="1em",
+        padding_bottom="0.2em",
     )
 
 
@@ -152,11 +158,18 @@ def chat():
                     'AI问答',
                     size='6'
                 ),
-                chat_box(),
+                rx.scroll_area(
+                    chat_box(),
+                    type="hover",
+                    scrollbars="vertical",
+                    height=660,
+                    width="100%",
+                    max_width="80em",
+                ),
                 action_bar(),
                 min_height="100vh",
                 align='center',
-                spacing="0",
+                spacing="6",
                 position="sticky",
                 left="15%",
                 width="85%",

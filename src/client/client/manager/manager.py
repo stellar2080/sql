@@ -192,30 +192,35 @@ class Manager:
         if self.message["message_to"] is None:
             self.message["message_to"] = EXTRACTOR
 
+        yield self.message
         iteration = 0
         while iteration < self.MAX_ITERATIONS:
             # print("MESSAGE: " + str(self.message))
             if self.message["message_to"] == MANAGER:
                 # print("The message is begin processed by manager...")
                 break
+
             elif self.message["message_to"] == EXTRACTOR:
                 self.message = await self.extractor.chat(
                     message=self.message, 
                     llm=self.llm, 
                     vectordb=self.vectordb, 
                 )
+                yield self.message
             elif self.message["message_to"] == FILTER:
                 self.message = await self.filter.chat(
                     message=self.message, 
                     llm=self.llm, 
                     vectordb=self.vectordb, 
                 )
+                yield self.message
             elif self.message["message_to"] == GENERATOR:
                 self.message = await self.generator.chat(
                     message=self.message, 
                     llm=self.llm, 
                     vectordb=self.vectordb
                 )
+                yield self.message
             elif self.message["message_to"] == REVISER:
                 self.message = await self.reviser.chat(
                     message=self.message, 
@@ -223,4 +228,4 @@ class Manager:
                 )
                 iteration += 1
 
-        return self.message
+        yield self.message
