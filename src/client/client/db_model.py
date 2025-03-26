@@ -1,5 +1,4 @@
-from sqlmodel import Field
-
+from sqlmodel import Field, JSON
 import reflex as rx
 
 class User(rx.Model, table=True):
@@ -43,3 +42,10 @@ class AIConfig(rx.Model, table=True):
     F_COL_STRONG_THRESHOLD: float
     F_VAL_STRONG_THRESHOLD: float
     G_HINT_THRESHOLD: float
+
+class ChatRecord(rx.Model, table=True):
+
+    user_id: str = Field(primary_key=True)
+    question: str
+    sql: str
+    sql_result: dict = Field(sa_type=JSON)

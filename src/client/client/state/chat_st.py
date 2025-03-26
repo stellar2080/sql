@@ -6,6 +6,7 @@ import pandas as pd
 from client.manager.manager import Manager
 from rxconfig import target_db_path
 from client.utils.const import EXTRACTOR, FILTER, GENERATOR, REVISER, MANAGER
+from client.db_model import ChatRecord
 
 class QA(rx.Base):
 
@@ -86,6 +87,7 @@ class ChatState(BaseState):
                 'rows': [(1,),(2,)]
             }
         }
+        sql = message.get('sql')
         sql_result = message.get('sql_result')
         cols = sql_result.get('cols')
         rows = sql_result.get('rows')
@@ -94,10 +96,20 @@ class ChatState(BaseState):
             columns=cols
         )
         async with self:
-            self.current_chat[-1].answer_text = message.get('sql')
+            self.current_chat[-1].answer_text += message.get('sql')
             self.current_chat[-1].table_datas = df
             self.current_chat[-1].table_loading=False
             self.processing = False
+        chat_record = ChatRecord(
+            user_id=self.user_id,
+            question=question,
+            sql=sql,
+            sql_result=sql_result
+        )
+        with rx.session() as session:
+            session.add(chat_record)
+            session.commit()
+
 
         # async with self:
         #     self.current_chat[-1].answer_text += '正在初始化...\n'
@@ -108,6 +120,7 @@ class ChatState(BaseState):
         # async_func =  manager.chat
         # async for message in async_func(last_qa.question):
         #     if message.get('message_to') == EXTRACTOR:
+        
         #         async with self:
         #             self.current_chat[-1].answer_text += '智能体：'+EXTRACTOR+'正在提取实体...\n'
         #     elif message.get('message_to') == FILTER:
@@ -126,6 +139,7 @@ class ChatState(BaseState):
         #             self.current_chat[-1].answer_text += message.get('sql') + '\n'
         #             self.current_chat[-1].answer_text += '智能体：'+REVISER+'正在执行和修正SQL...\n'
         #     elif message.get('message_to') == MANAGER:
+        #         sql = message.get('sql')
         #         sql_result = message.get('sql_result')
         #         cols = sql_result.get('cols')
         #         rows = sql_result.get('rows')
@@ -137,4 +151,13 @@ class ChatState(BaseState):
         #             self.current_chat[-1].table_datas = df
         #             self.current_chat[-1].table_loading=False
         #             self.processing = False
+        #         chat_record = ChatRecord(
+        #             user_id=self.user_id,
+        #             question=question,
+        #             sql=sql,
+        #             sql_result=sql_result
+        #         )
+        #         with rx.session() as session:
+        #             session.add(chat_record)
+        #             session.commit()
         

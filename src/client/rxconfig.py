@@ -8,7 +8,7 @@ target_db_path = os.path.join(CLIENT_PATH,"dataset","Bank_Financials.sqlite")
 
 config = rx.Config(
     app_name="client",
-    db_url="sqlite:///"+CLIENT_PATH+"/db/reflex.db",
+    db_url="mysql+pymysql://stellar:123456@localhost/reflex",
     frontend_port=3000,
     backend_port=8001,
 )
