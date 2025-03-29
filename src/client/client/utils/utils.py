@@ -138,13 +138,13 @@ def get_embedding(_str: str):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()
     return embedding_func([_str.lower().replace('_',' ').replace('-',' ')])[0]
 
-async def get_embedding_list(_list: list):
+async def get_embedding_list(element_list: list):
     embedding_func = embedding_functions.DefaultEmbeddingFunction()
     loop = asyncio.get_event_loop()
     embeddings = await loop.run_in_executor(
         None,
         embedding_func,
-        [item.lower().replace('_', ' ').replace('-', ' ') for item in _list]
+        [item.lower().replace('_', ' ').replace('-', ' ') for item in element_list]
     )
     return embeddings
 

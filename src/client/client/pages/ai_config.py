@@ -1,7 +1,7 @@
 """The AI config page."""
 
 import reflex as rx
-from client.state.base_st import BaseState
+from client.state.chat_st import ChatState
 from .components.sidebar import sidebar_bottom_profile
 from .components.theme_wrap import theme_wrap
 from .components.alert_dialog import alert_dialog
@@ -23,7 +23,7 @@ def platform() -> rx.Component:
         rx.select(
             ["Tongyi", "Custom"],
             size='3',
-            default_value=BaseState.platform,
+            default_value=ChatState.platform,
             name='platform',
             width='25%'
         ),
@@ -48,7 +48,7 @@ def model() -> rx.Component:
         rx.select(
             ["deepseek-v3","qwen-max","qwen-plus"],
             size='3',
-            default_value=BaseState.model,
+            default_value=ChatState.model,
             name='model',
             width='25%'
         ),
@@ -72,7 +72,7 @@ def api_key() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.api_key,
+            default_value=ChatState.api_key,
             name='api_key',
             width='60%'
         ),
@@ -96,7 +96,7 @@ def LLM_HOST() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.LLM_HOST,
+            default_value=ChatState.LLM_HOST,
             name='LLM_HOST',
         ),
         align="center",
@@ -119,7 +119,7 @@ def LLM_PORT() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_LLM_PORT,
+            default_value=ChatState.get_LLM_PORT,
             name='LLM_PORT'
         ),
         align="center",
@@ -143,7 +143,7 @@ def MAX_ITERATIONS() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_MAX_ITERATIONS,
+            default_value=ChatState.get_MAX_ITERATIONS,
             name='MAX_ITERATIONS'
         ),
         align="center",
@@ -168,7 +168,7 @@ def DO_SAMPLE() -> rx.Component:
         rx.spacer(),
         rx.switch(
             size='3',
-            default_checked=BaseState.DO_SAMPLE,
+            default_checked=ChatState.DO_SAMPLE,
             name='DO_SAMPLE'
         ),
         align="center",
@@ -193,7 +193,7 @@ def TEMPERATURE() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_TEMPERATURE,
+            default_value=ChatState.get_TEMPERATURE,
             name='TEMPERATURE'
         ),
         align="center",
@@ -218,7 +218,7 @@ def TOP_P() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_TOP_P,
+            default_value=ChatState.get_TOP_P,
             name='TOP_P'
         ),
         align="center",
@@ -243,7 +243,7 @@ def MAX_TOKENS() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_MAX_TOKENS,
+            default_value=ChatState.get_MAX_TOKENS,
             name='MAX_TOKENS'
         ),
         align="center",
@@ -267,7 +267,7 @@ def N_RESULTS() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_N_RESULTS,
+            default_value=ChatState.get_N_RESULTS,
             name='N_RESULTS'
         ),
         align="center",
@@ -291,7 +291,7 @@ def E_HINT_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_E_HINT_THRESHOLD,
+            default_value=ChatState.get_E_HINT_THRESHOLD,
             name='E_HINT_THRESHOLD'
         ),
         align="center",
@@ -315,7 +315,7 @@ def E_COL_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_E_COL_THRESHOLD,
+            default_value=ChatState.get_E_COL_THRESHOLD,
             name='E_COL_THRESHOLD'
         ),
         align="center",
@@ -339,7 +339,7 @@ def E_VAL_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_E_VAL_THRESHOLD,
+            default_value=ChatState.get_E_VAL_THRESHOLD,
             name='E_VAL_THRESHOLD'
         ),
         align="center",
@@ -364,7 +364,7 @@ def E_COL_STRONG_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_E_COL_STRONG_THRESHOLD,
+            default_value=ChatState.get_E_COL_STRONG_THRESHOLD,
             name='E_COL_STRONG_THRESHOLD'
         ),
         align="center",
@@ -389,7 +389,7 @@ def E_VAL_STRONG_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_E_VAL_STRONG_THRESHOLD,
+            default_value=ChatState.get_E_VAL_STRONG_THRESHOLD,
             name='E_VAL_STRONG_THRESHOLD'
         ),
         align="center",
@@ -413,7 +413,7 @@ def F_HINT_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_F_HINT_THRESHOLD,
+            default_value=ChatState.get_F_HINT_THRESHOLD,
             name='F_HINT_THRESHOLD'
         ),
         align="center",
@@ -437,7 +437,7 @@ def F_COL_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_F_COL_THRESHOLD,
+            default_value=ChatState.get_F_COL_THRESHOLD,
             name='F_COL_THRESHOLD'
         ),
         align="center",
@@ -461,7 +461,7 @@ def F_LSH_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_F_LSH_THRESHOLD,
+            default_value=ChatState.get_F_LSH_THRESHOLD,
             name='F_LSH_THRESHOLD'
         ),
         align="center",
@@ -485,7 +485,7 @@ def F_VAL_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_F_VAL_THRESHOLD,
+            default_value=ChatState.get_F_VAL_THRESHOLD,
             name='F_VAL_THRESHOLD'
         ),
         align="center",
@@ -510,7 +510,7 @@ def F_COL_STRONG_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_F_COL_STRONG_THRESHOLD,
+            default_value=ChatState.get_F_COL_STRONG_THRESHOLD,
             name='F_COL_STRONG_THRESHOLD'
         ),
         align="center",
@@ -535,7 +535,7 @@ def F_VAL_STRONG_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_F_VAL_STRONG_THRESHOLD,
+            default_value=ChatState.get_F_VAL_STRONG_THRESHOLD,
             name='F_VAL_STRONG_THRESHOLD'
         ),
         align="center",
@@ -559,7 +559,7 @@ def G_HINT_THRESHOLD() -> rx.Component:
         rx.spacer(),
         rx.input(
             size='3',
-            default_value=BaseState.get_G_HINT_THRESHOLD,
+            default_value=ChatState.get_G_HINT_THRESHOLD,
             name='G_HINT_THRESHOLD'
         ),
         align="center",
@@ -631,7 +631,7 @@ def ai_config() -> rx.Component:
                         padding_top="70px",
                         padding_bottom="50px",
                     ),
-                    on_submit=BaseState.save_ai_config,
+                    on_submit=ChatState.save_ai_config,
                     width="60%",
                 ),
                 position="sticky",
@@ -639,9 +639,9 @@ def ai_config() -> rx.Component:
                 width="85%",
             ),
             alert_dialog(
-                description=BaseState.base_dialog_description,
-                on_click=BaseState.base_dialog_open_change,
-                open=BaseState.base_dialog_open
+                description=ChatState.base_dialog_description,
+                on_click=ChatState.base_dialog_open_change,
+                open=ChatState.base_dialog_open
             ),
         )
     )

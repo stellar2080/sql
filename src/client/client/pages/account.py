@@ -49,12 +49,12 @@ def change_username() -> rx.Component:
                 reset_on_submit=False,
             ),
             alert_dialog(
-                description=AccountState.account_dialog_description,
+                description=AccountState.base_dialog_description,
                 on_click=AccountState.account_dialog_open_change,
                 open=AccountState.account_dialog_open
             ),
             alert_dialog(
-                description=AccountState.account_dialog_description,
+                description=AccountState.base_dialog_description,
                 on_click=AccountState.close_all_dialog,
                 open=AccountState.success_dialog_open
             ),
@@ -133,12 +133,12 @@ def change_email() -> rx.Component:
                 reset_on_submit=False,
             ),
             alert_dialog(
-                description=AccountState.account_dialog_description,
+                description=AccountState.base_dialog_description,
                 on_click=AccountState.account_dialog_open_change,
                 open=AccountState.account_dialog_open
             ),
             alert_dialog(
-                description=AccountState.account_dialog_description,
+                description=AccountState.base_dialog_description,
                 on_click=AccountState.close_all_dialog,
                 open=AccountState.success_dialog_open
             ),
@@ -200,12 +200,12 @@ def change_password() -> rx.Component:
                 reset_on_submit=False,
             ),
             alert_dialog(
-                description=AccountState.account_dialog_description,
+                description=AccountState.base_dialog_description,
                 on_click=AccountState.account_dialog_open_change,
                 open=AccountState.account_dialog_open
             ),
             alert_dialog(
-                description=AccountState.account_dialog_description,
+                description=AccountState.base_dialog_description,
                 on_click=AccountState.close_all_dialog,
                 open=AccountState.success_dialog_open
             ),

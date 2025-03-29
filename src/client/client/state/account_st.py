@@ -14,12 +14,16 @@ class AccountState(BaseState):
     countdown: int = 0
     captcha: str = None
 
-    account_dialog_description: str = ""
     account_dialog_open: bool = False
     success_dialog_open: bool = False
     change_username_dialog_open: bool = False
     change_email_dialog_open: bool = False
     change_password_dialog_open: bool = False
+
+    @rx.event
+    def on_load(self):
+        if not self.logged_in:
+            return rx.redirect("/login")
 
     @rx.event
     def account_dialog_open_change(self):
@@ -60,22 +64,22 @@ class AccountState(BaseState):
     @rx.event
     def send_email(self): 
         if self.email_sent == "":
-            self.account_dialog_description = "邮箱不能为空"
+            self.base_dialog_description = "邮箱不能为空"
             return self.account_dialog_open_change()
         if not validate_email(email=self.email_sent):
-            self.account_dialog_description = "邮箱格式错误"
+            self.base_dialog_description = "邮箱格式错误"
             return self.account_dialog_open_change()
         if self.email_sent == self.email:
-            self.account_dialog_description = "新邮箱不能和原邮箱相同"
+            self.base_dialog_description = "新邮箱不能和原邮箱相同"
             return self.account_dialog_open_change()
         with rx.session() as session:
             if session.exec(select(User).where(User.email == self.email_sent)).first():
-                self.account_dialog_description = "邮箱已被使用"
+                self.base_dialog_description = "邮箱已被使用"
                 return self.account_dialog_open_change()
         self.send_time = datetime.datetime.now()
         self.captcha = send_email(msg_to=self.email_sent)
         print(self.captcha)
-        self.account_dialog_description = "验证码发送成功!"
+        self.base_dialog_description = "验证码发送成功!"
         self.account_dialog_open_change()
         return AccountState.count
 
@@ -94,29 +98,29 @@ class AccountState(BaseState):
     def change_username(self,form_data: dict):
         username = form_data.get('username','')
         if username == "":
-            self.account_dialog_description = "用户名不能为空"
+            self.base_dialog_description = "用户名不能为空"
             return self.account_dialog_open_change()
         if " " in username:
-            self.account_dialog_description = "用户名不能含有空格"
+            self.base_dialog_description = "用户名不能含有空格"
             return self.account_dialog_open_change()
         if username == self.username:
-            self.account_dialog_description = "新用户名不能和原用户名相同"
+            self.base_dialog_description = "新用户名不能和原用户名相同"
             return self.account_dialog_open_change()
         if len(username) < 6 or len(username) > 10:
-            self.account_dialog_description = "用户名长度应在6位到10位间"
+            self.base_dialog_description = "用户名长度应在6位到10位间"
             return self.account_dialog_open_change()
         with rx.session() as session:
             user = session.exec(
                 select(User).where(User.email == self.email)
             ).first()
             if session.exec(select(User).where(User.username == username)).first():
-                self.account_dialog_description = "用户名已存在"
+                self.base_dialog_description = "用户名已存在"
                 return self.account_dialog_open_change()
             self.username = username
             user.username = username     
             session.add(user)
             session.commit()
-            self.account_dialog_description = "修改用户名成功"
+            self.base_dialog_description = "修改用户名成功"
             return self.success_dialog_open_change()
         
     @rx.event
@@ -124,19 +128,19 @@ class AccountState(BaseState):
         email_form = form_data.get('email','')
         captcha = form_data.get('captcha','')
         if email_form == "":
-            self.account_dialog_description = "邮箱不能为空"
+            self.base_dialog_description = "邮箱不能为空"
             return self.account_dialog_open_change()
         if not validate_email(email=email_form):
-            self.account_dialog_description = "邮箱格式错误"
+            self.base_dialog_description = "邮箱格式错误"
             return self.account_dialog_open_change()
         if self.email == email_form:
-            self.account_dialog_description = "新邮箱不能和原邮箱相同"
+            self.base_dialog_description = "新邮箱不能和原邮箱相同"
             return self.account_dialog_open_change()
         if self.email_sent != email_form or self.captcha != captcha:
-            self.account_dialog_description = "验证码错误"
+            self.base_dialog_description = "验证码错误"
             return self.account_dialog_open_change()
         if (datetime.datetime.now() - self.send_time).total_seconds() > 300:
-            self.account_dialog_description = "验证码已过期"
+            self.base_dialog_description = "验证码已过期"
             return self.account_dialog_open_change()
         
         with rx.session() as session:
@@ -148,7 +152,7 @@ class AccountState(BaseState):
             session.add(user)
             session.commit()
         self.reset_countdown()
-        self.account_dialog_description = "修改邮箱成功"
+        self.base_dialog_description = "修改邮箱成功"
         return self.success_dialog_open_change()
 
     @rx.event
@@ -156,19 +160,19 @@ class AccountState(BaseState):
         password = form_data.get('password','')
         confirm_password = form_data.get('confirm_password','')
         if password == "":
-            self.account_dialog_description = "密码不能为空"
+            self.base_dialog_description = "密码不能为空"
             return self.account_dialog_open_change()
         if " " in password:
-            self.account_dialog_description = "密码不能含有空格"
+            self.base_dialog_description = "密码不能含有空格"
             return self.account_dialog_open_change()
         if len(password) < 8 or len(password) > 15:
-            self.account_dialog_description = "密码长度应在8位到15位间"
+            self.base_dialog_description = "密码长度应在8位到15位间"
             return self.account_dialog_open_change()
         if password != confirm_password:
-            self.account_dialog_description = "密码与确认密码需完全相同"
+            self.base_dialog_description = "密码与确认密码需完全相同"
             return self.account_dialog_open_change()
         if bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8')):
-            self.account_dialog_description = "新密码不能和原密码相同"
+            self.base_dialog_description = "新密码不能和原密码相同"
             return self.account_dialog_open_change()
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
@@ -181,5 +185,5 @@ class AccountState(BaseState):
             user.password = hashed_password
             session.add(user)
             session.commit()
-        self.account_dialog_description = "修改密码成功"
+        self.base_dialog_description = "修改密码成功"
         return self.success_dialog_open_change()

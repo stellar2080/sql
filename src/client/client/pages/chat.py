@@ -60,6 +60,7 @@ def message(qa: QA) -> rx.Component:
                         rx.box(
                             rx.data_table(
                                 data=qa.table_datas,
+                                columns=qa.table_cols,
                                 pagination=True,
                                 sort=True,        
                             ),

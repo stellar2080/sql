@@ -1,5 +1,6 @@
-from sqlmodel import Field, JSON
+from sqlmodel import Field, JSON, TEXT, DateTime
 import reflex as rx
+from datetime import datetime
 
 class User(rx.Model, table=True):
 
@@ -45,7 +46,9 @@ class AIConfig(rx.Model, table=True):
 
 class ChatRecord(rx.Model, table=True):
 
-    user_id: str = Field(primary_key=True)
-    question: str
-    sql: str
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: str
+    question: str = Field(sa_type=TEXT)
+    sql: str = Field(sa_type=TEXT)
     sql_result: dict = Field(sa_type=JSON)
+    create_time: datetime = Field(sa_type=DateTime)

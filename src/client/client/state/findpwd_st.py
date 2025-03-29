@@ -99,7 +99,7 @@ class FindpwdState(rx.State):
         with rx.session() as session:   
             user = session.exec(
                 User.select().where(
-                    (User.email == email)
+                    User.email == email
                 )
             ).first()
             salt = bcrypt.gensalt()

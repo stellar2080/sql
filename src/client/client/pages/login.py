@@ -105,11 +105,6 @@ def login():
                 on_click=BaseState.auth_success_redirect,
                 open=BaseState.auth_success_dialog_open
             ),
-            alert_dialog(
-                description=BaseState.base_dialog_description,
-                on_click=BaseState.check_login_dialog_open_change,
-                open=BaseState.check_login_dialog_open
-            ),
             width="100%",
             height="100vh",
         )
