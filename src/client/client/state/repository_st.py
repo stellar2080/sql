@@ -1,27 +1,25 @@
 import reflex as rx
 from .base_st import BaseState
-from client.db_model import ChatRecord
 from datetime import datetime
 from typing import List, Dict
+from client.manager.manager import Manager
 
-class Item(rx.Base):
-    """The item class."""
+class Doc(rx.Base):
 
-    id: int
-    question: str
-    sql: str
-    sql_result: Dict[str, List]
-    create_time: datetime
+    key_id: str
+    key: str 
+    doc_id: str
+    doc: str
 
-class ChatRecordState(BaseState):
+class RepositoryState(BaseState):
 
     @rx.event
-    def on_load(self):
+    async def on_load(self):
         if not self.logged_in:
             return rx.redirect("/login")
-        self.load_entries()
+        await self.load_entries()
 
-    items: List[Item] = []
+    docs: List[Doc] = []
 
     search_value: str = ""
     sort_value: str = ""
@@ -37,55 +35,54 @@ class ChatRecordState(BaseState):
     def delete_dialog_open_change(self):
         self.delete_dialog_open = not self.delete_dialog_open
 
+    def init_manager(self):
+        return Manager(
+            config={
+                'user_id': self.user_id,
+                'vectordb_only': True,
+                'vectordb_host': 'localhost',
+                'vectordb_port': '8000',
+            },
+        )
+
     @rx.event
-    def delete_item(self, item: Item):
-        self.items.remove(item)
-        with rx.session() as session:
-            chat_record = session.exec(
-                ChatRecord.select().where(
-                    ChatRecord.id == item.id
-                )
-            ).first()
-            session.delete(chat_record)
-            session.commit()
+    def delete_doc(self, doc: Doc):
+        self.docs.remove(doc)
 
     @rx.event
     def set_sort_value(self, sort_value: str):
-        if sort_value == '问题':
-            self.sort_value = 'question'
-        elif sort_value == '生成时间':
-            self.sort_value = 'create_time'
+        self.sort_value = sort_value
 
     @rx.event
     def set_search_value(self, search_value: str):
         self.search_value = search_value
 
     @rx.var(cache=True)
-    def filtered_sorted_items(self) -> List[Item]:
-        items = self.items
+    def filtered_sorted_items(self) -> List[Doc]:
+        docs = self.docs
 
         if self.sort_value:
-            items = sorted(
-                items,
+            docs = sorted(
+                docs,
                 key=lambda item: str(getattr(item, self.sort_value)).lower(),
                 reverse=self.sort_reverse,
             )
 
         if self.search_value:
             search_value = self.search_value.lower()
-            items = [
+            docs = [
                 item
-                for item in items
+                for item in docs
                 if any(
                     search_value in str(getattr(item, attr)).lower()
                     for attr in [
-                        "question",
-                        "create_time",
+                        "key",
+                        "doc",
                     ]
                 )
             ]
 
-        return items
+        return docs
 
     @rx.var(cache=True)
     def page_number(self) -> int:
@@ -98,7 +95,7 @@ class ChatRecordState(BaseState):
         )
 
     @rx.var(cache=True, initial_value=[])
-    def get_current_page(self) -> list[Item]:
+    def get_current_page(self) -> list[Doc]:
         start_index = self.offset
         end_index = start_index + self.limit
         return self.filtered_sorted_items[start_index:end_index]
@@ -117,23 +114,34 @@ class ChatRecordState(BaseState):
     def last_page(self):
         self.offset = (self.total_pages - 1) * self.limit
 
-    def load_entries(self):
-        with rx.session() as session:
-            chat_records = session.exec(
-                ChatRecord.select().where(
-                    ChatRecord.user_id == self.user_id
+    @rx.event
+    async def load_entries(self):
+        manager = self.init_manager()
+        key_zip, tip_zip = await manager.get_repository(user_id=self.user_id)
+        key_list=[]
+        tip_list=[]
+        if key_zip:
+            key_list = [
+                Doc(
+                    key_id=key[0],
+                    key=key[1],
+                    doc_id=key[2],
+                    doc=key[3],
                 )
-            ).all()
-            self.items = [
-                Item(
-                    id=chat_record.id,
-                    question=chat_record.question, 
-                    sql=chat_record.sql,
-                    sql_result=chat_record.sql_result, 
-                    create_time=chat_record.create_time
-                ) for chat_record in chat_records
+                for key in key_zip
             ]
-        self.total_items = len(self.items)
+        if tip_zip:
+            tip_list = [
+                Doc(
+                    key_id="",
+                    key="",
+                    doc_id=tip[0],
+                    doc=tip[1],
+                )
+                for tip in tip_zip
+            ]
+        self.docs=key_list+tip_list
+        self.total_items = len(self.docs)
 
     def toggle_sort(self):
         self.sort_reverse = not self.sort_reverse

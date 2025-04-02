@@ -12,7 +12,7 @@ class Extractor(Agent_Base):
         config
     ):
         super().__init__()
-        self.platform = config['platform']
+        self.platform = config.get('platform')
         self.target_db_path = config.get("target_db_path")
         self.E_HINT_THRESHOLD = config.get('E_HINT_THRESHOLD')
         self.E_COL_THRESHOLD = config.get('E_COL_THRESHOLD')

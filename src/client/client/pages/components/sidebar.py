@@ -45,7 +45,7 @@ def sidebar_bottom_profile() -> rx.Component:
                 ),
                 rx.vstack(
                     sidebar_item("AI问答", "bot", rx.redirect("/chat")),
-                    sidebar_item("知识库", "square-library", rx.redirect("/account")),
+                    sidebar_item("知识库", "square-library", rx.redirect("/repository")),
                     sidebar_item("AI配置", "sliders-horizontal", rx.redirect("/ai_config")),
                     sidebar_item("问答记录", "message_circle", rx.redirect("/chat_record")),
                     spacing="1",

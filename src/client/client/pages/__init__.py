@@ -9,3 +9,4 @@ from .chat import chat
 from .settings import settings
 from .ai_config import ai_config
 from .chat_record import chat_record
+from .repository import repository

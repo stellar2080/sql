@@ -5,10 +5,10 @@ import os
 import pandas as pd
 import sys
 
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# CLIENT_PATH = os.path.dirname(os.path.dirname(current_dir))
-# sys.path.append(CLIENT_PATH)
-# from client.manager.manager import Manager
+current_dir = os.path.dirname(os.path.abspath(__file__))
+CLIENT_PATH = os.path.dirname(os.path.dirname(current_dir))
+sys.path.append(CLIENT_PATH)
+from client.manager.manager import Manager
 
 # manager = Manager(
 #     config={
@@ -39,60 +39,68 @@ import sys
 #         'G_HINT_THRESHOLD': 0.30,
 #     },
 # )
-
-# # # with open(os.path.join(CLIENT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
-# # #     for line in f:
-# # #         manager.add_to_vectordb(line.strip(),'repository.txt')
-        
-# # # with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev_proc.json')) as f:
-# # #     data = json.load(f)
-# # #     for i in range(0, 40):
-# # #         item = data[i]
-# # #         try:
-# # #             print("="*50)
-# # #             question = item['question'] 
-# # #             message = manager.chat(question)
-# # #             print("="*30)
-# # #             print(question)
-# # #             print(message['sql'])
-# # #             print(message['sql_result'])
-# # #             print("="*30)
-# # #             query = item['query']
-# # #             cur = manager.db_conn.cursor()
-# # #             cur.execute(query)
-# # #             result = cur.fetchall()
-# # #             print(question)
-# # #             print(query)
-# # #             print(result)
-# # #             print("="*50)
-# # #         except Exception as e:
-# # #             print(e)
-
-# async def test(manager: Manager):
-#     message = {
-#         "question": "I want the current ratio of all bank",
-#         "entity": None,
-#         "dialect": "sqlite",
-#         "schema": None,
-#         "hint": None,
-#         "sql": None,
-#         "sql_result": None,
-#         "message_to": "extractor"
-#     }
-#     message = await manager.chat(message=message)
-#     print(message['sql'])
-#     print(message['sql_result'])
+   
+# with open(os.path.join(ROOT_PATH,'dataset','Bank_Financials_dev_proc.json')) as f:
+#     data = json.load(f)
+#     for i in range(0, 40):
+#         item = data[i]
+#         try:
+#             print("="*50)
+#             question = item['question'] 
+#             message = manager.chat(question)
+#             print("="*30)
+#             print(question)
+#             print(message['sql'])
+#             print(message['sql_result'])
+#             print("="*30)
+#             query = item['query']
+#             cur = manager.db_conn.cursor()
+#             cur.execute(query)
+#             result = cur.fetchall()
+#             print(question)
+#             print(query)
+#             print(result)
+#             print("="*50)
+#         except Exception as e:
+#             print(e)
 
 async def test():
-    yield 1
-    await asyncio.sleep(5)
-    yield 2
-    yield 3
+    manager = Manager(
+        config={
+            'user_id': '2D4xR2J0',
+            'vectordb_only': True,
+            'vectordb_host': 'localhost',
+            'vectordb_port': '8000',
+        },
+    )
+    # message = {
+    #     "question": "I want the current ratio of all bank",
+    #     "entity": None,
+    #     "dialect": "sqlite",
+    #     "schema": None,
+    #     "hint": None,
+    #     "sql": None,
+    #     "sql_result": None,
+    #     "message_to": "extractor"
+    # }
+    # message = await manager.chat(message=message)
+    # print(message['sql'])
+    # print(message['sql_result'])
 
-async def test2():
-    model = test
-    async for value in model():
-        print(value)
+    # items = await manager.vectordb.get_all_key(user_id='1')
+    # print(items)
 
 if __name__ == '__main__':
-    asyncio.run(test2())
+    
+    # asyncio.run(test())
+    manager = Manager(
+        config={
+            'user_id': '2D4xR2J0',
+            'vectordb_only': True,
+            'vectordb_host': 'localhost',
+            'vectordb_port': '8000',
+        },
+    )
+    with open(os.path.join(CLIENT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
+        for line in f:
+            manager.add_to_vectordb(line.strip())

@@ -14,27 +14,31 @@ class Manager:
     def __init__(self,config=None):
         if config is None:
             raise Exception('Please provide config.')
-        self.platform = config.get('platform',None)
-        if self.platform is None:
-            raise Exception('Please provide platform.')
-        elif self.platform == 'Custom':
-            self.llm = Custom(config)
-        elif self.platform == 'Tongyi':
-            self.llm = Tongyi(config)
+        vectordb_only = config.get('vectordb_only')
+        if vectordb_only:
+            self.vectordb = VectorDB(config)
+            self.user_id = config.get('user_id',None)
+        else:
+            self.platform = config.get('platform',None)
+            if self.platform is None:
+                raise Exception('Please provide platform.')
+            elif self.platform == 'Custom':
+                self.llm = Custom(config)
+            elif self.platform == 'Tongyi':
+                self.llm = Tongyi(config)
 
-        self.extractor = Extractor(config)
-        self.filter = Filter(config)
-        self.generator = Generator(config)
-        self.reviser = Reviser(config)
-        self.vectordb = VectorDB(config)
+            self.extractor = Extractor(config)
+            self.filter = Filter(config)
+            self.generator = Generator(config)
+            self.reviser = Reviser(config)
+            self.user_id = config.get('user_id',None)
+            self.vectordb = VectorDB(config)
 
-        self.dialect = "sqlite"
-        
-        self.message = None
+            self.dialect = "sqlite"
+            
+            self.message = None
 
-        self.user_id = config.get('user_id',None)
-
-        self.MAX_ITERATIONS = config.get('MAX_ITERATIONS')
+            self.MAX_ITERATIONS = config.get('MAX_ITERATIONS')
 
     def message_init(self):
         self.message = {
@@ -73,13 +77,12 @@ class Manager:
     def add_to_vectordb(
         self, 
         doc: str, 
-        file_name: str
     ):
         print("="*30)
         result = self.parse_expression(doc)
         if result == -1:
             self.vectordb.add_tip(
-                user_id=self.user_id, file_name=file_name, tip=doc
+                user_id=self.user_id, tip=doc
             )
             return
         else:
@@ -90,9 +93,8 @@ class Manager:
         for enum, entity in enumerate(right_hand_size,start=2):
             if len(entity) <= 1:
                 continue
-            related_keys = self.vectordb.get_related_key(
+            related_keys = self.vectordb.get_related_key_noasync(
                 user_id=self.user_id, 
-                file_name=file_name, 
                 query_texts=entity, 
                 extracts=['documents','distances','metadatas']
             )
@@ -112,65 +114,46 @@ class Manager:
                     doc_id = filtered_keys[0][1]['doc_id']
                     if key_name != entity:
                         expression[enum] = key_name
-                    self.vectordb.add_key(user_id=self.user_id, file_name=file_name, key=key, doc_id=doc_id)
+                    self.vectordb.add_key(user_id=self.user_id, key=key, doc_id=doc_id)
                     print("="*10)
         doc = str(expression)
-        key_id = deterministic_uuid(self.user_id+file_name+key+doc) + "-key"
-        doc_id = deterministic_uuid(self.user_id+file_name+doc) + "-doc"
+        key_id = deterministic_uuid(self.user_id+key+doc) + "-key"
+        doc_id = deterministic_uuid(self.user_id+doc) + "-doc"
         self.vectordb.add_key(
-            user_id=self.user_id, file_name=file_name, key=key, doc_id=doc_id, embedding_id=key_id
+            user_id=self.user_id, key=key, doc_id=doc_id, embedding_id=key_id
         )
         self.vectordb.add_doc(
-            user_id=self.user_id, file_name=file_name, document=doc
+            user_id=self.user_id, document=doc
         )
-
-    def del_from_vectordb(
-        self,
-        embedding_ids
-    ):
-        if isinstance(embedding_ids,str):
-            example = embedding_ids
-        elif isinstance(embedding_ids,list):
-            example = embedding_ids[0]
-        if example.endswith("-key"):
-            self.vectordb.delete_key(embedding_ids=embedding_ids)
-        elif example.endswith("-doc"):
-            self.vectordb.delete_doc(embedding_ids=embedding_ids)
-        elif example.endswith("-tip"):
-            self.vectordb.delete_tip(embedding_ids=embedding_ids)
             
-    def get_repository(
+    async def get_repository(
         self,
         user_id: str,
-        file_name: str
     ):
-        all_keys = self.vectordb.get_all_key(
-            user_id=user_id,file_name=file_name,extracts=['ids','documents','metadatas']
+        all_keys = await self.vectordb.get_all_key(
+            user_id=user_id,extracts=['ids','documents','metadatas']
         )
         if len(all_keys['ids']) != 0:
             key_ids = all_keys['ids']
             keys = all_keys['documents']
             metadatas = all_keys['metadatas']
             doc_ids = []
-            file_names = []
             for metadata in metadatas:
                 doc_ids.append(metadata['doc_id'])
-                file_names.append(metadata['file_name'])
-            docs = self.vectordb.get_doc_by_id(user_id=user_id,embedding_ids=doc_ids)
+            docs = await self.vectordb.get_doc_by_id(user_id=user_id,embedding_ids=doc_ids)
             docs = [" ".join(parse_list(doc)) for doc in docs] 
-            key_zip = zip(file_names, key_ids, keys, doc_ids, docs)
+            key_zip = zip(key_ids, keys, doc_ids, docs)
         else:
             key_zip = None
 
-        all_tips = self.vectordb.get_all_tip(
-            user_id=user_id,file_name=file_name,extracts=['ids','documents','metadatas']
+        all_tips = await self.vectordb.get_all_tip(
+            user_id=user_id,extracts=['ids','documents','metadatas']
         )
         if len(all_tips['ids']) != 0:
             tip_ids = all_tips['ids']
             tips = all_tips['documents']
             metadatas = all_keys['metadatas']
-            file_names = [metadata['file_name'] for metadata in metadatas]
-            tip_zip = zip(file_names, tip_ids, tips)
+            tip_zip = zip(tip_ids, tips)
         else:
             tip_zip = None
 

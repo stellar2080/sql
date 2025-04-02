@@ -8,7 +8,15 @@ from rxconfig import target_db_path
 from client.utils.const import EXTRACTOR, FILTER, GENERATOR, REVISER, MANAGER
 from client.db_model import AIConfig, ChatRecord
 from datetime import datetime
-from .data_class.qa import QA
+
+class QA(rx.Base):
+
+    question: str
+    answer_text: str
+    table_cols: list
+    table_datas: list
+    text_loading: bool
+    table_loading: bool
 
 class ChatState(BaseState):
 
@@ -462,14 +470,45 @@ class ChatState(BaseState):
 
         async with self:
             self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
-            self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
+            self.current_chat[-1].answer_text += '智能体：'+GENERATOR+'正在执行...\n'
             self.current_chat[-1].text_loading=False
         await asyncio.sleep(5)
         message = {
-            'sql': '123',
+            'sql': 'SELECT * \nFROM CASDWA',
             'sql_result': {
-                'cols': ['c1'],
-                'rows': [(1,),(2,)]
+                'cols': ['c1','c2','c3','c4','c5','c6','c7'],
+                'rows': [
+                    (1, 'Apple', 15.2, True, '2023-05-01', 'New York', 1024),
+                    (2, 'Banana', 8.7, False, '2023-05-02', 'Los Angeles', 768),
+                    (3, 'Orange', 12.1, True, '2023-05-03', 'Chicago', 1536),
+                    (4, 'Grape', 5.5, False, '2023-05-04', 'Houston', 512),
+                    (5, 'Mango', 9.9, True, '2023-05-05', 'Phoenix', 2048),
+                    (6, 'Pineapple', 7.3, False, '2023-05-06', 'Philadelphia', 896),
+                    (7, 'Peach', 6.8, True, '2023-05-07', 'San Antonio', 1280),
+                    (8, 'Pear', 4.2, False, '2023-05-08', 'San Diego', 640),
+                    (9, 'Cherry', 11.5, True, '2023-05-09', 'Dallas', 1792),
+                    (10, 'Berry', 3.9, False, '2023-05-10', 'San Jose', 256),
+                    (11, 'Watermelon', 10.4, True, '2023-05-11', 'Austin', 1152),
+                    (12, 'Kiwi', 5.1, False, '2023-05-12', 'Jacksonville', 384),
+                    (13, 'Lemon', 2.8, True, '2023-05-13', 'Fort Worth', 512),
+                    (14, 'Lime', 3.5, False, '2023-05-14', 'Columbus', 768),
+                    (15, 'Plum', 6.2, True, '2023-05-15', 'Charlotte', 1024),
+                    (16, 'Apricot', 4.9, False, '2023-05-16', 'San Francisco', 640),
+                    (17, 'Fig', 7.7, True, '2023-05-17', 'Indianapolis', 896),
+                    (18, 'Melon', 8.5, False, '2023-05-18', 'Seattle', 1280),
+                    (19, 'Papaya', 9.1, True, '2023-05-19', 'Denver', 1536),
+                    (20, 'Avocado', 12.8, False, '2023-05-20', 'Washington', 2048),
+                    (21, 'Coconut', 11.2, True, '2023-05-21', 'Boston', 1792),
+                    (22, 'Guava', 5.7, False, '2023-05-22', 'El Paso', 384),
+                    (23, 'Lychee', 8.3, True, '2023-05-23', 'Detroit', 1024),
+                    (24, 'Dragonfruit', 14.5, False, '2023-05-24', 'Nashville', 512),
+                    (25, 'Starfruit', 6.9, True, '2023-05-25', 'Portland', 1280),
+                    (26, 'Pomegranate', 10.1, False, '2023-05-26', 'Memphis', 768),
+                    (27, 'Blackberry', 4.7, True, '2023-05-27', 'Oklahoma City', 896),
+                    (28, 'Raspberry', 5.3, False, '2023-05-28', 'Las Vegas', 640),
+                    (29, 'Blueberry', 7.1, True, '2023-05-29', 'Louisville', 1536),
+                    (30, 'Cantaloupe', 9.5, False, '2023-05-30', 'Baltimore', 2048)
+                ]
             }
         }
         sql = message.get('sql')

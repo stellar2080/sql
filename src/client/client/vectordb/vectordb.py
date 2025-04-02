@@ -1,3 +1,4 @@
+import asyncio
 import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
@@ -12,107 +13,103 @@ class VectorDB(VectorDB_Base):
     ):
         super().__init__(config)
 
-        self.chroma_client = None
         self.host = config.get("vectordb_host", None)
         self.port = config.get("vectordb_port", None)
 
         default_ef = embedding_functions.DefaultEmbeddingFunction()
         self.embedding_function = config.get("embedding_function", default_ef)
-        self.N_RESULTS = config.get("N_RESULTS")
+        self.N_RESULTS = config.get("N_RESULTS", 3)
 
-    async def generate_embedding(
+    def generate_embedding(
         self, 
         data:str, 
     ):
-        embedding = await self.embedding_function([data])
+        embedding = self.embedding_function([data])
         if len(embedding) == 1:
             return embedding[0]
         return embedding
 
-    async def add_doc(
+    def add_doc(
         self, 
         user_id: str,
-        file_name: str,
         document: str, 
         embedding_id: str = None, 
     ):
-        chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
+        chroma_client = chromadb.HttpClient(host=self.host, port=self.port)
 
-        document_collection = await chroma_client.get_or_create_collection(
+        document_collection = chroma_client.get_or_create_collection(
             name="document",
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
         if embedding_id is None:
-            embedding_id = deterministic_uuid(user_id+file_name+document) + "-doc"
+            embedding_id = deterministic_uuid(user_id+document) + "-doc"
         else:
             embedding_id = embedding_id
 
-        await document_collection.add(
+        document_collection.add(
             ids=embedding_id,
             documents=document,
-            embeddings=await self.generate_embedding(document),
-            metadatas={"user_id": user_id, "file_name": file_name}
+            embeddings=self.generate_embedding(document),
+            metadatas={"user_id": user_id}
         )
-        print("Add_doc: ", document, " ID: ", embedding_id, " user_id: ", user_id, "file_name: ", file_name)
+        print("Add_doc: ", document, " ID: ", embedding_id, " user_id: ", user_id)
 
-    async def add_key(
+    def add_key(
         self, 
         user_id: str,
-        file_name: str,
         key: str, 
         doc_id: str, 
         embedding_id: str = None, 
     ):
-        chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
+        chroma_client = chromadb.HttpClient(host=self.host, port=self.port)
 
-        document_collection = await chroma_client.get_or_create_collection(
+        document_collection = chroma_client.get_or_create_collection(
             name="document",
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        key_collection = await chroma_client.get_or_create_collection(
+        key_collection = chroma_client.get_or_create_collection(
             name="key",
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
 
         if embedding_id is None:
-            doc = await document_collection.get(ids=[doc_id])['documents'][0]
-            embedding_id = deterministic_uuid(user_id+file_name+key+doc) + "-key"
+            doc = document_collection.get(ids=[doc_id])['documents'][0]
+            embedding_id = deterministic_uuid(user_id+key+doc) + "-key"
         key_collection.add(
             ids=embedding_id,
             documents=key,
-            embeddings=await self.generate_embedding(key),
-            metadatas={"doc_id": doc_id, "user_id": user_id, "file_name": file_name}
+            embeddings=self.generate_embedding(key),
+            metadatas={"doc_id": doc_id, "user_id": user_id}
         )
-        print("Add_key: ", key, " Key_Rela_Doc_id: ", doc_id, " user_id: ", user_id, "file_name: ", file_name)
+        print("Add_key: ", key, " Key_Rela_Doc_id: ", doc_id, " user_id: ", user_id)
 
-    async def add_tip(
+    def add_tip(
         self, 
         user_id: str,
-        file_name: str,
         tip: str, 
         embedding_id: str = None, 
     ):
-        chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
+        chroma_client = chromadb.HttpClient(host=self.host, port=self.port)
 
-        tip_collection = await chroma_client.get_or_create_collection(
+        tip_collection = chroma_client.get_or_create_collection(
             name="tip",
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
         if embedding_id is None:
-            embedding_id = deterministic_uuid(user_id+file_name+tip) + "-tip"
+            embedding_id = deterministic_uuid(user_id+tip) + "-tip"
         else:
             embedding_id = embedding_id
-        await tip_collection.add(
+        tip_collection.add(
             ids=embedding_id,
             documents=tip,
-            embeddings=await self.generate_embedding(tip),
-            metadatas={"user_id": user_id, "file_name": file_name}
+            embeddings=self.generate_embedding(tip),
+            metadatas={"user_id": user_id}
         )
-        print("Add_tip: ", tip, " ID: ", embedding_id, " user_id: ", user_id, "file_name: ", file_name)
+        print("Add_tip: ", tip, " ID: ", embedding_id, " user_id: ", user_id)
 
     def extract_query_results(
         self,
@@ -142,7 +139,6 @@ class VectorDB(VectorDB_Base):
         self, 
         query_texts, 
         user_id: str = None,
-        file_name: str = None,
         n_results=None, 
         extracts=None, 
     ) -> dict:
@@ -153,12 +149,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        if user_id and file_name:
-            where_dict = {"$and":[{"user_id":user_id},{"file_name":file_name}]}
-        elif user_id:
+        if user_id:
             where_dict = {"user_id":user_id}
-        elif file_name:
-            where_dict = {"file_name":file_name}
         else:
             where_dict = None
 
@@ -174,11 +166,41 @@ class VectorDB(VectorDB_Base):
             extracts=extracts
         )
 
+    def get_related_key_noasync(
+        self, 
+        query_texts, 
+        user_id: str = None,
+        n_results=None, 
+        extracts=None, 
+    ) -> dict:
+        chroma_client = chromadb.HttpClient(host=self.host, port=self.port)
+
+        key_collection = chroma_client.get_or_create_collection(
+            name="key",
+            embedding_function=self.embedding_function,
+            metadata={"hnsw:space": "cosine"},
+        )
+        if user_id:
+            where_dict = {"user_id":user_id}
+        else:
+            where_dict = None
+
+        if extracts is None:
+            extracts = 'documents'
+        n_results = self.N_RESULTS if not n_results else n_results
+        return self.extract_query_results(
+            key_collection.query(
+                query_texts=query_texts,
+                n_results=n_results,
+                where=where_dict
+            ),
+            extracts=extracts
+        )
+
     async def get_related_key(
         self, 
         query_texts, 
         user_id: str = None,
-        file_name: str = None,
         n_results=None, 
         extracts=None, 
     ) -> dict:
@@ -189,12 +211,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        if user_id and file_name:
-            where_dict = {"$and":[{"user_id":user_id},{"file_name":file_name}]}
-        elif user_id:
+        if user_id:
             where_dict = {"user_id":user_id}
-        elif file_name:
-            where_dict = {"file_name":file_name}
         else:
             where_dict = None
 
@@ -214,7 +232,6 @@ class VectorDB(VectorDB_Base):
         self, 
         query_texts,
         user_id: str = None,
-        file_name: str = None,   
         n_results=None, 
         extracts=None, 
     ) -> dict:
@@ -225,12 +242,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        if user_id and file_name:
-            where_dict = {"$and":[{"user_id":user_id},{"file_name":file_name}]}
-        elif user_id:
+        if user_id:
             where_dict = {"user_id":user_id}
-        elif file_name:
-            where_dict = {"file_name":file_name}
         else:
             where_dict = None
 
@@ -285,7 +298,6 @@ class VectorDB(VectorDB_Base):
     async def get_all_key(
         self,
         user_id: str = None,
-        file_name: str = None,
         extracts = None
     ):
         chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
@@ -295,12 +307,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        if user_id and file_name:
-            where_dict = {"$and":[{"user_id":user_id},{"file_name":file_name}]}
-        elif user_id:
+        if user_id:
             where_dict = {"user_id":user_id}
-        elif file_name:
-            where_dict = {"file_name":file_name}
         else:
             where_dict = None
 
@@ -317,7 +325,6 @@ class VectorDB(VectorDB_Base):
     async def get_all_doc(
         self,
         user_id: str = None,
-        file_name: str = None,
         extracts = None
     ):
         chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
@@ -327,12 +334,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        if user_id and file_name:
-            where_dict = {"$and":[{"user_id":user_id},{"file_name":file_name}]}
-        elif user_id:
+        if user_id:
             where_dict = {"user_id":user_id}
-        elif file_name:
-            where_dict = {"file_name":file_name}
         else:
             where_dict = None
 
@@ -349,7 +352,6 @@ class VectorDB(VectorDB_Base):
     async def get_all_tip(
         self,
         user_id: str = None,
-        file_name: str = None,
         extracts = None
     ):
         chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
@@ -359,12 +361,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        if user_id and file_name:
-            where_dict = {"$and":[{"user_id":user_id},{"file_name":file_name}]}
-        elif user_id:
+        if user_id:
             where_dict = {"user_id":user_id}
-        elif file_name:
-            where_dict = {"file_name":file_name}
         else:
             where_dict = None
 
@@ -377,73 +375,11 @@ class VectorDB(VectorDB_Base):
             extracts=extracts
         )
         return res
-    
-    async def delete_key(
-        self, 
-        embedding_ids
-    ):
-        chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
-
-        key_collection = await chroma_client.get_or_create_collection(
-            name="key",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
-        if isinstance(embedding_ids,str):
-            await key_collection.delete(
-                ids=[embedding_ids]
-            )
-        elif isinstance(embedding_ids,list):
-            await key_collection.delete(
-                ids=embedding_ids
-            )
-    
-    async def delete_doc(
-        self, 
-        embedding_ids
-    ):
-        chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
-
-        document_collection = await chroma_client.get_or_create_collection(
-            name="document",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
-
-        if isinstance(embedding_ids,str):
-            await document_collection.delete(
-                ids=[embedding_ids]
-            )
-        elif isinstance(embedding_ids,list):
-            await document_collection.delete(
-                ids=embedding_ids
-            )
-            
-    async def delete_tip(
-        self, 
-        embedding_ids
-    ):
-        chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
-
-        tip_collection = await chroma_client.get_or_create_collection(
-            name="tip",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
-        if isinstance(embedding_ids,str):
-            await tip_collection.delete(
-                ids=[embedding_ids]
-            )
-        elif isinstance(embedding_ids,list):
-            await tip_collection.delete(
-                ids=embedding_ids
-            )
 
     async def remove_data(
         self, 
         embedding_id: str,
         user_id: str = None,
-        file_name: str = None,
     ) -> bool:
         chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
 
@@ -462,12 +398,8 @@ class VectorDB(VectorDB_Base):
             embedding_function=self.embedding_function,
             metadata={"hnsw:space": "cosine"},
         )
-        if user_id and file_name:
-            where_dict = {"$and":[{"user_id":user_id},{"file_name":file_name}]}
-        elif user_id:
+        if user_id:
             where_dict = {"user_id":user_id}
-        elif file_name:
-            where_dict = {"file_name":file_name}
         else:
             where_dict = None
             

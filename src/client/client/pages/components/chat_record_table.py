@@ -2,55 +2,96 @@ import reflex as rx
 
 from client.state.chat_record_st import Item, ChatRecordState
 
-def _create_dialog(
-    item: Item, icon_name: str, color_scheme: str, dialog_title: str
-) -> rx.Component:
+
+def _delete_dialog(item: Item) -> rx.Component:
     return rx.dialog.root(
         rx.dialog.trigger(
-            rx.icon_button(
-                rx.icon(icon_name), color_scheme=color_scheme, size="2", variant="solid"
+            rx.button(
+                rx.icon('trash-2',size=15), 
+                rx.text('删除'),
+                color_scheme='tomato', 
+                size="2", 
+                variant="solid"
+            )
+        ),
+        rx.dialog.content(
+            rx.dialog.title('删除对话'),
+            rx.dialog.description(
+                rx.vstack(
+                    rx.text('确定要删除吗'),
+                    rx.hstack(
+                        rx.dialog.close(
+                            rx.button(
+                                "取消",
+                                variant="soft",
+                                size="3",
+                                type="button",
+                            ),
+                        ),
+                        rx.dialog.close(
+                            rx.button(
+                                "确定", 
+                                type="button",
+                                size="3",
+                                on_click=ChatRecordState.delete_item(item)
+                            ),
+                        ),
+                        spacing="5",
+                        justify="end",
+                    ), 
+                )
+            ),
+            max_width="450px",
+        ),
+    ) 
+
+def _detail_dialog(item: Item) -> rx.Component:
+    return rx.dialog.root(
+        rx.dialog.trigger(
+            rx.button(
+                rx.icon('list',size=15), 
+                rx.text('详情'),
+                color_scheme='blue', 
+                size="2", 
+                variant="solid"
             )
         ),
         rx.dialog.content(
             rx.vstack(
-                rx.dialog.title(dialog_title),
+                rx.dialog.title('查看详情'),
                 rx.dialog.description(
                     rx.vstack(
-                        rx.text(item.question),
-                        rx.text(item.sql),
-                        rx.data_table(
-                            data=item.sql_result['rows'],
-                            columns=item.sql_result['cols'],
-                            pagination=True,
-                            sort=True,        
+                        rx.hstack(
+                            rx.badge("问题"),
+                            rx.text(item.question),
+                            align='center',
                         ),
-                        rx.text(item.create_time),
+                        rx.hstack(
+                            rx.badge("SQL"),
+                            rx.text(item.sql),
+                            align='center',
+                        ),
+                        rx.box(
+                            rx.data_table(
+                                data=item.sql_result['rows'],
+                                columns=item.sql_result['cols'],
+                                pagination=True,
+                                sort=True,        
+                            ),
+                        ),
                     )
                 ),
                 rx.dialog.close(
-                    rx.button("Close Dialog", size="2", color_scheme=color_scheme),
+                    rx.button("关闭", size="3", color_scheme='blue'),
                 ),
             ),
+            max_width="150em",
         ),
-    )
-
-
-def _delete_dialog(item: Item) -> rx.Component:
-    return _create_dialog(item, "trash-2", "tomato", "Delete Dialog")
-
-
-def _approve_dialog(item: Item) -> rx.Component:
-    return _create_dialog(item, "check", "grass", "Approve Dialog")
-
-
-def _edit_dialog(item: Item) -> rx.Component:
-    return _create_dialog(item, "square-pen", "blue", "Edit Dialog")
-
+    ) 
 
 def _dialog_group(item: Item) -> rx.Component:
     return rx.hstack(
-        _approve_dialog(item),
-        _edit_dialog(item),
+        _detail_dialog(item),
         _delete_dialog(item),
         align="center",
         spacing="2",
@@ -81,11 +122,21 @@ def _show_item(item: Item, index: int) -> rx.Component:
         rx.color("accent", 3),
     )
     return rx.table.row(
-        rx.table.row_header_cell(item.question),
-        rx.table.cell(item.sql),
-        rx.table.cell(item.sql_result),
-        rx.table.cell(item.create_time),
-        rx.table.cell(_dialog_group(item)),
+        rx.table.row_header_cell(
+            item.question,
+            min_width="500px",
+            max_width="500px"
+        ),
+        rx.table.cell(
+            item.create_time,
+            min_width="100px",
+            max_width="100px"
+        ),
+        rx.table.cell(
+            _dialog_group(item),
+            min_width="120px",
+            max_width="120px"
+        ), 
         style={"_hover": {"bg": hover_color}, "bg": bg_color},
         align="center",
     )
@@ -179,12 +230,10 @@ def main_table() -> rx.Component:
                 ),
                 rx.select(
                     [
-                        "question",
-                        "sql",
-                        "sql_result",
-                        "create_time",
+                        "问题",
+                        "生成时间",
                     ],
-                    placeholder="Sort By: question",
+                    placeholder="排序...",
                     size="3",
                     on_change=ChatRecordState.set_sort_value,
                 ),
@@ -198,7 +247,7 @@ def main_table() -> rx.Component:
                         display=rx.cond(ChatRecordState.search_value, "flex", "none"),
                     ),
                     value=ChatRecordState.search_value,
-                    placeholder="Search here...",
+                    placeholder="在此处搜索...",
                     size="3",
                     max_width=["150px", "150px", "200px", "250px"],
                     width="100%",
@@ -219,11 +268,9 @@ def main_table() -> rx.Component:
         rx.table.root(
             rx.table.header(
                 rx.table.row(
-                    _header_cell("question", "route"),
-                    _header_cell("sql", "list-checks"),
-                    _header_cell("sql_result", "notebook-pen"),
-                    _header_cell("create_time", "calendar"),
-                    _header_cell("操作", "calendar"),
+                    _header_cell("问题", "message-circle-question"),
+                    _header_cell("生成时间", "calendar"),
+                    _header_cell("操作", "wrench"),
                 ),
             ),
             rx.table.body(

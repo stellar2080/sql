@@ -1,18 +1,18 @@
-"""The Chat Record page."""
+"""The Repository page."""
 
 import reflex as rx
 from .components.sidebar import sidebar_bottom_profile
 from .components.theme_wrap import theme_wrap
-from .components.chat_record_table import main_table
+from .components.repository_table import main_table
 
-def chat_record() -> rx.Component:
+def repository() -> rx.Component:
     return theme_wrap(
         rx.box( 
             sidebar_bottom_profile(),
             rx.center(
                 rx.vstack(
                     rx.heading(
-                        "问答记录", 
+                        "知识库", 
                         size="6"
                     ),
                     main_table(),
