@@ -282,6 +282,7 @@ def main_table() -> rx.Component:
             variant="surface",
             size="3",
             width="100%",
+            height='65vh'
         ),
         _pagination_view(),
         width="100%",

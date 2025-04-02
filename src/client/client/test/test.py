@@ -87,9 +87,6 @@ async def test():
     # print(message['sql'])
     # print(message['sql_result'])
 
-    # items = await manager.vectordb.get_all_key(user_id='1')
-    # print(items)
-
 if __name__ == '__main__':
     
     # asyncio.run(test())
@@ -103,4 +100,4 @@ if __name__ == '__main__':
     )
     with open(os.path.join(CLIENT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
         for line in f:
-            manager.add_to_vectordb(line.strip())
+            manager.add_doc(line.strip())

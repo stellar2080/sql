@@ -86,7 +86,7 @@ def _detail_dialog(doc: Doc) -> rx.Component:
                     rx.button("关闭", size="3", color_scheme='blue'),
                 ),
             ),
-            max_width="150em",
+            max_width="75em",
         ),
     ) 
 
@@ -126,12 +126,12 @@ def _show_item(doc: Doc, index: int) -> rx.Component:
         rx.table.row_header_cell(
             doc.key,
             min_width="100px",
-            max_width="100px"
+            max_width="100px",
         ),
         rx.table.cell(
             doc.doc,
             min_width="500px",
-            max_width="500px"
+            max_width="500px",
         ),
         rx.table.cell(
             _dialog_group(doc),
@@ -269,8 +269,8 @@ def main_table() -> rx.Component:
         rx.table.root(
             rx.table.header(
                 rx.table.row(
-                    _header_cell("key", "message-circle-question"),
-                    _header_cell("doc", "calendar"),
+                    _header_cell("key", "file-key"),
+                    _header_cell("doc", "file-text"),
                     _header_cell("操作", "wrench"),
                 ),
             ),
@@ -283,6 +283,7 @@ def main_table() -> rx.Component:
             variant="surface",
             size="3",
             width="100%",
+            height='65vh'
         ),
         _pagination_view(),
         width="100%",

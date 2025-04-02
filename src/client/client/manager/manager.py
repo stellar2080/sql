@@ -1,5 +1,3 @@
-from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
-
 from client.llm.custom import Custom
 from client.llm.tongyi import Tongyi
 from client.agent.extractor import Extractor
@@ -52,79 +50,11 @@ class Manager:
             "message_to": EXTRACTOR
         }
 
-    def parse_expression(
-        self,
-        s: str
-    ):
-        try:
-            special_chars = "'_,."
-            word = Word(alphas + nums + special_chars)
-            identifier = Combine(word + ZeroOrMore(White(" ") + word))
-            eq_1 = Word("=")
-            operator_1 = oneOf("+ - * /")
-            lparen_1 = Word("(")
-            rparen_1 = Word(")")
-            expr = Group(
-                identifier + eq_1 + OneOrMore(
-                    Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
-                )
-            )
-            result_list = expr.parseString(s)[0]
-            return result_list
-        except Exception as e:
-            return -1
-
-    def add_to_vectordb(
+    def add_doc(
         self, 
         doc: str, 
     ):
-        print("="*30)
-        result = self.parse_expression(doc)
-        if result == -1:
-            self.vectordb.add_tip(
-                user_id=self.user_id, tip=doc
-            )
-            return
-        else:
-            expression = [item.lower().replace('_',' ').replace('-',' ') 
-                          if len(item) > 1 else item for item in result]
-        key = expression[0]
-        right_hand_size = expression[2:]
-        for enum, entity in enumerate(right_hand_size,start=2):
-            if len(entity) <= 1:
-                continue
-            related_keys = self.vectordb.get_related_key_noasync(
-                user_id=self.user_id, 
-                query_texts=entity, 
-                extracts=['documents','distances','metadatas']
-            )
-            print(related_keys)
-            if len(related_keys['documents']) != 0:
-                threshold = 0.1
-                filtered_keys = [
-                    (filtered_key, doc_id) for filtered_key, distance, doc_id in sorted(
-                        zip(related_keys['documents'], related_keys['distances'], related_keys['metadatas']),
-                        key=lambda x: x[1]
-                    ) if distance < threshold
-                ]
-                print("Elem:", entity)
-                print("Rela:", filtered_keys)
-                if len(filtered_keys) > 0:
-                    key_name = filtered_keys[0][0]
-                    doc_id = filtered_keys[0][1]['doc_id']
-                    if key_name != entity:
-                        expression[enum] = key_name
-                    self.vectordb.add_key(user_id=self.user_id, key=key, doc_id=doc_id)
-                    print("="*10)
-        doc = str(expression)
-        key_id = deterministic_uuid(self.user_id+key+doc) + "-key"
-        doc_id = deterministic_uuid(self.user_id+doc) + "-doc"
-        self.vectordb.add_key(
-            user_id=self.user_id, key=key, doc_id=doc_id, embedding_id=key_id
-        )
-        self.vectordb.add_doc(
-            user_id=self.user_id, document=doc
-        )
+        self.vectordb.add_data(user_id=self.user_id,doc=doc)
             
     async def get_repository(
         self,
@@ -158,6 +88,13 @@ class Manager:
             tip_zip = None
 
         return key_zip, tip_zip
+    
+    async def remove_doc(
+        self, 
+        embedding_id: str | list,
+        user_id: str = None,
+    ):
+        await self.vectordb.remove_data(embedding_id=embedding_id,user_id=user_id)
     
     async def chat(
         self,

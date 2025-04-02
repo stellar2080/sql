@@ -46,8 +46,10 @@ class RepositoryState(BaseState):
         )
 
     @rx.event
-    def delete_doc(self, doc: Doc):
+    async def delete_doc(self, doc: Doc):
         self.docs.remove(doc)
+        manager = self.init_manager()
+        await manager.remove_doc(embedding_id=[doc.key_id,doc.doc_id],user_id=self.user_id)
 
     @rx.event
     def set_sort_value(self, sort_value: str):

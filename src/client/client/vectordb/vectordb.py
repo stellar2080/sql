@@ -3,7 +3,7 @@ import chromadb
 from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
-
+from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
 from client.utils.utils import deterministic_uuid
 
 class VectorDB(VectorDB_Base):
@@ -29,6 +29,17 @@ class VectorDB(VectorDB_Base):
             return embedding[0]
         return embedding
 
+    def get_doc(self,id):
+        chroma_client = chromadb.HttpClient(host=self.host, port=self.port)
+
+        key_collection = chroma_client.get_or_create_collection(
+            name="key",
+            embedding_function=self.embedding_function,
+            metadata={"hnsw:space": "cosine"},
+        )
+        res = key_collection.get(ids=id)
+        print(len(res['documents']))
+
     def add_doc(
         self, 
         user_id: str,
@@ -51,9 +62,9 @@ class VectorDB(VectorDB_Base):
             ids=embedding_id,
             documents=document,
             embeddings=self.generate_embedding(document),
-            metadatas={"user_id": user_id}
+            metadatas={"user_id": user_id, "key_num": 0}
         )
-        print("Add_doc: ", document, " ID: ", embedding_id, " user_id: ", user_id)
+        print("Add_doc: ", document, " ID: ", embedding_id, " user_id: ", user_id, "key_num: ", 0)
 
     def add_key(
         self, 
@@ -75,16 +86,26 @@ class VectorDB(VectorDB_Base):
             metadata={"hnsw:space": "cosine"},
         )
 
+        res = document_collection.get(ids=[doc_id])
+        doc = res['documents'][0]
+
         if embedding_id is None:
-            doc = document_collection.get(ids=[doc_id])['documents'][0]
             embedding_id = deterministic_uuid(user_id+key+doc) + "-key"
-        key_collection.add(
-            ids=embedding_id,
-            documents=key,
-            embeddings=self.generate_embedding(key),
-            metadatas={"doc_id": doc_id, "user_id": user_id}
-        )
-        print("Add_key: ", key, " Key_Rela_Doc_id: ", doc_id, " user_id: ", user_id)
+        if len(key_collection.get(ids=embedding_id)['documents']) == 0:
+            key_collection.add(
+                ids=embedding_id,
+                documents=key,
+                embeddings=self.generate_embedding(key),
+                metadatas={"doc_id": doc_id, "user_id": user_id}
+            )
+            print("Add_key: ", key, " Key_Rela_Doc_id: ", doc_id, " user_id: ", user_id)
+
+            key_num = res['metadatas'][0]['key_num'] + 1
+            document_collection.update(
+                ids=doc_id,
+                metadatas={"user_id": user_id, "key_num": key_num}
+            )
+            print("Update_doc: ", doc, " ID: ", doc_id, " user_id: ", user_id, "key_num: ", key_num)
 
     def add_tip(
         self, 
@@ -110,6 +131,80 @@ class VectorDB(VectorDB_Base):
             metadatas={"user_id": user_id}
         )
         print("Add_tip: ", tip, " ID: ", embedding_id, " user_id: ", user_id)
+
+    def parse_expression(
+        self,
+        s: str
+    ):
+        try:
+            special_chars = "'_,."
+            word = Word(alphas + nums + special_chars)
+            identifier = Combine(word + ZeroOrMore(White(" ") + word))
+            eq_1 = Word("=")
+            operator_1 = oneOf("+ - * /")
+            lparen_1 = Word("(")
+            rparen_1 = Word(")")
+            expr = Group(
+                identifier + eq_1 + OneOrMore(
+                    Optional(lparen_1) + identifier + Optional(operator_1 | rparen_1)
+                )
+            )
+            result_list = expr.parseString(s)[0]
+            return result_list
+        except Exception as e:
+            return -1
+
+    def add_data(
+        self, 
+        user_id: str,
+        doc: str, 
+    ):
+        print("="*30)
+        result = self.parse_expression(doc)
+        if result == -1:
+            self.add_tip(
+                user_id=user_id, tip=doc
+            )
+            return
+        else:
+            expression = [item.lower().replace('_',' ').replace('-',' ') 
+                          if len(item) > 1 else item for item in result]
+        key = expression[0]
+        right_hand_size = expression[2:]
+        for enum, entity in enumerate(right_hand_size,start=2):
+            if len(entity) <= 1:
+                continue
+            related_keys = self.get_related_key_noasync(
+                user_id=user_id, 
+                query_texts=entity, 
+                extracts=['documents','distances','metadatas']
+            )
+            print(related_keys)
+            if len(related_keys['documents']) != 0:
+                threshold = 0.1
+                filtered_keys = [
+                    (filtered_key, doc_id) for filtered_key, distance, doc_id in sorted(
+                        zip(related_keys['documents'], related_keys['distances'], related_keys['metadatas']),
+                        key=lambda x: x[1]
+                    ) if distance < threshold
+                ]
+                print("Elem:", entity)
+                print("Rela:", filtered_keys)
+                if len(filtered_keys) > 0:
+                    key_name = filtered_keys[0][0]
+                    doc_id = filtered_keys[0][1]['doc_id']
+                    if key_name != entity:
+                        expression[enum] = key_name
+                    self.add_key(user_id=user_id, key=key, doc_id=doc_id)
+                    print("="*10)
+        doc = str(expression)
+        doc_id = deterministic_uuid(user_id+doc) + "-doc"
+        self.add_doc(
+            user_id=user_id, document=doc
+        )
+        self.add_key(
+            user_id=user_id, key=key, doc_id=doc_id
+        )
 
     def extract_query_results(
         self,
@@ -378,45 +473,54 @@ class VectorDB(VectorDB_Base):
 
     async def remove_data(
         self, 
-        embedding_id: str,
+        embedding_id: str | list,
         user_id: str = None,
     ) -> bool:
         chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
-
-        document_collection = await chroma_client.get_or_create_collection(
-            name="document",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
-        key_collection = await chroma_client.get_or_create_collection(
-            name="key",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
-        tip_collection = await chroma_client.get_or_create_collection(
-            name="tip",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
         if user_id:
             where_dict = {"user_id":user_id}
         else:
             where_dict = None
-            
-        if embedding_id.endswith("-key"):
-            await key_collection.delete(
-                ids=[embedding_id],where=where_dict
-            )
-            return True
-        elif embedding_id.endswith("-doc"):
-            await document_collection.delete(
-                ids=[embedding_id],where=where_dict
-            )
-            return True
-        elif embedding_id.endswith("-tip"):
-            await tip_collection.delete(
-                ids=[embedding_id],where=where_dict
-            )
-            return True
-        else:
-            return False
+
+        ids = [embedding_id] if isinstance(embedding_id, str) else embedding_id
+        for id in ids:
+            if id.endswith("-key"):
+                key_collection = await chroma_client.get_or_create_collection(
+                    name="key",
+                    embedding_function=self.embedding_function,
+                    metadata={"hnsw:space": "cosine"},
+                )
+                await key_collection.delete(
+                    ids=[id],where=where_dict
+                )
+            elif id.endswith("-doc"):
+                document_collection = await chroma_client.get_or_create_collection(
+                    name="document",
+                    embedding_function=self.embedding_function,
+                    metadata={"hnsw:space": "cosine"},
+                )
+                res = await document_collection.get(
+                    ids=[id],where=where_dict
+                )
+                key_num = res['metadatas'][0]['key_num'] - 1
+                if key_num == 0:
+                    await document_collection.delete(
+                        ids=[id],
+                        where=where_dict
+                    )
+                else:
+                    await document_collection.update(
+                        ids=[id],
+                        metadatas={"user_id": user_id, "key_num": key_num}
+                    )
+            elif id.endswith("-tip"):
+                tip_collection = await chroma_client.get_or_create_collection(
+                    name="tip",
+                    embedding_function=self.embedding_function,
+                    metadata={"hnsw:space": "cosine"},
+                )
+                await tip_collection.delete(
+                    ids=[id],where=where_dict
+                )
+            else:
+                raise Exception('The suffix of the embedding_id is incorrect.')
