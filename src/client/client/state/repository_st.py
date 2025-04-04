@@ -186,3 +186,17 @@ class RepositoryState(BaseState):
                 embedding_id=doc.doc_id,
                 activated=1 if doc.activated else 0,
             )
+    
+    @rx.event
+    def handle_upload(
+        self, files: list[rx.UploadFile]
+    ):
+        manager = self.init_manager()
+        for file in files:
+            if not file._deprecated_filename.endswith('.txt'):
+                self.base_dialog_description='仅支持txt格式的文件'
+                return self.base_dialog_open_change()
+        for file in files:
+            for bytes_line in file.file.readlines():
+                text_line = bytes_line.decode('utf-8').strip()
+                manager.add_doc(text_line)

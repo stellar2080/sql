@@ -103,7 +103,6 @@ def _upload_dialog() -> rx.Component:
                 size="3",
                 variant="surface",
                 display=["none", "none", "none", "flex"],
-                on_click=rx.clear_selected_files("upload1")
             ),
         ),
         rx.dialog.content(
@@ -138,7 +137,17 @@ def _upload_dialog() -> rx.Component:
                 rx.hstack(
                     rx.button(
                         "上传",
-                        size="2"
+                        size="2",
+                        on_click=RepositoryState.handle_upload(
+                            rx.upload_files(upload_id="upload1")
+                        ),
+                        disabled=rx.selected_files("upload1").length() == 0 
+                    ),
+                    rx.button(
+                        "清空",
+                        size="2",
+                        variant="surface",
+                        on_click=rx.clear_selected_files('upload1')
                     ),
                     rx.dialog.close(
                         rx.button(
