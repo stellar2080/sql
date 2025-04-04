@@ -51,10 +51,7 @@ class ChatRecordState(BaseState):
 
     @rx.event
     def set_sort_value(self, sort_value: str):
-        if sort_value == '问题':
-            self.sort_value = 'question'
-        elif sort_value == '生成时间':
-            self.sort_value = 'create_time'
+        self.sort_value = sort_value
 
     @rx.event
     def set_search_value(self, search_value: str):
@@ -139,4 +136,11 @@ class ChatRecordState(BaseState):
         self.sort_reverse = not self.sort_reverse
         self.load_entries()
 
-
+    @rx.event
+    def refresh(self):
+        self.base_dialog_description='刷新成功'
+        self.base_dialog_open_change()
+        self.load_entries()
+        self.setvar("search_value","")
+        self.setvar("sort_value","")
+        self.setvar("sort_reverse",False)

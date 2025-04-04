@@ -11,4 +11,5 @@ config = rx.Config(
     db_url="mysql+pymysql://stellar:123456@localhost/reflex",
     frontend_port=3000,
     backend_port=8001,
+    loglevel='info'
 )

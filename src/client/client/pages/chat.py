@@ -41,7 +41,8 @@ def message(qa: QA) -> rx.Component:
                     color=rx.color("gray", 12)
                 ),
                 rx.vstack(
-                    rx.skeleton(
+                    rx.cond(
+                        qa.show_text,
                         rx.box(
                             rx.text(
                                 qa.answer_text,
@@ -54,9 +55,9 @@ def message(qa: QA) -> rx.Component:
                                 max_width="72em",
                             ),
                         ),
-                        loading=qa.text_loading
                     ),
-                    rx.skeleton(
+                    rx.cond(
+                        qa.show_table,
                         rx.box(
                             rx.data_table(
                                 data=qa.table_datas,
@@ -66,7 +67,6 @@ def message(qa: QA) -> rx.Component:
                             ),
                             max_width="72em",
                         ),
-                        loading=qa.table_loading
                     )
                 ),
                 direction='row',
@@ -125,6 +125,12 @@ def action_bar() -> rx.Component:
                         type="submit",
                         width='10em'
                     ),
+                    rx.button(
+                        rx.icon('arrow-down-to-line',size=15),
+                        "滚到底部",
+                        type='button',
+                        on_click=rx.scroll_to("bottom"),
+                    ),
                     align_items="center",
                 ),
                 on_submit=ChatState.AI_process_question,
@@ -161,6 +167,7 @@ def chat():
                 ),
                 rx.scroll_area(
                     chat_box(),
+                    rx.text("",id='bottom'),
                     type="hover",
                     scrollbars="vertical",
                     height=660,

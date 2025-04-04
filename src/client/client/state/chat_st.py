@@ -15,8 +15,8 @@ class QA(rx.Base):
     answer_text: str
     table_cols: list
     table_datas: list
-    text_loading: bool
-    table_loading: bool
+    show_text: bool
+    show_table: bool
 
 class ChatState(BaseState):
 
@@ -458,8 +458,8 @@ class ChatState(BaseState):
             answer_text='', 
             table_cols=[],
             table_datas=[],
-            text_loading=True,
-            table_loading=True,
+            show_text=False,
+            show_table=False,
         )
         async with self:
             self.current_chat.append(qa)
@@ -467,11 +467,12 @@ class ChatState(BaseState):
             self.processing = True
   
         last_qa = self.current_chat[-1]
+        yield rx.scroll_to("bottom")
 
         async with self:
             self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
             self.current_chat[-1].answer_text += '智能体：'+GENERATOR+'正在执行...\n'
-            self.current_chat[-1].text_loading=False
+            self.current_chat[-1].show_text=True
         await asyncio.sleep(5)
         message = {
             'sql': 'SELECT * \nFROM CASDWA',
@@ -519,7 +520,7 @@ class ChatState(BaseState):
             self.current_chat[-1].answer_text += message.get('sql')
             self.current_chat[-1].table_cols = cols
             self.current_chat[-1].table_datas = rows
-            self.current_chat[-1].table_loading=False
+            self.current_chat[-1].show_table=True
             self.processing = False
         chat_record = ChatRecord(
             user_id=self.user_id,
@@ -534,7 +535,7 @@ class ChatState(BaseState):
 
         # async with self:
         #     self.current_chat[-1].answer_text += '--- 正在初始化...\n'
-        #     self.current_chat[-1].text_loading=False 
+        #     self.current_chat[-1].show_text=True 
         # manager = self.init_manager()
         # async with self:
         #     self.current_chat[-1].answer_text += '--- 初始化成功...\n'
@@ -567,7 +568,7 @@ class ChatState(BaseState):
         #         async with self:
                     # self.current_chat[-1].table_cols = cols
                     # self.current_chat[-1].table_datas = rows
-        #             self.current_chat[-1].table_loading=False
+        #             self.current_chat[-1].show_table=True
         #             self.processing = False
         #         chat_record = ChatRecord(
         #             user_id=self.user_id,
@@ -579,4 +580,5 @@ class ChatState(BaseState):
         #         with rx.session() as session:
         #             session.add(chat_record)
         #             session.commit()
+        
         

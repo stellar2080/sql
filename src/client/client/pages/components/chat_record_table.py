@@ -1,6 +1,7 @@
 import reflex as rx
 
 from client.state.chat_record_st import Item, ChatRecordState
+from .alert_dialog import alert_dialog
 
 
 def _delete_dialog(item: Item) -> rx.Component:
@@ -19,21 +20,21 @@ def _delete_dialog(item: Item) -> rx.Component:
             rx.dialog.description(
                 rx.vstack(
                     rx.text('确定要删除吗'),
-                    rx.hstack(
-                        rx.dialog.close(
-                            rx.button(
-                                "取消",
-                                variant="soft",
-                                size="3",
-                                type="button",
-                            ),
-                        ),
+                    rx.hstack(   
                         rx.dialog.close(
                             rx.button(
                                 "确定", 
                                 type="button",
                                 size="3",
                                 on_click=ChatRecordState.delete_item(item)
+                            ),
+                        ),
+                        rx.dialog.close(
+                            rx.button(
+                                "取消",
+                                variant="soft",
+                                size="3",
+                                type="button",
                             ),
                         ),
                         spacing="5",
@@ -62,7 +63,7 @@ def _detail_dialog(item: Item) -> rx.Component:
                 rx.dialog.description(
                     rx.vstack(
                         rx.hstack(
-                            rx.badge("问题"),
+                            rx.badge("question"),
                             rx.text(item.question),
                             align='center',
                         ),
@@ -230,9 +231,10 @@ def main_table() -> rx.Component:
                 ),
                 rx.select(
                     [
-                        "问题",
-                        "生成时间",
+                        "question",
+                        "create_time",
                     ],
+                    value=ChatRecordState.sort_value,
                     placeholder="排序...",
                     size="3",
                     on_change=ChatRecordState.set_sort_value,
@@ -255,6 +257,18 @@ def main_table() -> rx.Component:
                     color_scheme="gray",
                     on_change=ChatRecordState.set_search_value,
                 ),
+                rx.button(
+                    rx.icon('refresh-ccw',size=15), 
+                    rx.text('刷新'),
+                    size="3", 
+                    variant="solid",
+                    on_click=ChatRecordState.refresh
+                ),
+                alert_dialog(
+                    description=ChatRecordState.base_dialog_description,
+                    on_click=ChatRecordState.base_dialog_open_change,
+                    open=ChatRecordState.base_dialog_open
+                ),
                 align="center",
                 justify="end",
                 spacing="3",
@@ -268,8 +282,8 @@ def main_table() -> rx.Component:
         rx.table.root(
             rx.table.header(
                 rx.table.row(
-                    _header_cell("问题", "message-circle-question"),
-                    _header_cell("生成时间", "calendar"),
+                    _header_cell("question", "message-circle-question"),
+                    _header_cell("create_time", "calendar"),
                     _header_cell("操作", "wrench"),
                 ),
             ),

@@ -1,6 +1,7 @@
 import reflex as rx
 
 from client.state.repository_st import Doc, RepositoryState
+from .alert_dialog import alert_dialog
 
 def _delete_dialog(doc: Doc) -> rx.Component:
     return rx.dialog.root(
@@ -21,20 +22,20 @@ def _delete_dialog(doc: Doc) -> rx.Component:
                     rx.hstack(
                         rx.dialog.close(
                             rx.button(
-                                "取消",
-                                variant="soft",
-                                size="3",
-                                type="button",
-                            ),
-                        ),
-                        rx.dialog.close(
-                            rx.button(
                                 "确定", 
                                 type="button",
                                 size="3",
                                 on_click=RepositoryState.delete_doc(doc)
                             ),
                         ),
+                        rx.dialog.close(
+                            rx.button(
+                                "取消",
+                                variant="soft",
+                                size="3",
+                                type="button",
+                            ),
+                        ), 
                         spacing="5",
                         justify="end",
                     ), 
@@ -88,6 +89,63 @@ def _detail_dialog(doc: Doc) -> rx.Component:
             ),
             max_width="75em",
         ),
+    ) 
+
+def _upload_dialog() -> rx.Component:
+    return rx.dialog.root(
+        rx.dialog.trigger(
+            rx.button(
+                rx.icon("file-up", size=20),
+                "上传文件",
+                size="3",
+                variant="surface",
+                display=["none", "none", "none", "flex"],
+                on_click=rx.clear_selected_files("upload1")
+            ),
+        ),
+        rx.dialog.content(
+            rx.vstack(
+                rx.dialog.title('上传文件'),
+                rx.upload(
+                    rx.vstack(
+                        rx.button(
+                            "选择文件",
+                        ),
+                        rx.text(
+                            "在此处拖放文件或点击选择文件"
+                        ),
+                        align='center',
+                        justify='center',
+                        width='100%'
+                    ),
+                    id="upload1",
+                    border="1px solid",
+                    border_radius='15px',
+                    padding="5em",
+                    width='100%'
+                ),
+                rx.hstack(
+                    rx.foreach(
+                        rx.selected_files("upload1"), rx.badge
+                    ),
+                    wrap="wrap",
+                    width='100%'
+                ),
+                rx.hstack(
+                    rx.button(
+                        "上传",
+                        size="3"
+                    ),
+                    rx.dialog.close(
+                        rx.button("关闭", size="3"),
+                    ),
+                    justify='center',
+                    width='100%'
+                ),
+                width='100%'
+            ),
+        ),
+        max_width='300px'
     ) 
 
 def _dialog_group(doc: Doc) -> rx.Component:
@@ -234,6 +292,7 @@ def main_table() -> rx.Component:
                         "key",
                         "doc",
                     ],
+                    value=RepositoryState.sort_value,
                     placeholder="排序...",
                     size="3",
                     on_change=RepositoryState.set_sort_value,
@@ -256,10 +315,23 @@ def main_table() -> rx.Component:
                     color_scheme="gray",
                     on_change=RepositoryState.set_search_value,
                 ),
+                rx.button(
+                    rx.icon('refresh-ccw',size=15), 
+                    rx.text('刷新'),
+                    size="3", 
+                    variant="solid",
+                    on_click=RepositoryState.refresh
+                ),
+                alert_dialog(
+                    description=RepositoryState.base_dialog_description,
+                    on_click=RepositoryState.base_dialog_open_change,
+                    open=RepositoryState.base_dialog_open
+                ),
                 align="center",
                 justify="end",
                 spacing="3",
             ),
+            _upload_dialog(),
             spacing="3",
             justify="between",
             wrap="wrap",

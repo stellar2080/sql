@@ -145,8 +145,15 @@ class RepositoryState(BaseState):
         self.docs=key_list+tip_list
         self.total_items = len(self.docs)
 
-    def toggle_sort(self):
+    async def toggle_sort(self):
         self.sort_reverse = not self.sort_reverse
+        await self.load_entries()
+
+    @rx.event
+    def refresh(self):
+        self.base_dialog_description='刷新成功'
+        self.base_dialog_open_change()
         self.load_entries()
-
-
+        self.setvar("search_value","")
+        self.setvar("sort_value","")
+        self.setvar("sort_reverse",False)
