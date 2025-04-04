@@ -27,17 +27,6 @@ class VectorDB(VectorDB_Base):
             return embedding[0]
         return embedding
 
-    def get_doc(self,id):
-        chroma_client = chromadb.HttpClient(host=self.host, port=self.port)
-
-        key_collection = chroma_client.get_or_create_collection(
-            name="key",
-            embedding_function=self.embedding_function,
-            metadata={"hnsw:space": "cosine"},
-        )
-        res = key_collection.get(ids=id)
-        print(len(res['documents']))
-
     def add_doc(
         self, 
         user_id: str,

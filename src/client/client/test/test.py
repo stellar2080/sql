@@ -64,42 +64,65 @@ from client.manager.manager import Manager
 #         except Exception as e:
 #             print(e)
 
-async def test():
-    manager = Manager(
-        config={
-            'user_id': '2D4xR2J0',
-            'vectordb_only': True,
-            'vectordb_host': 'localhost',
-            'vectordb_port': '8000',
-        },
-    )
-    # message = {
-    #     "question": "I want the current ratio of all bank",
-    #     "entity": None,
-    #     "dialect": "sqlite",
-    #     "schema": None,
-    #     "hint": None,
-    #     "sql": None,
-    #     "sql_result": None,
-    #     "message_to": "extractor"
-    # }
-    # message = await manager.chat(message=message)
-    # print(message['sql'])
-    # print(message['sql_result'])
-    res = await manager.vectordb.get_related_tip('Calculate the median with the following statement: SELECT column FROM (SELECT column, PERCENT_RANK() OVER (ORDER BY column) AS percentile FROM table) AS Ra')
-    print(res)
+# async def test():
+#     manager = Manager(
+#         config={
+#             'user_id': '2D4xR2J0',
+#             'vectordb_only': True,
+#             'vectordb_host': 'localhost',
+#             'vectordb_port': '8000',
+#         },
+#     )
+#     # message = {
+#     #     "question": "I want the current ratio of all bank",
+#     #     "entity": None,
+#     #     "dialect": "sqlite",
+#     #     "schema": None,
+#     #     "hint": None,
+#     #     "sql": None,
+#     #     "sql_result": None,
+#     #     "message_to": "extractor"
+#     # }
+#     # message = await manager.chat(message=message)
+#     # print(message['sql'])
+#     # print(message['sql_result'])
+#     res = await manager.vectordb.get_related_tip('Calculate the median with the following statement: SELECT column FROM (SELECT column, PERCENT_RANK() OVER (ORDER BY column) AS percentile FROM table) AS Ra')
+#     print(res)
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     
     # asyncio.run(test())
-    manager = Manager(
-        config={
-            'user_id': '2D4xR2J0',
-            'vectordb_only': True,
-            'vectordb_host': 'localhost',
-            'vectordb_port': '8000',
-        },
-    )
-    with open(os.path.join(CLIENT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
-        for line in f:
-            manager.add_doc(line.strip())
+    # manager = Manager(
+    #     config={
+    #         'user_id': '2D4xR2J0',
+    #         'vectordb_only': True,
+    #         'vectordb_host': 'localhost',
+    #         'vectordb_port': '8000',
+    #     },
+    # )
+    # with open(os.path.join(CLIENT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
+    #     for line in f:
+    #         manager.add_doc(line.strip())
+
+async def sequential_operations(items):
+    for item in items:
+        await asyncio.sleep(2)
+        print('已处理'+str(item))
+
+async def other_tasks():
+    while True:
+        print("其他任务正在运行...")
+        await asyncio.sleep(0.5)
+
+async def main():
+    my_list = [1, 2, 3, 4, 5]
+    
+    # 创建两个任务
+    task1 = asyncio.create_task(sequential_operations(my_list))
+    task2 = asyncio.create_task(other_tasks())
+    
+    # 等待顺序操作完成（但其他任务可以继续运行）
+    await task1
+    task2.cancel()  # 顺序操作完成后取消其他任务
+    
+asyncio.run(main())
