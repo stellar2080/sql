@@ -50,11 +50,11 @@ class Manager:
             "message_to": EXTRACTOR
         }
 
-    def add_doc(
+    async def add_doc(
         self, 
         doc: str, 
     ):
-        self.vectordb.add_data(user_id=self.user_id,doc=doc)
+        await self.vectordb.add_data(user_id=self.user_id,doc=doc)
             
     async def get_repository(
         self,
@@ -103,6 +103,11 @@ class Manager:
         activated: int,
     ):
         await self.vectordb.update_activated(embedding_id=embedding_id, activated=activated)
+
+    async def clear_doc(
+        self
+    ):
+        await self.vectordb.clear_doc(user_id=self.user_id)
     
     async def chat(
         self,

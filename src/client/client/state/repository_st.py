@@ -31,10 +31,15 @@ class RepositoryState(BaseState):
     limit: int = 10
 
     delete_dialog_open: bool = False
+    upload_dialog_open: bool = False
 
     @rx.event
     def delete_dialog_open_change(self):
         self.delete_dialog_open = not self.delete_dialog_open
+    
+    @rx.event
+    def upload_dialog_open_change(self):
+        self.upload_dialog_open = not self.upload_dialog_open
 
     def init_manager(self):
         return Manager(
@@ -188,15 +193,31 @@ class RepositoryState(BaseState):
             )
     
     @rx.event
-    def handle_upload(
+    async def handle_upload(
         self, files: list[rx.UploadFile]
     ):
         manager = self.init_manager()
         for file in files:
             if not file._deprecated_filename.endswith('.txt'):
                 self.base_dialog_description='仅支持txt格式的文件'
-                return self.base_dialog_open_change()
+                yield self.base_dialog_open_change()
+                return
+        yield self.upload_dialog_open_change()
         for file in files:
             for bytes_line in file.file.readlines():
                 text_line = bytes_line.decode('utf-8').strip()
-                manager.add_doc(text_line)
+                await manager.add_doc(text_line)
+        yield self.upload_dialog_open_change()
+        await self.load_entries()
+
+    @rx.event
+    async def clear_doc(
+        self
+    ):
+        self.docs.clear()
+        self.total_items = len(self.docs)
+        self.setvar("search_value","")
+        self.setvar("sort_value","")
+        self.setvar("sort_reverse",False)
+        manager = self.init_manager()
+        await manager.clear_doc()

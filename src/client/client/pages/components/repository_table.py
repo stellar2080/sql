@@ -90,8 +90,8 @@ def _detail_dialog(doc: Doc) -> rx.Component:
                     ),
                 ),
             ),
-            max_width="75em",
         ),
+        max_width="50em",
     ) 
 
 def _upload_dialog() -> rx.Component:
@@ -160,6 +160,16 @@ def _upload_dialog() -> rx.Component:
                     width='100%'
                 ),
                 width='100%'
+            ),
+            rx.alert_dialog.root(
+                rx.alert_dialog.content(
+                    rx.alert_dialog.title("系统信息"),
+                    rx.alert_dialog.description(
+                        '正在解析文件，请稍等....'
+                    ),
+                    max_width='450px'
+                ),
+                open=RepositoryState.upload_dialog_open,
             ),
         ),
         max_width='300px'
@@ -348,6 +358,13 @@ def main_table() -> rx.Component:
                     size="3", 
                     variant="surface",
                     on_click=RepositoryState.refresh
+                ),
+                rx.button(
+                    rx.icon('file-x-2',size=15), 
+                    rx.text('清空'),
+                    size="3", 
+                    variant="surface",
+                    on_click=RepositoryState.clear_doc
                 ),
                 alert_dialog(
                     description=RepositoryState.base_dialog_description,

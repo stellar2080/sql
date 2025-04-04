@@ -267,6 +267,13 @@ def main_table() -> rx.Component:
                     variant="surface",
                     on_click=ChatRecordState.refresh
                 ),
+                rx.button(
+                    rx.icon('file-x-2',size=15), 
+                    rx.text('清空'),
+                    size="3", 
+                    variant="surface",
+                    on_click=ChatRecordState.clear_record
+                ),
                 alert_dialog(
                     description=ChatRecordState.base_dialog_description,
                     on_click=ChatRecordState.base_dialog_open_change,

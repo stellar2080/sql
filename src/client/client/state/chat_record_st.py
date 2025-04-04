@@ -1,6 +1,7 @@
 import reflex as rx
 from .base_st import BaseState
 from client.db_model import ChatRecord
+from sqlalchemy import delete
 from datetime import datetime
 from typing import List, Dict
 
@@ -144,3 +145,16 @@ class ChatRecordState(BaseState):
         self.setvar("search_value","")
         self.setvar("sort_value","")
         self.setvar("sort_reverse",False)
+
+    @rx.event
+    def clear_record(self):
+        self.items.clear()
+        self.total_items = len(self.items)
+        self.setvar("search_value","")
+        self.setvar("sort_value","")
+        self.setvar("sort_reverse",False)
+        with rx.session() as session:
+            session.exec(
+                delete(ChatRecord).where(ChatRecord.user_id == self.user_id)
+            )
+            session.commit()
