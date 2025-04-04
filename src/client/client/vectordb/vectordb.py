@@ -225,6 +225,8 @@ class VectorDB(VectorDB_Base):
                     extracted_results[item] = (extract_item[0])
                 elif isinstance(extract_item[0], str):
                     extracted_results[item] = ([extract_item[0]])
+                elif isinstance(extract_item[0], dict):
+                    extracted_results[item] = ([extract_item[0]])
             else:
                 extracted_results[item] = extract_item
 

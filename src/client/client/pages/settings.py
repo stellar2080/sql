@@ -60,11 +60,13 @@ def settings() -> rx.Component:
                         rx.button(
                             "恢复默认",
                             on_click=BaseState.reset_settings,
+                            variant='surface',
                             size='3'
                         ),
                         rx.button(
                             "保存设置",
                             on_click=BaseState.save_settings,
+                            variant='surface',
                             size='3'
                         ),
                         width='100%',

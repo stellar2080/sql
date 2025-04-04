@@ -123,12 +123,14 @@ def action_bar() -> rx.Component:
                         ),
                         disabled=ChatState.processing,
                         type="submit",
-                        width='10em'
+                        width='10em',
+                        variant='surface'
                     ),
                     rx.button(
                         rx.icon('arrow-down-to-line',size=15),
                         "滚到底部",
                         type='button',
+                        variant='surface',
                         on_click=rx.scroll_to("bottom"),
                     ),
                     align_items="center",

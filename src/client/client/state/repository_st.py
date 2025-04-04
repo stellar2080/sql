@@ -159,17 +159,20 @@ class RepositoryState(BaseState):
     async def delete_doc(self, doc: Doc):
         self.docs.remove(doc)
         manager = self.init_manager()
-        await manager.remove_doc(embedding_id=[doc.key_id,doc.doc_id])
+        if doc.key_id != "":
+            await manager.remove_doc(embedding_id=[doc.key_id,doc.doc_id])
+        else:
+            await manager.remove_doc(embedding_id=doc.doc_id)
 
     @rx.event
     async def update_activated(self, doc: Doc):
         doc.activated = not doc.activated
+        manager = self.init_manager()
         if doc.key_id != "":
             for item in self.docs:
                 if item.key_id == doc.key_id:
                     item.activated = doc.activated
-                    break
-            manager = self.init_manager()
+                    break   
             await manager.update_activated(
                 embedding_id=doc.key_id,
                 activated=1 if doc.activated else 0,
@@ -179,7 +182,6 @@ class RepositoryState(BaseState):
                 if item.doc_id == doc.doc_id:
                     item.activated = doc.activated
                     break
-            manager = self.init_manager()
             await manager.update_activated(
                 embedding_id=doc.doc_id,
                 activated=1 if doc.activated else 0,

@@ -11,7 +11,7 @@ def _delete_dialog(doc: Doc) -> rx.Component:
                 rx.text('删除'),
                 color_scheme='tomato', 
                 size="2", 
-                variant="solid"
+                variant="surface",
             )
         ),
         rx.dialog.content(
@@ -24,7 +24,7 @@ def _delete_dialog(doc: Doc) -> rx.Component:
                             rx.button(
                                 "确定", 
                                 type="button",
-                                size="3",
+                                size="2",
                                 on_click=RepositoryState.delete_doc(doc)
                             ),
                         ),
@@ -32,7 +32,7 @@ def _delete_dialog(doc: Doc) -> rx.Component:
                             rx.button(
                                 "取消",
                                 variant="soft",
-                                size="3",
+                                size="2",
                                 type="button",
                             ),
                         ), 
@@ -51,9 +51,8 @@ def _detail_dialog(doc: Doc) -> rx.Component:
             rx.button(
                 rx.icon('list',size=15), 
                 rx.text('详情'),
-                color_scheme='blue', 
                 size="2", 
-                variant="solid"
+                variant="surface",
             )
         ),
         rx.dialog.content(
@@ -84,7 +83,11 @@ def _detail_dialog(doc: Doc) -> rx.Component:
                     )
                 ),
                 rx.dialog.close(
-                    rx.button("关闭", size="3", color_scheme='blue'),
+                    rx.button(
+                        "关闭", 
+                        size="2",
+                        variant="soft",
+                    ),
                 ),
             ),
             max_width="75em",
@@ -110,6 +113,7 @@ def _upload_dialog() -> rx.Component:
                     rx.vstack(
                         rx.button(
                             "选择文件",
+                            variant='surface',
                         ),
                         rx.text(
                             "在此处拖放文件或点击选择文件"
@@ -134,10 +138,14 @@ def _upload_dialog() -> rx.Component:
                 rx.hstack(
                     rx.button(
                         "上传",
-                        size="3"
+                        size="2"
                     ),
                     rx.dialog.close(
-                        rx.button("关闭", size="3"),
+                        rx.button(
+                            "关闭",
+                            size="2",
+                            variant="soft",
+                        ),
                     ),
                     justify='center',
                     width='100%'
@@ -195,7 +203,8 @@ def _show_item(doc: Doc, index: int) -> rx.Component:
             rx.checkbox(
                 size='3',
                 checked=doc.activated,
-                on_change=RepositoryState.update_activated(doc)
+                on_change=RepositoryState.update_activated(doc),
+                variant='surface'
             ),
             min_width="20px",
             max_width="20px",
@@ -328,7 +337,7 @@ def main_table() -> rx.Component:
                     rx.icon('refresh-ccw',size=15), 
                     rx.text('刷新'),
                     size="3", 
-                    variant="solid",
+                    variant="surface",
                     on_click=RepositoryState.refresh
                 ),
                 alert_dialog(

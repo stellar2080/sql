@@ -29,6 +29,7 @@ def index():
                         on_click=rx.redirect("/login"),
                         size="4",
                         width="100%",
+                        variant='surface',
                     ),
                     direction="column",
                     align="center",

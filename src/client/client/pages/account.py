@@ -240,6 +240,7 @@ def user_box() -> rx.Component:
             "修改",
             size="3",
             width="10%",
+            variant='surface',
             on_click=AccountState.change_username_dialog_open_change
         ),
         change_username(),
@@ -276,6 +277,7 @@ def email_box() -> rx.Component:
             "修改",
             size="3",
             width="10%",
+            variant='surface',
             on_click=AccountState.change_email_dialog_open_change
         ),
         change_email(),
@@ -312,6 +314,7 @@ def password_box() -> rx.Component:
             "修改",
             size="3",
             width="10%",
+            variant='surface',
             on_click=AccountState.change_password_dialog_open_change
         ),
         change_password(),

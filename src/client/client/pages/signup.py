@@ -77,6 +77,7 @@ def signup():
                                         type="button",
                                         on_click=SignupState.send_email,
                                         size="3",
+                                        variant='surface',
                                         disabled=SignupState.countdown > 0,
                                         width="40%",
                                     ),
@@ -127,6 +128,7 @@ def signup():
                             rx.button(
                                 "注册",
                                 type="submit",
+                                variant='surface',
                                 size="3",
                                 width="100%",
                             ),

@@ -473,7 +473,7 @@ class ChatState(BaseState):
             self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
             self.current_chat[-1].answer_text += '智能体：'+GENERATOR+'正在执行...\n'
             self.current_chat[-1].show_text=True
-        await asyncio.sleep(5)
+        await asyncio.sleep(1)
         message = {
             'sql': 'SELECT * \nFROM CASDWA',
             'sql_result': {

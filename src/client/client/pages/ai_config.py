@@ -616,7 +616,8 @@ def ai_config() -> rx.Component:
                         rx.button(
                             "保存设置",
                             type='submit',
-                            size='3'
+                            size='3',
+                            variant='surface'
                         ),
                         rx.text(
                             "若不保存设置，新配置将不会生效",

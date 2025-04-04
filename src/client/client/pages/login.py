@@ -66,6 +66,7 @@ def login():
                             rx.button(
                                 "登录", 
                                 type='submit', 
+                                variant='surface',
                                 size="3", 
                                 width="100%",
                             ),

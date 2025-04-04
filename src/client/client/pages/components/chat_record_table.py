@@ -12,7 +12,7 @@ def _delete_dialog(item: Item) -> rx.Component:
                 rx.text('删除'),
                 color_scheme='tomato', 
                 size="2", 
-                variant="solid"
+                variant="surface"
             )
         ),
         rx.dialog.content(
@@ -25,7 +25,7 @@ def _delete_dialog(item: Item) -> rx.Component:
                             rx.button(
                                 "确定", 
                                 type="button",
-                                size="3",
+                                size="2",
                                 on_click=ChatRecordState.delete_item(item)
                             ),
                         ),
@@ -33,7 +33,7 @@ def _delete_dialog(item: Item) -> rx.Component:
                             rx.button(
                                 "取消",
                                 variant="soft",
-                                size="3",
+                                size="2",
                                 type="button",
                             ),
                         ),
@@ -52,9 +52,8 @@ def _detail_dialog(item: Item) -> rx.Component:
             rx.button(
                 rx.icon('list',size=15), 
                 rx.text('详情'),
-                color_scheme='blue', 
                 size="2", 
-                variant="solid"
+                variant="surface"
             )
         ),
         rx.dialog.content(
@@ -83,7 +82,11 @@ def _detail_dialog(item: Item) -> rx.Component:
                     )
                 ),
                 rx.dialog.close(
-                    rx.button("关闭", size="3", color_scheme='blue'),
+                    rx.button(
+                        "关闭", 
+                        size="2",
+                        variant="soft",
+                    ),
                 ),
             ),
             max_width="150em",
@@ -261,7 +264,7 @@ def main_table() -> rx.Component:
                     rx.icon('refresh-ccw',size=15), 
                     rx.text('刷新'),
                     size="3", 
-                    variant="solid",
+                    variant="surface",
                     on_click=ChatRecordState.refresh
                 ),
                 alert_dialog(

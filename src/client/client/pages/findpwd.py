@@ -57,6 +57,7 @@ def findpwd():
                                         ),
                                         type="button",
                                         on_click=FindpwdState.send_email,
+                                        variant='surface',
                                         size="3",
                                         disabled=FindpwdState.countdown > 0,
                                         width="40%",
@@ -108,6 +109,7 @@ def findpwd():
                             rx.button(
                                 "提交",
                                 type="submit",
+                                variant='surface',
                                 size="3",
                                 width="100%",
                             ),
