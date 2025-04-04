@@ -86,6 +86,8 @@ async def test():
     # message = await manager.chat(message=message)
     # print(message['sql'])
     # print(message['sql_result'])
+    res = await manager.vectordb.get_related_tip('Calculate the median with the following statement: SELECT column FROM (SELECT column, PERCENT_RANK() OVER (ORDER BY column) AS percentile FROM table) AS Ra')
+    print(res)
 
 if __name__ == '__main__':
     

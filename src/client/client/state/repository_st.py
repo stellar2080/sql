@@ -10,6 +10,7 @@ class Doc(rx.Base):
     key: str 
     doc_id: str
     doc: str
+    activated: bool
 
 class RepositoryState(BaseState):
 
@@ -44,12 +45,6 @@ class RepositoryState(BaseState):
                 'vectordb_port': '8000',
             },
         )
-
-    @rx.event
-    async def delete_doc(self, doc: Doc):
-        self.docs.remove(doc)
-        manager = self.init_manager()
-        await manager.remove_doc(embedding_id=[doc.key_id,doc.doc_id],user_id=self.user_id)
 
     @rx.event
     def set_sort_value(self, sort_value: str):
@@ -119,7 +114,7 @@ class RepositoryState(BaseState):
     @rx.event
     async def load_entries(self):
         manager = self.init_manager()
-        key_zip, tip_zip = await manager.get_repository(user_id=self.user_id)
+        key_zip, tip_zip = await manager.get_repository()
         key_list=[]
         tip_list=[]
         if key_zip:
@@ -129,6 +124,7 @@ class RepositoryState(BaseState):
                     key=key[1],
                     doc_id=key[2],
                     doc=key[3],
+                    activated=True if key[4] == 1 else False
                 )
                 for key in key_zip
             ]
@@ -139,6 +135,7 @@ class RepositoryState(BaseState):
                     key="",
                     doc_id=tip[0],
                     doc=tip[1],
+                    activated=True if tip[2] == 1 else False
                 )
                 for tip in tip_zip
             ]
@@ -150,10 +147,40 @@ class RepositoryState(BaseState):
         await self.load_entries()
 
     @rx.event
-    def refresh(self):
+    async def refresh(self):
         self.base_dialog_description='刷新成功'
         self.base_dialog_open_change()
-        self.load_entries()
+        await self.load_entries()
         self.setvar("search_value","")
         self.setvar("sort_value","")
         self.setvar("sort_reverse",False)
+
+    @rx.event
+    async def delete_doc(self, doc: Doc):
+        self.docs.remove(doc)
+        manager = self.init_manager()
+        await manager.remove_doc(embedding_id=[doc.key_id,doc.doc_id])
+
+    @rx.event
+    async def update_activated(self, doc: Doc):
+        doc.activated = not doc.activated
+        if doc.key_id != "":
+            for item in self.docs:
+                if item.key_id == doc.key_id:
+                    item.activated = doc.activated
+                    break
+            manager = self.init_manager()
+            await manager.update_activated(
+                embedding_id=doc.key_id,
+                activated=1 if doc.activated else 0,
+            )
+        else:
+            for item in self.docs:
+                if item.doc_id == doc.doc_id:
+                    item.activated = doc.activated
+                    break
+            manager = self.init_manager()
+            await manager.update_activated(
+                embedding_id=doc.doc_id,
+                activated=1 if doc.activated else 0,
+            )

@@ -188,13 +188,22 @@ def _show_item(doc: Doc, index: int) -> rx.Component:
         ),
         rx.table.cell(
             doc.doc,
-            min_width="500px",
-            max_width="500px",
+            min_width="470px",
+            max_width="470px",
+        ),
+        rx.table.cell(
+            rx.checkbox(
+                size='3',
+                checked=doc.activated,
+                on_change=RepositoryState.update_activated(doc)
+            ),
+            min_width="20px",
+            max_width="20px",
         ),
         rx.table.cell(
             _dialog_group(doc),
-            min_width="120px",
-            max_width="120px"
+            min_width="140px",
+            max_width="140px"
         ), 
         style={"_hover": {"bg": hover_color}, "bg": bg_color},
         align="center",
@@ -343,6 +352,7 @@ def main_table() -> rx.Component:
                 rx.table.row(
                     _header_cell("key", "file-key"),
                     _header_cell("doc", "file-text"),
+                    _header_cell("启用", "circle-check-big"),
                     _header_cell("操作", "wrench"),
                 ),
             ),

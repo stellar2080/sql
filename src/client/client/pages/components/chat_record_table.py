@@ -125,8 +125,8 @@ def _show_item(item: Item, index: int) -> rx.Component:
     return rx.table.row(
         rx.table.row_header_cell(
             item.question,
-            min_width="500px",
-            max_width="500px"
+            min_width="470px",
+            max_width="470px"
         ),
         rx.table.cell(
             item.create_time,
@@ -135,8 +135,8 @@ def _show_item(item: Item, index: int) -> rx.Component:
         ),
         rx.table.cell(
             _dialog_group(item),
-            min_width="120px",
-            max_width="120px"
+            min_width="130px",
+            max_width="130px"
         ), 
         style={"_hover": {"bg": hover_color}, "bg": bg_color},
         align="center",

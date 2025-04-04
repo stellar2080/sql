@@ -58,32 +58,34 @@ class Manager:
             
     async def get_repository(
         self,
-        user_id: str,
     ):
         all_keys = await self.vectordb.get_all_key(
-            user_id=user_id,extracts=['ids','documents','metadatas']
+            user_id=self.user_id,extracts=['ids','documents','metadatas']
         )
         if len(all_keys['ids']) != 0:
             key_ids = all_keys['ids']
             keys = all_keys['documents']
             metadatas = all_keys['metadatas']
             doc_ids = []
+            activated = []
             for metadata in metadatas:
                 doc_ids.append(metadata['doc_id'])
-            docs = await self.vectordb.get_doc_by_id(user_id=user_id,embedding_ids=doc_ids)
+                activated.append(metadata['activated'])
+            docs = await self.vectordb.get_doc_by_id(user_id=self.user_id,embedding_ids=doc_ids)
             docs = [" ".join(parse_list(doc)) for doc in docs] 
-            key_zip = zip(key_ids, keys, doc_ids, docs)
+            key_zip = zip(key_ids, keys, doc_ids, docs, activated)
         else:
             key_zip = None
 
         all_tips = await self.vectordb.get_all_tip(
-            user_id=user_id,extracts=['ids','documents','metadatas']
+            user_id=self.user_id,extracts=['ids','documents','metadatas']
         )
         if len(all_tips['ids']) != 0:
             tip_ids = all_tips['ids']
             tips = all_tips['documents']
-            metadatas = all_keys['metadatas']
-            tip_zip = zip(tip_ids, tips)
+            metadatas = all_tips['metadatas']
+            activated = [metadata['activated'] for metadata in metadatas]
+            tip_zip = zip(tip_ids, tips, activated)
         else:
             tip_zip = None
 
@@ -92,9 +94,15 @@ class Manager:
     async def remove_doc(
         self, 
         embedding_id: str | list,
-        user_id: str = None,
     ):
-        await self.vectordb.remove_data(embedding_id=embedding_id,user_id=user_id)
+        await self.vectordb.remove_data(embedding_id=embedding_id)
+
+    async def update_activated(
+        self, 
+        embedding_id: str | list,
+        activated: int,
+    ):
+        await self.vectordb.update_activated(embedding_id=embedding_id, activated=activated)
     
     async def chat(
         self,

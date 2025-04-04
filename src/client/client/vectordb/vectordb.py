@@ -1,6 +1,4 @@
-import asyncio
 import chromadb
-from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 from .vectordb_base import VectorDB_Base
 from pyparsing import Word, alphas, oneOf, Optional, Group, ZeroOrMore, Combine, OneOrMore, White, nums
@@ -96,7 +94,7 @@ class VectorDB(VectorDB_Base):
                 ids=embedding_id,
                 documents=key,
                 embeddings=self.generate_embedding(key),
-                metadatas={"doc_id": doc_id, "user_id": user_id}
+                metadatas={"doc_id": doc_id, "user_id": user_id, "activated": 1}
             )
             print("Add_key: ", key, " Key_Rela_Doc_id: ", doc_id, " user_id: ", user_id)
 
@@ -128,7 +126,7 @@ class VectorDB(VectorDB_Base):
             ids=embedding_id,
             documents=tip,
             embeddings=self.generate_embedding(tip),
-            metadatas={"user_id": user_id}
+            metadatas={"user_id": user_id, "activated": 1}
         )
         print("Add_tip: ", tip, " ID: ", embedding_id, " user_id: ", user_id)
 
@@ -167,8 +165,10 @@ class VectorDB(VectorDB_Base):
             )
             return
         else:
-            expression = [item.lower().replace('_',' ').replace('-',' ') 
-                          if len(item) > 1 else item for item in result]
+            expression = [
+                item.lower().replace('_',' ').replace('-',' ') 
+                if len(item) > 1 else item for item in result
+            ]
         key = expression[0]
         right_hand_size = expression[2:]
         for enum, entity in enumerate(right_hand_size,start=2):
@@ -307,9 +307,26 @@ class VectorDB(VectorDB_Base):
             metadata={"hnsw:space": "cosine"},
         )
         if user_id:
-            where_dict = {"user_id":user_id}
+            where_dict = {
+                "$and": [
+                    {
+                        "user_id": {
+                            "$eq": user_id
+                        }   
+                    },
+                    {
+                        "activated": {
+                            "$eq": 1
+                        }
+                    }
+                ]
+            }
         else:
-            where_dict = None
+            where_dict = {
+                "activated": {
+                    "$eq": 1
+                }
+            }
 
         if extracts is None:
             extracts = 'documents'
@@ -338,9 +355,26 @@ class VectorDB(VectorDB_Base):
             metadata={"hnsw:space": "cosine"},
         )
         if user_id:
-            where_dict = {"user_id":user_id}
+            where_dict = {
+                "$and": [
+                    {
+                        "user_id": {
+                            "$eq": user_id
+                        }   
+                    },
+                    {
+                        "activated": {
+                            "$eq": 1
+                        }
+                    }
+                ]
+            }
         else:
-            where_dict = None
+            where_dict = {
+                "activated": {
+                    "$eq": 1
+                }
+            }
 
         if extracts is None:
             extracts = 'documents'
@@ -474,13 +508,8 @@ class VectorDB(VectorDB_Base):
     async def remove_data(
         self, 
         embedding_id: str | list,
-        user_id: str = None,
     ) -> bool:
         chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
-        if user_id:
-            where_dict = {"user_id":user_id}
-        else:
-            where_dict = None
 
         ids = [embedding_id] if isinstance(embedding_id, str) else embedding_id
         for id in ids:
@@ -491,7 +520,7 @@ class VectorDB(VectorDB_Base):
                     metadata={"hnsw:space": "cosine"},
                 )
                 await key_collection.delete(
-                    ids=[id],where=where_dict
+                    ids=id
                 )
             elif id.endswith("-doc"):
                 document_collection = await chroma_client.get_or_create_collection(
@@ -500,18 +529,17 @@ class VectorDB(VectorDB_Base):
                     metadata={"hnsw:space": "cosine"},
                 )
                 res = await document_collection.get(
-                    ids=[id],where=where_dict
+                    ids=id
                 )
                 key_num = res['metadatas'][0]['key_num'] - 1
                 if key_num == 0:
                     await document_collection.delete(
-                        ids=[id],
-                        where=where_dict
+                        ids=id,
                     )
                 else:
                     await document_collection.update(
-                        ids=[id],
-                        metadatas={"user_id": user_id, "key_num": key_num}
+                        ids=id,
+                        metadatas={"key_num": key_num}
                     )
             elif id.endswith("-tip"):
                 tip_collection = await chroma_client.get_or_create_collection(
@@ -520,7 +548,41 @@ class VectorDB(VectorDB_Base):
                     metadata={"hnsw:space": "cosine"},
                 )
                 await tip_collection.delete(
-                    ids=[id],where=where_dict
+                    ids=id
                 )
+            else:
+                raise Exception('The suffix of the embedding_id is incorrect.')
+            
+    async def update_activated(
+        self, 
+        embedding_id: str | list,
+        activated: int,
+    ) -> bool:
+        chroma_client = await chromadb.AsyncHttpClient(host=self.host, port=self.port)
+
+        ids = [embedding_id] if isinstance(embedding_id, str) else embedding_id
+        for id in ids:
+            if id.endswith("-key"):
+                key_collection = await chroma_client.get_or_create_collection(
+                    name="key",
+                    embedding_function=self.embedding_function,
+                    metadata={"hnsw:space": "cosine"},
+                )
+                await key_collection.update(
+                    ids=id,
+                    metadatas={"activated": activated}
+                )
+
+            elif id.endswith("-tip"):
+                tip_collection = await chroma_client.get_or_create_collection(
+                    name="tip",
+                    embedding_function=self.embedding_function,
+                    metadata={"hnsw:space": "cosine"},
+                )
+                await tip_collection.update(
+                    ids=id,
+                    metadatas={"activated": activated}
+                )
+
             else:
                 raise Exception('The suffix of the embedding_id is incorrect.')
