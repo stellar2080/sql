@@ -1,7 +1,6 @@
 import reflex as rx
 from .base_st import BaseState
-from datetime import datetime
-from typing import List, Dict
+from typing import List
 from client.manager.manager import Manager
 
 class Doc(rx.Base):
