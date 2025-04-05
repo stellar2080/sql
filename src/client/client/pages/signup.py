@@ -158,16 +158,6 @@ def signup():
                 ),
                 width="600px",
             ),
-            alert_dialog(
-                description=SignupState.signup_dialog_description,
-                on_click=SignupState.signup_dialog_open_change,
-                open=SignupState.signup_dialog_open
-            ),
-            alert_dialog(
-                description=SignupState.signup_dialog_description,
-                on_click=SignupState.signup_success_redirect,
-                open=SignupState.signupsuccess_dialog_open
-            ),
             width="100%",
             height="100vh",
         )

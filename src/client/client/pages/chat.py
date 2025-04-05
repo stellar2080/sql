@@ -163,6 +163,14 @@ def action_bar() -> rx.Component:
                         variant='surface',
                         on_click=rx.scroll_to("bottom"),
                     ),
+                    rx.button(
+                        rx.icon('message-circle-off',size=15),
+                        "清空对话",
+                        type='button',
+                        variant='surface',
+                        on_click=ChatState.clear_chat,
+                        disabled=ChatState.chat_empty
+                    ),
                     align_items="center",
                 ),
                 on_submit=ChatState.AI_process_question,

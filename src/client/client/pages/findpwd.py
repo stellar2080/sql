@@ -137,16 +137,6 @@ def findpwd():
                 ),
                 width="600px",
             ),
-            alert_dialog(
-                description=FindpwdState.findpwd_dialog_description,
-                on_click=FindpwdState.findpwd_dialog_open_change,
-                open=FindpwdState.findpwd_dialog_open
-            ),
-            alert_dialog(
-                description=FindpwdState.findpwd_dialog_description,
-                on_click=FindpwdState.findpwd_success_redirect,
-                open=FindpwdState.findpwdsuccess_dialog_open
-            ),
             width="100%",
             height="100vh",
         )

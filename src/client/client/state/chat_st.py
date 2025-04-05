@@ -124,13 +124,22 @@ class ChatState(BaseState):
 
     @rx.event
     def copy_answer_text(self, qa: QA):
-        yield rx.toast('成功复制文本到剪贴板')
+        yield rx.toast.success('成功复制文本到剪贴板', duration=2000)
         return rx.set_clipboard(qa.answer_text)
     
     @rx.event
     def copy_table(self, qa: QA):
-        yield rx.toast('成功复制表到剪贴板')
+        yield rx.toast.success('成功复制表到剪贴板', duration=2000)
         return rx.set_clipboard(str({'cols':qa.table_cols,'data':qa.table_datas}))
+
+    @rx.var
+    def chat_empty(self) -> bool:
+        return len(self.current_chat) == 0
+
+    @rx.event
+    def clear_chat(self):
+        self.current_chat.clear()
+        return rx.toast.success("清空对话成功", duration=2000)
 
     @rx.event
     def on_load(self):
@@ -180,191 +189,150 @@ class ChatState(BaseState):
         if platform == 'Tongyi':
             api_key = form_data.get('api_key')
             if api_key == '':
-                self.base_dialog_description = "请输入api_key"
-                return self.base_dialog_open_change()
+                return rx.toast.error("请输入api_key", duration=2000)
             
             if not (is_valid_ipv4(LLM_HOST) or LLM_HOST.lower() == 'localhost' or LLM_HOST == ''):
-                self.base_dialog_description = "请输入正确的ip地址或将ip地址置空"
-                return self.base_dialog_open_change()
+                return rx.toast.error("请输入正确的ip地址或将ip地址置空", duration=2000)
 
             if LLM_PORT.isdigit():
                 LLM_PORT = int(LLM_PORT)
                 if LLM_PORT < 0 or LLM_PORT > 65535:
-                    self.base_dialog_description = "端口号范围应为：[0, 65535]"
-                    return self.base_dialog_open_change()
+                    return rx.toast.error("端口号范围应为：[0, 65535]", duration=2000)
             elif LLM_PORT == '':
                 LLM_PORT = -1
             else:
-                self.base_dialog_description = "请输入正确的端口号或将端口号置空"
-                return self.base_dialog_open_change()
+                return rx.toast.error("请输入正确的端口号或将端口号置空", duration=2000)
             
         elif platform == 'Custom':
             if not (is_valid_ipv4(LLM_HOST) or LLM_HOST.lower() == 'localhost'):
-                self.base_dialog_description = "请输入正确的ip地址"
-                return self.base_dialog_open_change()
+                return rx.toast.error("请输入正确的ip地址", duration=2000)
             
             if not LLM_PORT.isdigit():
-                self.base_dialog_description = "请输入正确的端口号"
-                return self.base_dialog_open_change()
+                return rx.toast.error("请输入正确的端口号", duration=2000)
             LLM_PORT = int(LLM_PORT)
             if LLM_PORT < 0 or LLM_PORT > 65535:
-                self.base_dialog_description = "端口号范围应为：[0, 65535]"
-                return self.base_dialog_open_change()
+                return rx.toast.error("端口号范围应为：[0, 65535]", duration=2000)
 
         MAX_ITERATIONS = form_data.get('MAX_ITERATIONS')
         if not MAX_ITERATIONS.isdigit():
-            self.base_dialog_description = "最大修正轮次的取值应为整数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("最大修正轮次的取值应为整数", duration=2000)
         MAX_ITERATIONS = int(MAX_ITERATIONS)
         if MAX_ITERATIONS < 0 or MAX_ITERATIONS > 10:
-            self.base_dialog_description = "最大修正轮次的取值范围应为：[0, 10]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("最大修正轮次的取值范围应为：[0, 10]", duration=2000)
 
         DO_SAMPLE = True if form_data.get('DO_SAMPLE') == 'on' else False
     
         TEMPERATURE = form_data.get('TEMPERATURE')
         if not is_float(TEMPERATURE):
-            self.base_dialog_description = "TEMPERATURE的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("TEMPERATURE的取值应为小数", duration=2000)
         TEMPERATURE = float(TEMPERATURE)
         if TEMPERATURE < 0 or TEMPERATURE >= 2.0:
-            self.base_dialog_description = "TEMPERATURE的取值范围应为：[0, 2.0)"
-            return self.base_dialog_open_change()
+            return rx.toast.error("TEMPERATURE的取值范围应为：[0, 2.0)", duration=2000)
         
         TOP_P = form_data.get('TOP_P')
         if not is_float(TOP_P):
-            self.base_dialog_description = "TOP_P的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("TOP_P的取值应为小数", duration=2000)
         TOP_P = float(TOP_P)
         if TOP_P <= 0 or TOP_P > 1.0:
-            self.base_dialog_description = "TOP_P的取值范围应为：(0,1.0]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("TOP_P的取值范围应为：(0,1.0]", duration=2000)
 
         MAX_TOKENS = form_data.get('MAX_TOKENS')
         if not MAX_TOKENS.isdigit():
-            self.base_dialog_description = "MAX_TOKENS的取值应为整数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("MAX_TOKENS的取值应为整数", duration=2000)
         MAX_TOKENS = int(MAX_TOKENS)
         if MAX_TOKENS < 100 or MAX_TOKENS > 8192:
-            self.base_dialog_description = "MAX_TOKENS的取值范围应为：[100,8192]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("MAX_TOKENS的取值范围应为：[100,8192]", duration=2000)
         
         N_RESULTS = form_data.get('N_RESULTS')
         if not N_RESULTS.isdigit():
-            self.base_dialog_description = "N_RESULTS的取值应为整数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("N_RESULTS的取值应为整数", duration=2000)
         N_RESULTS = int(N_RESULTS)
         if N_RESULTS < 1 or N_RESULTS > 10:
-            self.base_dialog_description = "N_RESULTS的取值范围应为：[1,10]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("N_RESULTS的取值范围应为：[1,10]", duration=2000)
 
         E_HINT_THRESHOLD = form_data.get('E_HINT_THRESHOLD')
         if not is_float(E_HINT_THRESHOLD):
-            self.base_dialog_description = "E_HINT_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_HINT_THRESHOLD的取值应为小数", duration=2000)
         E_HINT_THRESHOLD = float(E_HINT_THRESHOLD)
         if E_HINT_THRESHOLD <= 0 or E_HINT_THRESHOLD > 1.0:
-            self.base_dialog_description = "E_HINT_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_HINT_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
 
         E_COL_THRESHOLD = form_data.get('E_COL_THRESHOLD')
         if not is_float(E_COL_THRESHOLD):
-            self.base_dialog_description = "E_COL_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_COL_THRESHOLD的取值应为小数", duration=2000)
         E_COL_THRESHOLD = float(E_COL_THRESHOLD)
         if E_COL_THRESHOLD <= 0 or E_COL_THRESHOLD > 1.0:
-            self.base_dialog_description = "E_COL_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_COL_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
 
         E_VAL_THRESHOLD = form_data.get('E_VAL_THRESHOLD')
         if not is_float(E_VAL_THRESHOLD):
-            self.base_dialog_description = "E_VAL_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_VAL_THRESHOLD的取值应为小数", duration=2000)
         E_VAL_THRESHOLD = float(E_VAL_THRESHOLD)
         if E_VAL_THRESHOLD <= 0 or E_VAL_THRESHOLD > 1.0:
-            self.base_dialog_description = "E_VAL_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_VAL_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
 
         E_COL_STRONG_THRESHOLD = form_data.get('E_COL_STRONG_THRESHOLD')
         if not is_float(E_COL_STRONG_THRESHOLD):
-            self.base_dialog_description = "E_COL_STRONG_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_COL_STRONG_THRESHOLD的取值应为小数", duration=2000)
         E_COL_STRONG_THRESHOLD = float(E_COL_STRONG_THRESHOLD)
         if E_COL_STRONG_THRESHOLD <= 0 or E_COL_STRONG_THRESHOLD > 1.0:
-            self.base_dialog_description = "E_COL_STRONG_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_COL_STRONG_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         E_VAL_STRONG_THRESHOLD = form_data.get('E_VAL_STRONG_THRESHOLD')
         if not is_float(E_VAL_STRONG_THRESHOLD):
-            self.base_dialog_description = "E_VAL_STRONG_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_VAL_STRONG_THRESHOLD的取值应为小数", duration=2000)
         E_VAL_STRONG_THRESHOLD = float(E_VAL_STRONG_THRESHOLD)
         if E_VAL_STRONG_THRESHOLD <= 0 or E_VAL_STRONG_THRESHOLD > 1.0:
-            self.base_dialog_description = "E_VAL_STRONG_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("E_VAL_STRONG_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         F_HINT_THRESHOLD = form_data.get('F_HINT_THRESHOLD')
         if not is_float(F_HINT_THRESHOLD):
-            self.base_dialog_description = "F_HINT_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_HINT_THRESHOLD的取值应为小数", duration=2000)
         F_HINT_THRESHOLD = float(F_HINT_THRESHOLD)
         if F_HINT_THRESHOLD <= 0 or F_HINT_THRESHOLD > 1.0:
-            self.base_dialog_description = "F_HINT_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_HINT_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         F_COL_THRESHOLD = form_data.get('F_COL_THRESHOLD')
         if not is_float(F_COL_THRESHOLD):
-            self.base_dialog_description = "F_COL_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_COL_THRESHOLD的取值应为小数", duration=2000)
         F_COL_THRESHOLD = float(F_COL_THRESHOLD)
         if F_COL_THRESHOLD <= 0 or F_COL_THRESHOLD > 1.0:
-            self.base_dialog_description = "F_COL_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_COL_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         F_LSH_THRESHOLD = form_data.get('F_LSH_THRESHOLD')
         if not is_float(F_LSH_THRESHOLD):
-            self.base_dialog_description = "F_LSH_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_LSH_THRESHOLD的取值应为小数", duration=2000)
         F_LSH_THRESHOLD = float(F_LSH_THRESHOLD)
         if F_LSH_THRESHOLD <= 0 or F_LSH_THRESHOLD > 1.0:
-            self.base_dialog_description = "F_LSH_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_LSH_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         F_VAL_THRESHOLD = form_data.get('F_VAL_THRESHOLD')
         if not is_float(F_VAL_THRESHOLD):
-            self.base_dialog_description = "F_VAL_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_VAL_THRESHOLD的取值应为小数", duration=2000)
         F_VAL_THRESHOLD = float(F_VAL_THRESHOLD)
         if F_VAL_THRESHOLD <= 0 or F_VAL_THRESHOLD > 1.0:
-            self.base_dialog_description = "F_VAL_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_VAL_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         F_COL_STRONG_THRESHOLD = form_data.get('F_COL_STRONG_THRESHOLD')
         if not is_float(F_COL_STRONG_THRESHOLD):
-            self.base_dialog_description = "F_COL_STRONG_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_COL_STRONG_THRESHOLD的取值应为小数", duration=2000)
         F_COL_STRONG_THRESHOLD = float(F_COL_STRONG_THRESHOLD)
         if F_COL_STRONG_THRESHOLD <= 0 or F_COL_STRONG_THRESHOLD > 1.0:
-            self.base_dialog_description = "F_COL_STRONG_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_COL_STRONG_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         F_VAL_STRONG_THRESHOLD = form_data.get('F_VAL_STRONG_THRESHOLD')
         if not is_float(F_VAL_STRONG_THRESHOLD):
-            self.base_dialog_description = "F_VAL_STRONG_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_VAL_STRONG_THRESHOLD的取值应为小数", duration=2000)
         F_VAL_STRONG_THRESHOLD = float(F_VAL_STRONG_THRESHOLD)
         if F_VAL_STRONG_THRESHOLD <= 0 or F_VAL_STRONG_THRESHOLD > 1.0:
-            self.base_dialog_description = "F_VAL_STRONG_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("F_VAL_STRONG_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
         
         G_HINT_THRESHOLD = form_data.get('G_HINT_THRESHOLD')
         if not is_float(G_HINT_THRESHOLD):
-            self.base_dialog_description = "G_HINT_THRESHOLD的取值应为小数"
-            return self.base_dialog_open_change()
+            return rx.toast.error("G_HINT_THRESHOLD的取值应为小数", duration=2000)
         G_HINT_THRESHOLD = float(G_HINT_THRESHOLD)
         if G_HINT_THRESHOLD <= 0 or G_HINT_THRESHOLD > 1.0:
-            self.base_dialog_description = "G_HINT_THRESHOLD的取值范围应为：(0,1.00]"
-            return self.base_dialog_open_change()
+            return rx.toast.error("G_HINT_THRESHOLD的取值范围应为：(0,1.00]", duration=2000)
 
         self.platform = platform
         self.model = model
@@ -421,8 +389,7 @@ class ChatState(BaseState):
             ai_config.G_HINT_THRESHOLD = G_HINT_THRESHOLD
             session.add(ai_config)
             session.commit()
-        self.base_dialog_description = "保存设置成功"
-        return self.base_dialog_open_change()
+        return rx.toast.success("保存设置成功", duration=2000)
 
     def init_manager(self):
         return Manager(

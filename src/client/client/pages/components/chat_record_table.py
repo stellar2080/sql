@@ -301,11 +301,6 @@ def main_table() -> rx.Component:
                     variant="surface",
                     on_click=ChatRecordState.clear_record
                 ),
-                alert_dialog(
-                    description=ChatRecordState.base_dialog_description,
-                    on_click=ChatRecordState.base_dialog_open_change,
-                    open=ChatRecordState.base_dialog_open
-                ),
                 align="center",
                 justify="end",
                 spacing="3",

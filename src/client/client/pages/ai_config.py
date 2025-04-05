@@ -639,10 +639,5 @@ def ai_config() -> rx.Component:
                 left="15%",
                 width="85%",
             ),
-            alert_dialog(
-                description=ChatState.base_dialog_description,
-                on_click=ChatState.base_dialog_open_change,
-                open=ChatState.base_dialog_open
-            ),
         )
     )

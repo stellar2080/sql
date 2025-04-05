@@ -15,23 +15,6 @@ class SignupState(rx.State):
     countdown: int = 0
     captcha: str = None
 
-    signup_dialog_description: str = ""
-    signup_dialog_open: bool = False
-    signupsuccess_dialog_open: bool = False
-
-    @rx.event
-    def signup_dialog_open_change(self):
-        self.signup_dialog_open = not self.signup_dialog_open
-
-    @rx.event
-    def signupsuccess_dialog_open_change(self):
-        self.signupsuccess_dialog_open = not self.signupsuccess_dialog_open
-
-    @rx.event
-    def signup_success_redirect(self):
-        self.signupsuccess_dialog_open_change()
-        return rx.redirect("/login")
-
     @rx.event
     def set_email(self, email: str):
         self.email = email
@@ -48,20 +31,16 @@ class SignupState(rx.State):
     @rx.event
     def send_email(self): 
         if self.email == "":
-            self.signup_dialog_description = "邮箱不能为空"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("邮箱不能为空", duration=2000)
         elif not validate_email(email=self.email):
-            self.signup_dialog_description = "邮箱格式错误"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("邮箱格式错误", duration=2000)
         with rx.session() as session:
             if session.exec(select(User).where(User.email == self.email)).first():
-                self.signup_dialog_description = "邮箱已被注册"
-                return self.signup_dialog_open_change()
+                return rx.toast.error("邮箱已被注册", duration=2000)
         self.send_time = datetime.datetime.now()
         self.captcha = send_email(msg_to=self.email)
         print(self.captcha)
-        self.signup_dialog_description = "验证码发送成功!"
-        self.signup_dialog_open_change()
+        yield rx.toast.success("验证码发送成功", duration=2000)
         return SignupState.count
 
     @rx.event(background=True)
@@ -84,39 +63,28 @@ class SignupState(rx.State):
         confirm_password = form_data.get('confirm_password','')
         if username == "" or password == "" or email == "" or \
             captcha=="" or confirm_password=="":
-            self.signup_dialog_description = "请填写所有信息"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("请填写所有信息", duration=2000)
         if " " in username:
-            self.signup_dialog_description = "用户名不能含有空格"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("用户名不能含有空格", duration=2000)
         if len(username) < 6 or len(username) > 10:
-            self.signup_dialog_description = "用户名长度应在6位到10位间"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("用户名长度应在6位到10位间", duration=2000)
         if " " in password:
-            self.signup_dialog_description = "密码不能含有空格"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("密码不能含有空格", duration=2000)
         if len(password) < 8 or len(password) > 15:
-            self.signup_dialog_description = "密码长度应在8位到15位间"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("密码长度应在8位到15位间", duration=2000)
         if not validate_email(email=email):
-            self.signup_dialog_description = "邮箱格式错误"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("邮箱格式错误", duration=2000)
         if password != confirm_password:
-            self.signup_dialog_description = "密码与确认密码需完全相同"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("密码与确认密码需完全相同", duration=2000)
         if self.email != email or self.captcha != captcha:
-            self.signup_dialog_description = "验证码错误"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("验证码错误", duration=2000)
         if (datetime.datetime.now() - self.send_time).total_seconds() > 300:
-            self.signup_dialog_description = "验证码已过期"
-            return self.signup_dialog_open_change()
+            return rx.toast.error("验证码已过期", duration=2000)
         with rx.session() as session:
             if session.exec(select(User).where(User.username == username)).first():
-                self.signup_dialog_description = "用户名已存在"
-                return self.signup_dialog_open_change()
+                return rx.toast.error("用户名已存在", duration=2000)
             if session.exec(select(User).where(User.email == email)).first():
-                self.signup_dialog_description = "邮箱已被注册"
-                return self.signup_dialog_open_change()
+                return rx.toast.error("邮箱已被注册", duration=2000)
             salt = bcrypt.gensalt()
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
             print(hashed_password)
@@ -161,6 +129,7 @@ class SignupState(rx.State):
             session.add(settings)
             session.add(ai_config)
             session.commit()
-        self.signup_dialog_description = "注册成功，点击确定返回登录页面"
         self.reset_countdown()
-        return self.signupsuccess_dialog_open_change()
+        self.email = ""
+        yield rx.toast.success("注册成功，已返回登录页面", duration=2000)
+        return rx.redirect("/login")

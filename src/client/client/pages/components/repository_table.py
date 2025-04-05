@@ -366,11 +366,6 @@ def main_table() -> rx.Component:
                     variant="surface",
                     on_click=RepositoryState.clear_doc
                 ),
-                alert_dialog(
-                    description=RepositoryState.base_dialog_description,
-                    on_click=RepositoryState.base_dialog_open_change,
-                    open=RepositoryState.base_dialog_open
-                ),
                 align="center",
                 justify="end",
                 spacing="3",

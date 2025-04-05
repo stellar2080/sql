@@ -152,12 +152,11 @@ class RepositoryState(BaseState):
 
     @rx.event
     async def refresh(self):
-        self.base_dialog_description='刷新成功'
-        self.base_dialog_open_change()
-        await self.load_entries()
+        await self.load_entries()   
         self.setvar("search_value","")
         self.setvar("sort_value","")
         self.setvar("sort_reverse",False)
+        return rx.toast.success("刷新成功", duration=2000)
 
     @rx.event
     async def delete_doc(self, doc: Doc):
@@ -167,6 +166,7 @@ class RepositoryState(BaseState):
             await manager.remove_doc(embedding_id=[doc.key_id,doc.doc_id])
         else:
             await manager.remove_doc(embedding_id=doc.doc_id)
+        return rx.toast.success("删除成功", duration=2000)
 
     @rx.event
     async def update_activated(self, doc: Doc):
@@ -190,6 +190,7 @@ class RepositoryState(BaseState):
                 embedding_id=doc.doc_id,
                 activated=1 if doc.activated else 0,
             )
+        return rx.toast.success("修改成功", duration=2000)
     
     @rx.event
     async def handle_upload(
@@ -198,8 +199,7 @@ class RepositoryState(BaseState):
         manager = self.init_manager()
         for file in files:
             if not file._deprecated_filename.endswith('.txt'):
-                self.base_dialog_description='仅支持txt格式的文件'
-                yield self.base_dialog_open_change()
+                yield rx.toast.error("仅支持txt格式的文件", duration=2000)
                 return
         yield self.upload_dialog_open_change()
         for file in files:
@@ -207,6 +207,7 @@ class RepositoryState(BaseState):
                 text_line = bytes_line.decode('utf-8').strip()
                 await manager.add_doc(text_line)
         yield self.upload_dialog_open_change()
+        yield rx.toast.success('文件已解析完毕', duration=2000)
         await self.load_entries()
 
     @rx.event
@@ -220,3 +221,4 @@ class RepositoryState(BaseState):
         self.setvar("sort_reverse",False)
         manager = self.init_manager()
         await manager.clear_doc()
+        return rx.toast.success('清空成功',duration=2000)

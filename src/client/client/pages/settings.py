@@ -88,16 +88,6 @@ def settings() -> rx.Component:
                 left="15%",
                 width="85%",
             ),
-            alert_dialog(
-                description=BaseState.base_dialog_description,
-                on_click=BaseState.settings_reset_open_change,
-                open=BaseState.settings_reset_open
-            ),
-            alert_dialog(
-                description=BaseState.base_dialog_description,
-                on_click=BaseState.settings_saved_open_change,
-                open=BaseState.settings_saved_open
-            ),
         )
     )
             

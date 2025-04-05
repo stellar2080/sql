@@ -48,16 +48,6 @@ def change_username() -> rx.Component:
                 on_submit=AccountState.change_username,
                 reset_on_submit=False,
             ),
-            alert_dialog(
-                description=AccountState.base_dialog_description,
-                on_click=AccountState.account_dialog_open_change,
-                open=AccountState.account_dialog_open
-            ),
-            alert_dialog(
-                description=AccountState.base_dialog_description,
-                on_click=AccountState.close_all_dialog,
-                open=AccountState.success_dialog_open
-            ),
             max_width="450px",
         ),
         open=AccountState.change_username_dialog_open
@@ -132,16 +122,6 @@ def change_email() -> rx.Component:
                 on_submit=AccountState.change_email,
                 reset_on_submit=False,
             ),
-            alert_dialog(
-                description=AccountState.base_dialog_description,
-                on_click=AccountState.account_dialog_open_change,
-                open=AccountState.account_dialog_open
-            ),
-            alert_dialog(
-                description=AccountState.base_dialog_description,
-                on_click=AccountState.close_all_dialog,
-                open=AccountState.success_dialog_open
-            ),
             max_width="450px",
         ),
         open=AccountState.change_email_dialog_open
@@ -198,16 +178,6 @@ def change_password() -> rx.Component:
                 width="100%",
                 on_submit=AccountState.change_password,
                 reset_on_submit=False,
-            ),
-            alert_dialog(
-                description=AccountState.base_dialog_description,
-                on_click=AccountState.account_dialog_open_change,
-                open=AccountState.account_dialog_open
-            ),
-            alert_dialog(
-                description=AccountState.base_dialog_description,
-                on_click=AccountState.close_all_dialog,
-                open=AccountState.success_dialog_open
             ),
             max_width="450px",
         ),
