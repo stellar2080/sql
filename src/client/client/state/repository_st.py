@@ -29,12 +29,7 @@ class RepositoryState(BaseState):
     offset: int = 0
     limit: int = 10
 
-    delete_dialog_open: bool = False
     upload_dialog_open: bool = False
-
-    @rx.event
-    def delete_dialog_open_change(self):
-        self.delete_dialog_open = not self.delete_dialog_open
     
     @rx.event
     def upload_dialog_open_change(self):

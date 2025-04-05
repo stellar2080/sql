@@ -119,6 +119,7 @@ class AccountState(BaseState):
             session.add(user)
             session.commit()
         self.reset_countdown()
+        self.email = ''
         yield rx.toast.success("修改邮箱成功", duration=2000)
         return self.change_email_dialog_open_change()
 

@@ -16,12 +16,6 @@ class Item(rx.Base):
 
 class ChatRecordState(BaseState):
 
-    @rx.event
-    def on_load(self):
-        if not self.logged_in:
-            return rx.redirect("/login")
-        self.load_entries()
-
     items: List[Item] = []
 
     search_value: str = ""
@@ -32,11 +26,11 @@ class ChatRecordState(BaseState):
     offset: int = 0
     limit: int = 10
 
-    delete_dialog_open: bool = False
-
     @rx.event
-    def delete_dialog_open_change(self):
-        self.delete_dialog_open = not self.delete_dialog_open
+    def on_load(self):
+        if not self.logged_in:
+            return rx.redirect("/login")
+        self.load_entries()
 
     @rx.event
     def delete_item(self, item: Item):

@@ -10,6 +10,11 @@ class BaseState(rx.State):
     email: str = None
     password: str = None
 
+    accent_color: str = "violet"
+    gray_color: str = "gray"
+    radius: str = "large"
+    scaling: str = "100%"
+
     @rx.event
     def login(self, form_data: dict):
         user = form_data.get('user','')
@@ -57,11 +62,6 @@ class BaseState(rx.State):
         if not self.logged_in:
             return rx.redirect("/login")
         
-    accent_color: str = "violet"
-    gray_color: str = "gray"
-    radius: str = "large"
-    scaling: str = "100%"
-
     @rx.event()
     def load_settings(self):
         with rx.session() as session:
