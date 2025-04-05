@@ -161,10 +161,10 @@ def _upload_dialog() -> rx.Component:
                 ),
                 width='100%'
             ),
-            rx.alert_dialog.root(
-                rx.alert_dialog.content(
-                    rx.alert_dialog.title("系统信息"),
-                    rx.alert_dialog.description(
+            rx.dialog.root(
+                rx.dialog.content(
+                    rx.dialog.title("系统信息"),
+                    rx.dialog.description(
                         '正在解析文件，请稍等....'
                     ),
                     max_width='450px'

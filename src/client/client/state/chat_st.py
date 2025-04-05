@@ -123,6 +123,16 @@ class ChatState(BaseState):
         return str(self.LLM_PORT)
 
     @rx.event
+    def copy_answer_text(self, qa: QA):
+        yield rx.toast('成功复制文本到剪贴板')
+        return rx.set_clipboard(qa.answer_text)
+    
+    @rx.event
+    def copy_table(self, qa: QA):
+        yield rx.toast('成功复制表到剪贴板')
+        return rx.set_clipboard(str({'cols':qa.table_cols,'data':qa.table_datas}))
+
+    @rx.event
     def on_load(self):
         if not self.logged_in:
             return rx.redirect("/login")
@@ -475,11 +485,11 @@ class ChatState(BaseState):
             self.current_chat[-1].show_text=True
         await asyncio.sleep(1)
         message = {
-            'sql': 'SELECT * \nFROM CASDWA',
+            'sql': 'SELECT * \nFROM STUDENT',
             'sql_result': {
                 'cols': ['c1','c2','c3','c4','c5','c6','c7'],
                 'rows': [
-                    (1, 'Apple', 15.2, True, '2023-05-01', 'New York', 1024),
+                    (1, 'GOON', 15.2, True, '2023-05-01', 'New York', 1024),
                     (2, 'Banana', 8.7, False, '2023-05-02', 'Los Angeles', 768),
                     (3, 'Orange', 12.1, True, '2023-05-03', 'Chicago', 1536),
                     (4, 'Grape', 5.5, False, '2023-05-04', 'Houston', 512),
@@ -580,5 +590,3 @@ class ChatState(BaseState):
         #         with rx.session() as session:
         #             session.add(chat_record)
         #             session.commit()
-        
-        

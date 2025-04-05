@@ -76,8 +76,35 @@ def _detail_dialog(item: Item) -> rx.Component:
                                 data=item.sql_result['rows'],
                                 columns=item.sql_result['cols'],
                                 pagination=True,
-                                sort=True,        
+                                sort=True,    
                             ),
+                        ),
+                        rx.hstack(
+                            rx.tooltip(
+                                rx.icon(
+                                    "copy",
+                                    size=28,
+                                    stroke_width=1.5,
+                                    cursor="pointer",
+                                    flex_shrink="0",
+                                    on_click=ChatRecordState.copy_sql(item),
+                                ),
+                                content='复制SQL'
+                            ),
+                            rx.tooltip(
+                                rx.icon(
+                                    "clipboard-list",
+                                    size=28,
+                                    stroke_width=1.5,
+                                    cursor="pointer",
+                                    flex_shrink="0",
+                                    on_click=ChatRecordState.copy_table(item),
+                                ),
+                                content='复制表'
+                            ),
+                            align='center',
+                            justify='start',
+                            spacing='3'
                         ),
                     )
                 ),

@@ -67,7 +67,37 @@ def message(qa: QA) -> rx.Component:
                             ),
                             max_width="72em",
                         ),
-                    )
+                    ),
+                    rx.cond(
+                        qa.show_text & qa.show_table,
+                        rx.hstack(
+                            rx.tooltip(
+                                rx.icon(
+                                    "copy",
+                                    size=28,
+                                    stroke_width=1.5,
+                                    cursor="pointer",
+                                    flex_shrink="0",
+                                    on_click=ChatState.copy_answer_text(qa),
+                                ),
+                                content='复制文本'
+                            ),
+                            rx.tooltip(
+                                rx.icon(
+                                    "clipboard-list",
+                                    size=28,
+                                    stroke_width=1.5,
+                                    cursor="pointer",
+                                    flex_shrink="0",
+                                    on_click=ChatState.copy_table(qa),
+                                ),
+                                content='复制表'
+                            ),
+                            align='center',
+                            justify='start',
+                            spacing='3'
+                        ),
+                    ),
                 ),
                 direction='row',
                 align='start',

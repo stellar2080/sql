@@ -158,3 +158,13 @@ class ChatRecordState(BaseState):
                 delete(ChatRecord).where(ChatRecord.user_id == self.user_id)
             )
             session.commit()
+
+    @rx.event
+    def copy_sql(self, item: Item):
+        yield rx.toast('成功复制SQL到剪贴板')
+        return rx.set_clipboard(item.sql)
+    
+    @rx.event
+    def copy_table(self, item: Item):
+        yield rx.toast('成功复制表到剪贴板')
+        return rx.set_clipboard(str(item.sql_result))
