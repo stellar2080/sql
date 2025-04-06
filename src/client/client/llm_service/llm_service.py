@@ -56,7 +56,7 @@ async def create_item(request: Request):
     return answer  
 
 if __name__ == '__main__':
-    LLM_HOST = 'localhost'
+    LLM_HOST = '127.0.0.1'
     LLM_PORT = 6006
     model_path = '/home/stellar/model/LLM-Research/Meta-Llama-3___1-8B-Instruct-bnb-4bit'
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=True, trust_remote_code=True)

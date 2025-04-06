@@ -15,13 +15,13 @@ class Reviser(Agent_Base):
     ):
         super().__init__()
         self.platform = config['platform']
-        self.target_db_path = config.get("target_db_path")
+        self.target_db_url = config.get("target_db_url")
 
     async def run_sql(
         self,
         sql: str,
     ) -> dict:
-        async with aiosqlite.connect(self.target_db_path) as db:
+        async with aiosqlite.connect(self.target_db_url) as db:
             cursor = await db.cursor()
             await cursor.execute(sql)
             rows = await cursor.fetchall()

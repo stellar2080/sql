@@ -126,6 +126,30 @@ def LLM_PORT() -> rx.Component:
         width='100%'
     ),
 
+def target_db_url() -> rx.Component:
+    return rx.hstack(
+        rx.icon("cog"),
+        rx.heading(
+            "target_db_url", 
+            size="5"
+        ),
+        rx.tooltip(
+            rx.icon("info", size=18),
+            content='''
+                需要被查询的目标数据库的url，目前仅支持sqlite
+            ''',
+        ),
+        rx.spacer(),
+        rx.input(
+            size='3',
+            default_value=ChatState.get_target_db_url,
+            name='target_db_url',
+            width='60%'
+        ),
+        align="center",
+        width='100%'
+    ),
+
 def MAX_ITERATIONS() -> rx.Component:
     return rx.hstack(
         rx.icon("cog"),
@@ -584,6 +608,7 @@ def ai_config() -> rx.Component:
                                 api_key(),
                                 LLM_HOST(),
                                 LLM_PORT(),
+                                target_db_url(),
                                 MAX_ITERATIONS(),
                                 DO_SAMPLE(),
                                 TEMPERATURE(),

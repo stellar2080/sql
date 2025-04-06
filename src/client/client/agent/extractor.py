@@ -13,7 +13,7 @@ class Extractor(Agent_Base):
     ):
         super().__init__()
         self.platform = config.get('platform')
-        self.target_db_path = config.get("target_db_path")
+        self.target_db_url = config.get("target_db_url")
         self.E_HINT_THRESHOLD = config.get('E_HINT_THRESHOLD')
         self.E_COL_THRESHOLD = config.get('E_COL_THRESHOLD')
         self.E_VAL_THRESHOLD = config.get('E_VAL_THRESHOLD')
@@ -45,7 +45,7 @@ class Extractor(Agent_Base):
     async def get_schema(
         self,
     ) -> tuple[list,list,list]:
-        async with aiosqlite.connect(self.target_db_path) as db:
+        async with aiosqlite.connect(self.target_db_url) as db:
             cursor = await db.cursor()
             await cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
             tbl_datas = await cursor.fetchall()
@@ -152,7 +152,7 @@ class Extractor(Agent_Base):
     ) -> tuple[set,set]:
         value_set = set()
         strong_rala_set = set()
-        async with aiosqlite.connect(self.target_db_path) as db:
+        async with aiosqlite.connect(self.target_db_url) as db:
             cursor = await db.cursor()
             for column in schema:
                 tbl_name = column[0]

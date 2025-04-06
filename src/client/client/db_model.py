@@ -25,6 +25,7 @@ class AIConfig(rx.Model, table=True):
     api_key: str
     LLM_HOST: str
     LLM_PORT: int
+    target_db_url: str
     MAX_ITERATIONS: int
     DO_SAMPLE: bool
     TEMPERATURE: float

@@ -16,8 +16,8 @@ from client.manager.manager import Manager
 #         'platform': 'Tongyi',
 #         'model': 'deepseek-v3',
 #         'api_key': "sk-9536a97947b641ad9e287da238ba3abb",
-#         'target_db_path': os.path.join(CLIENT_PATH,"dataset","Bank_Financials.sqlite"),
-#         'vectordb_host': 'localhost',
+#         'target_db_url': os.path.join(CLIENT_PATH,"dataset","Bank_Financials.sqlite"),
+#         'vectordb_host': '127.0.0.1',
 #         'vectordb_port': '8000',
 #         'MAX_ITERATIONS': 3,
 #         'DO_SAMPLE': False,
@@ -69,7 +69,7 @@ from client.manager.manager import Manager
 #         config={
 #             'user_id': '2D4xR2J0',
 #             'vectordb_only': True,
-#             'vectordb_host': 'localhost',
+#             'vectordb_host': '127.0.0.1',
 #             'vectordb_port': '8000',
 #         },
 #     )
@@ -96,10 +96,11 @@ from client.manager.manager import Manager
     #     config={
     #         'user_id': '2D4xR2J0',
     #         'vectordb_only': True,
-    #         'vectordb_host': 'localhost',
+    #         'vectordb_host': '127.0.0.1',
     #         'vectordb_port': '8000',
     #     },
     # )
     # with open(os.path.join(CLIENT_PATH,"knowledge","repository.txt"),mode='r',encoding='utf-8') as f:
     #     for line in f:
     #         manager.add_doc(line.strip())
+

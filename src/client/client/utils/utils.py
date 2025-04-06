@@ -13,6 +13,7 @@ import json
 import ast
 import numpy as np
 from chromadb.utils import embedding_functions
+from sqlalchemy.engine.url import make_url
 
 def system_message(message: str):
     return {'role': 'system', 'content': message}
@@ -155,3 +156,10 @@ def is_valid_ipv4(ip):
 def is_float(s):
     pattern = r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$'
     return bool(re.match(pattern, s))
+
+def is_valid_sqlite_url(url):
+    try:
+        parsed = make_url(url)
+        return parsed.drivername == 'sqlite'
+    except:
+        return False

@@ -1,10 +1,9 @@
 import asyncio
 import reflex as rx
 
-from client.utils.utils import is_valid_ipv4, is_float
+from client.utils.utils import is_valid_ipv4, is_float, is_valid_sqlite_url
 from .base_st import BaseState
 from client.manager.manager import Manager
-from rxconfig import target_db_path
 from client.utils.const import EXTRACTOR, FILTER, GENERATOR, REVISER, MANAGER
 from client.db_model import AIConfig, ChatRecord
 from datetime import datetime
@@ -27,8 +26,9 @@ class ChatState(BaseState):
     platform: str = 'Tongyi'
     model: str = 'qwen-max'
     api_key: str = ''
-    LLM_HOST: str = 'localhost'
+    LLM_HOST: str = '127.0.0.1'
     LLM_PORT: int = 6006
+    target_db_url: str = ''
     MAX_ITERATIONS: int = 3
     DO_SAMPLE: bool = False
     TEMPERATURE: float = 0.1
@@ -121,6 +121,10 @@ class ChatState(BaseState):
     @rx.var
     def get_LLM_PORT(self) -> str:
         return str(self.LLM_PORT)
+    
+    @rx.var
+    def get_target_db_url(self) -> str:
+        return str(self.target_db_url)
 
     @rx.event
     def copy_answer_text(self, qa: QA):
@@ -158,6 +162,7 @@ class ChatState(BaseState):
                 self.api_key = ai_config.api_key
                 self.LLM_HOST = ai_config.LLM_HOST
                 self.LLM_PORT = ai_config.LLM_PORT
+                self.target_db_url = ai_config.target_db_url
                 self.MAX_ITERATIONS = ai_config.MAX_ITERATIONS
                 self.DO_SAMPLE = ai_config.DO_SAMPLE
                 self.TEMPERATURE = ai_config.TEMPERATURE
@@ -212,6 +217,8 @@ class ChatState(BaseState):
             LLM_PORT = int(LLM_PORT)
             if LLM_PORT < 0 or LLM_PORT > 65535:
                 return rx.toast.error("端口号范围应为：[0, 65535]", duration=2000)
+
+        target_db_url = form_data.get('target_db_url')
 
         MAX_ITERATIONS = form_data.get('MAX_ITERATIONS')
         if not MAX_ITERATIONS.isdigit():
@@ -339,6 +346,7 @@ class ChatState(BaseState):
         self.api_key = api_key
         self.LLM_HOST = LLM_HOST
         self.LLM_PORT = LLM_PORT
+        self.target_db_url = target_db_url
         self.MAX_ITERATIONS = MAX_ITERATIONS
         self.DO_SAMPLE = DO_SAMPLE
         self.TEMPERATURE = TEMPERATURE
@@ -369,6 +377,7 @@ class ChatState(BaseState):
             ai_config.api_key = api_key
             ai_config.LLM_HOST = LLM_HOST
             ai_config.LLM_PORT = LLM_PORT
+            ai_config.target_db_url = target_db_url
             ai_config.MAX_ITERATIONS = MAX_ITERATIONS
             ai_config.DO_SAMPLE = DO_SAMPLE
             ai_config.TEMPERATURE = TEMPERATURE
@@ -400,8 +409,8 @@ class ChatState(BaseState):
                 'api_key': self.api_key,
                 'LLM_HOST': self.LLM_HOST,
                 'LLM_PORT': self.LLM_PORT,
-                'target_db_path': target_db_path,
-                'vectordb_host': 'localhost',
+                'target_db_url': self.target_db_url,
+                'vectordb_host': '127.0.0.1',
                 'vectordb_port': '8000',
                 'MAX_ITERATIONS': self.MAX_ITERATIONS,
                 'DO_SAMPLE': self.DO_SAMPLE,
@@ -446,114 +455,114 @@ class ChatState(BaseState):
         last_qa = self.current_chat[-1]
         yield rx.scroll_to("bottom")
 
-        async with self:
-            self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
-            self.current_chat[-1].answer_text += '智能体：'+GENERATOR+'正在执行...\n'
-            self.current_chat[-1].show_text=True
-        await asyncio.sleep(1)
-        message = {
-            'sql': 'SELECT * \nFROM STUDENT',
-            'sql_result': {
-                'cols': ['c1','c2','c3','c4','c5','c6','c7'],
-                'rows': [
-                    (1, 'GOON', 15.2, True, '2023-05-01', 'New York', 1024),
-                    (2, 'Banana', 8.7, False, '2023-05-02', 'Los Angeles', 768),
-                    (3, 'Orange', 12.1, True, '2023-05-03', 'Chicago', 1536),
-                    (4, 'Grape', 5.5, False, '2023-05-04', 'Houston', 512),
-                    (5, 'Mango', 9.9, True, '2023-05-05', 'Phoenix', 2048),
-                    (6, 'Pineapple', 7.3, False, '2023-05-06', 'Philadelphia', 896),
-                    (7, 'Peach', 6.8, True, '2023-05-07', 'San Antonio', 1280),
-                    (8, 'Pear', 4.2, False, '2023-05-08', 'San Diego', 640),
-                    (9, 'Cherry', 11.5, True, '2023-05-09', 'Dallas', 1792),
-                    (10, 'Berry', 3.9, False, '2023-05-10', 'San Jose', 256),
-                    (11, 'Watermelon', 10.4, True, '2023-05-11', 'Austin', 1152),
-                    (12, 'Kiwi', 5.1, False, '2023-05-12', 'Jacksonville', 384),
-                    (13, 'Lemon', 2.8, True, '2023-05-13', 'Fort Worth', 512),
-                    (14, 'Lime', 3.5, False, '2023-05-14', 'Columbus', 768),
-                    (15, 'Plum', 6.2, True, '2023-05-15', 'Charlotte', 1024),
-                    (16, 'Apricot', 4.9, False, '2023-05-16', 'San Francisco', 640),
-                    (17, 'Fig', 7.7, True, '2023-05-17', 'Indianapolis', 896),
-                    (18, 'Melon', 8.5, False, '2023-05-18', 'Seattle', 1280),
-                    (19, 'Papaya', 9.1, True, '2023-05-19', 'Denver', 1536),
-                    (20, 'Avocado', 12.8, False, '2023-05-20', 'Washington', 2048),
-                    (21, 'Coconut', 11.2, True, '2023-05-21', 'Boston', 1792),
-                    (22, 'Guava', 5.7, False, '2023-05-22', 'El Paso', 384),
-                    (23, 'Lychee', 8.3, True, '2023-05-23', 'Detroit', 1024),
-                    (24, 'Dragonfruit', 14.5, False, '2023-05-24', 'Nashville', 512),
-                    (25, 'Starfruit', 6.9, True, '2023-05-25', 'Portland', 1280),
-                    (26, 'Pomegranate', 10.1, False, '2023-05-26', 'Memphis', 768),
-                    (27, 'Blackberry', 4.7, True, '2023-05-27', 'Oklahoma City', 896),
-                    (28, 'Raspberry', 5.3, False, '2023-05-28', 'Las Vegas', 640),
-                    (29, 'Blueberry', 7.1, True, '2023-05-29', 'Louisville', 1536),
-                    (30, 'Cantaloupe', 9.5, False, '2023-05-30', 'Baltimore', 2048)
-                ]
-            }
-        }
-        sql = message.get('sql')
-        sql_result = message.get('sql_result')
-        cols = sql_result.get('cols')
-        rows = sql_result.get('rows')
-        async with self:
-            self.current_chat[-1].answer_text += message.get('sql')
-            self.current_chat[-1].table_cols = cols
-            self.current_chat[-1].table_datas = rows
-            self.current_chat[-1].show_table=True
-            self.processing = False
-        chat_record = ChatRecord(
-            user_id=self.user_id,
-            question=question,
-            sql=sql,
-            sql_result=sql_result,
-            create_time=datetime.now()
-        )
-        with rx.session() as session:
-            session.add(chat_record)
-            session.commit()
+        # async with self:
+        #     self.current_chat[-1].answer_text += '智能体：'+FILTER+'正在执行...\n'
+        #     self.current_chat[-1].answer_text += '智能体：'+GENERATOR+'正在执行...\n'
+        #     self.current_chat[-1].show_text=True
+        # await asyncio.sleep(1)
+        # message = {
+        #     'sql': 'SELECT * \nFROM STUDENT',
+        #     'sql_result': {
+        #         'cols': ['c1','c2','c3','c4','c5','c6','c7'],
+        #         'rows': [
+        #             (1, 'GOON', 15.2, True, '2023-05-01', 'New York', 1024),
+        #             (2, 'Banana', 8.7, False, '2023-05-02', 'Los Angeles', 768),
+        #             (3, 'Orange', 12.1, True, '2023-05-03', 'Chicago', 1536),
+        #             (4, 'Grape', 5.5, False, '2023-05-04', 'Houston', 512),
+        #             (5, 'Mango', 9.9, True, '2023-05-05', 'Phoenix', 2048),
+        #             (6, 'Pineapple', 7.3, False, '2023-05-06', 'Philadelphia', 896),
+        #             (7, 'Peach', 6.8, True, '2023-05-07', 'San Antonio', 1280),
+        #             (8, 'Pear', 4.2, False, '2023-05-08', 'San Diego', 640),
+        #             (9, 'Cherry', 11.5, True, '2023-05-09', 'Dallas', 1792),
+        #             (10, 'Berry', 3.9, False, '2023-05-10', 'San Jose', 256),
+        #             (11, 'Watermelon', 10.4, True, '2023-05-11', 'Austin', 1152),
+        #             (12, 'Kiwi', 5.1, False, '2023-05-12', 'Jacksonville', 384),
+        #             (13, 'Lemon', 2.8, True, '2023-05-13', 'Fort Worth', 512),
+        #             (14, 'Lime', 3.5, False, '2023-05-14', 'Columbus', 768),
+        #             (15, 'Plum', 6.2, True, '2023-05-15', 'Charlotte', 1024),
+        #             (16, 'Apricot', 4.9, False, '2023-05-16', 'San Francisco', 640),
+        #             (17, 'Fig', 7.7, True, '2023-05-17', 'Indianapolis', 896),
+        #             (18, 'Melon', 8.5, False, '2023-05-18', 'Seattle', 1280),
+        #             (19, 'Papaya', 9.1, True, '2023-05-19', 'Denver', 1536),
+        #             (20, 'Avocado', 12.8, False, '2023-05-20', 'Washington', 2048),
+        #             (21, 'Coconut', 11.2, True, '2023-05-21', 'Boston', 1792),
+        #             (22, 'Guava', 5.7, False, '2023-05-22', 'El Paso', 384),
+        #             (23, 'Lychee', 8.3, True, '2023-05-23', 'Detroit', 1024),
+        #             (24, 'Dragonfruit', 14.5, False, '2023-05-24', 'Nashville', 512),
+        #             (25, 'Starfruit', 6.9, True, '2023-05-25', 'Portland', 1280),
+        #             (26, 'Pomegranate', 10.1, False, '2023-05-26', 'Memphis', 768),
+        #             (27, 'Blackberry', 4.7, True, '2023-05-27', 'Oklahoma City', 896),
+        #             (28, 'Raspberry', 5.3, False, '2023-05-28', 'Las Vegas', 640),
+        #             (29, 'Blueberry', 7.1, True, '2023-05-29', 'Louisville', 1536),
+        #             (30, 'Cantaloupe', 9.5, False, '2023-05-30', 'Baltimore', 2048)
+        #         ]
+        #     }
+        # }
+        # sql = message.get('sql')
+        # sql_result = message.get('sql_result')
+        # cols = sql_result.get('cols')
+        # rows = sql_result.get('rows')
+        # async with self:
+        #     self.current_chat[-1].answer_text += message.get('sql')
+        #     self.current_chat[-1].table_cols = cols
+        #     self.current_chat[-1].table_datas = rows
+        #     self.current_chat[-1].show_table=True
+        #     self.processing = False
+        # chat_record = ChatRecord(
+        #     user_id=self.user_id,
+        #     question=question,
+        #     sql=sql,
+        #     sql_result=sql_result,
+        #     create_time=datetime.now()
+        # )
+        # with rx.session() as session:
+        #     session.add(chat_record)
+        #     session.commit()
 
-        # async with self:
-        #     self.current_chat[-1].answer_text += '--- 正在初始化...\n'
-        #     self.current_chat[-1].show_text=True 
-        # manager = self.init_manager()
-        # async with self:
-        #     self.current_chat[-1].answer_text += '--- 初始化成功...\n'
-        # async_func =  manager.chat
-        # async for message in async_func(last_qa.question):
-        #     if message.get('message_to') == EXTRACTOR:
+        async with self:
+            self.current_chat[-1].answer_text += '--- 正在初始化...\n'
+            self.current_chat[-1].show_text=True 
+        manager = self.init_manager()
+        async with self:
+            self.current_chat[-1].answer_text += '--- 初始化成功...\n'
+        async_func =  manager.chat
+        async for message in async_func(last_qa.question):
+            if message.get('message_to') == EXTRACTOR:
         
-        #         async with self:
-        #             self.current_chat[-1].answer_text += '--- 智能体：'+EXTRACTOR+'正在提取实体...\n'
-        #     elif message.get('message_to') == FILTER:
-        #         async with self:
-        #             self.current_chat[-1].answer_text += '--- 智能体：'+EXTRACTOR + '已提取来自问题，知识库和数据库的可能的实体：\n'
-        #             self.current_chat[-1].answer_text += str(message.get('entity')) + '\n'
-        #             self.current_chat[-1].answer_text += '--- 智能体：'+FILTER+'正在选取数据库的表和列...\n'
-        #     elif message.get('message_to') == GENERATOR:
-        #         async with self:
-        #             self.current_chat[-1].answer_text += '--- 智能体：'+FILTER + '已选取数据库的表和列：\n'
-        #             self.current_chat[-1].answer_text += str(message.get('schema')) + '\n'
-        #             self.current_chat[-1].answer_text += '--- 智能体：'+GENERATOR+'正在生成SQL...\n'
-        #     elif message.get('message_to') == REVISER:
-        #         async with self:
-        #             self.current_chat[-1].answer_text += '--- 智能体：'+GENERATOR + '已生成SQL：\n'
-        #             self.current_chat[-1].answer_text += message.get('sql') + '\n'
-        #             self.current_chat[-1].answer_text += '--- 智能体：'+REVISER+'正在执行和修正SQL...\n'
-        #     elif message.get('message_to') == MANAGER:
-        #         sql = message.get('sql')
-        #         sql_result = message.get('sql_result')
-        #         cols = sql_result.get('cols')
-        #         rows = sql_result.get('rows')
-        #         async with self:
-                    # self.current_chat[-1].table_cols = cols
-                    # self.current_chat[-1].table_datas = rows
-        #             self.current_chat[-1].show_table=True
-        #             self.processing = False
-        #         chat_record = ChatRecord(
-        #             user_id=self.user_id,
-        #             question=question,
-        #             sql=sql,
-        #             sql_result=sql_result,
-        #             create_time=datetime.now()
-        #         )
-        #         with rx.session() as session:
-        #             session.add(chat_record)
-        #             session.commit()
+                async with self:
+                    self.current_chat[-1].answer_text += '--- 智能体：'+EXTRACTOR+'正在提取实体...\n'
+            elif message.get('message_to') == FILTER:
+                async with self:
+                    self.current_chat[-1].answer_text += '--- 智能体：'+EXTRACTOR + '已提取来自问题，知识库和数据库的可能的实体：\n'
+                    self.current_chat[-1].answer_text += str(message.get('entity')) + '\n'
+                    self.current_chat[-1].answer_text += '--- 智能体：'+FILTER+'正在选取数据库的表和列...\n'
+            elif message.get('message_to') == GENERATOR:
+                async with self:
+                    self.current_chat[-1].answer_text += '--- 智能体：'+FILTER + '已选取数据库的表和列：\n'
+                    self.current_chat[-1].answer_text += str(message.get('schema')) + '\n'
+                    self.current_chat[-1].answer_text += '--- 智能体：'+GENERATOR+'正在生成SQL...\n'
+            elif message.get('message_to') == REVISER:
+                async with self:
+                    self.current_chat[-1].answer_text += '--- 智能体：'+GENERATOR + '已生成SQL：\n'
+                    self.current_chat[-1].answer_text += message.get('sql') + '\n'
+                    self.current_chat[-1].answer_text += '--- 智能体：'+REVISER+'正在执行和修正SQL...\n'
+            elif message.get('message_to') == MANAGER:
+                sql = message.get('sql')
+                sql_result = message.get('sql_result')
+                cols = sql_result.get('cols')
+                rows = sql_result.get('rows')
+                async with self:
+                    self.current_chat[-1].table_cols = cols
+                    self.current_chat[-1].table_datas = rows
+                    self.current_chat[-1].show_table=True
+                    self.processing = False
+                chat_record = ChatRecord(
+                    user_id=self.user_id,
+                    question=question,
+                    sql=sql,
+                    sql_result=sql_result,
+                    create_time=datetime.now()
+                )
+                with rx.session() as session:
+                    session.add(chat_record)
+                    session.commit()

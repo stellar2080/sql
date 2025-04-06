@@ -40,7 +40,7 @@ class RepositoryState(BaseState):
             config={
                 'user_id': self.user_id,
                 'vectordb_only': True,
-                'vectordb_host': 'localhost',
+                'vectordb_host': '127.0.0.1',
                 'vectordb_port': '8000',
             },
         )

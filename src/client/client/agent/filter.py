@@ -15,7 +15,7 @@ class Filter(Agent_Base):
         super().__init__()
         self.platform = config.get('platform','')
         self.user_id = config.get('user_id','')
-        self.target_db_path = config.get("target_db_path")
+        self.target_db_url = config.get("target_db_url")
         self.F_HINT_THRESHOLD = config.get('F_HINT_THRESHOLD')
         self.F_COL_THRESHOLD = config.get('F_COL_THRESHOLD')
         self.F_LSH_THRESHOLD = config.get('F_LSH_THRESHOLD')
@@ -131,7 +131,7 @@ class Filter(Agent_Base):
     async def get_schema(
         self,
     ) -> tuple[list,dict,list,list,list]:
-        async with aiosqlite.connect(self.target_db_path) as db:
+        async with aiosqlite.connect(self.target_db_url) as db:
             cursor = await db.cursor()
             await cursor.execute("SELECT name, sql FROM sqlite_master WHERE type='table'")
             tbl_datas = await cursor.fetchall()
@@ -188,7 +188,7 @@ class Filter(Agent_Base):
         schema_dict: dict,
         tbl_name_list: list,
     ):
-        async with aiosqlite.connect(self.target_db_path) as db:
+        async with aiosqlite.connect(self.target_db_url) as db:
             cursor = await db.cursor()
             for tbl_name in tbl_name_list:
                 await cursor.execute(f"PRAGMA foreign_key_list({tbl_name})")
@@ -369,7 +369,7 @@ class Filter(Agent_Base):
             threshold = self.F_VAL_THRESHOLD
         strong_rela_set = set()
         
-        async with aiosqlite.connect(self.target_db_path) as db:
+        async with aiosqlite.connect(self.target_db_url) as db:
             cursor = await db.cursor()
             for tbl_name, col_datas in schema_dict.items():
                 for col_name, col_data in col_datas.items():
