@@ -35,13 +35,15 @@ class AccountState(BaseState):
     def change_password_dialog_open_change(self):
         self.change_password_dialog_open = not self.change_password_dialog_open
 
+    def reset_vars(self):
+        self.email_sent = ""
+        self.send_time = datetime.datetime(1970, 1, 1, 0, 0, 0)
+        self.countdown = 0
+        self.captcha = None
+
     @rx.event
     def set_email_sent(self, email_sent: str):
         self.email_sent = email_sent
-
-    @rx.event
-    def reset_countdown(self):
-        self.countdown = 0
 
     @rx.event
     def send_email(self): 
@@ -118,8 +120,7 @@ class AccountState(BaseState):
             user.email = email_form  
             session.add(user)
             session.commit()
-        self.reset_countdown()
-        self.email = ''
+        self.reset_vars()
         yield rx.toast.success("修改邮箱成功", duration=2000)
         return self.change_email_dialog_open_change()
 

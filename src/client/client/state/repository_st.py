@@ -13,12 +13,6 @@ class Doc(rx.Base):
 
 class RepositoryState(BaseState):
 
-    @rx.event
-    async def on_load(self):
-        if not self.logged_in:
-            return rx.redirect("/login")
-        await self.load_entries()
-
     docs: List[Doc] = []
 
     search_value: str = ""
@@ -31,6 +25,12 @@ class RepositoryState(BaseState):
 
     upload_dialog_open: bool = False
     
+    @rx.event
+    async def on_load(self):
+        if not self.logged_in:
+            return rx.redirect("/login")
+        await self.load_entries()
+
     @rx.event
     def upload_dialog_open_change(self):
         self.upload_dialog_open = not self.upload_dialog_open
@@ -52,6 +52,7 @@ class RepositoryState(BaseState):
     @rx.event
     def set_search_value(self, search_value: str):
         self.search_value = search_value
+        self.first_page()
 
     @rx.var(cache=True)
     def filtered_sorted_items(self) -> List[Doc]:
@@ -86,9 +87,12 @@ class RepositoryState(BaseState):
 
     @rx.var(cache=True)
     def total_pages(self) -> int:
-        return (self.total_items // self.limit) + (
-            1 if self.total_items % self.limit else 0
-        )
+        addition = 0
+        if self.total_items == 0:
+            addition = 1
+        elif self.total_items % self.limit:
+            addition = 1
+        return (self.total_items // self.limit) + addition
 
     @rx.var(cache=True, initial_value=[])
     def get_current_page(self) -> list[Doc]:
@@ -147,7 +151,8 @@ class RepositoryState(BaseState):
 
     @rx.event
     async def refresh(self):
-        await self.load_entries()   
+        await self.load_entries()
+        self.first_page()
         self.setvar("search_value","")
         self.setvar("sort_value","")
         self.setvar("sort_reverse",False)
@@ -156,6 +161,9 @@ class RepositoryState(BaseState):
     @rx.event
     async def delete_doc(self, doc: Doc):
         self.docs.remove(doc)
+        self.total_items -= 1
+        if self.total_items <= self.offset:
+            self.prev_page()
         manager = self.init_manager()
         if doc.key_id != "":
             await manager.remove_doc(embedding_id=[doc.key_id,doc.doc_id])
@@ -210,7 +218,8 @@ class RepositoryState(BaseState):
         self
     ):
         self.docs.clear()
-        self.total_items = len(self.docs)
+        self.total_items = 0
+        self.first_page()
         self.setvar("search_value","")
         self.setvar("sort_value","")
         self.setvar("sort_reverse",False)

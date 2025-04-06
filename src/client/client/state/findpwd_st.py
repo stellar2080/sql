@@ -17,9 +17,11 @@ class FindpwdState(rx.State):
     def set_email(self, email: str):
         self.email = email
 
-    @rx.event
-    def reset_countdown(self):
+    def reset_vars(self):
+        self.email_sent = ""
+        self.send_time = datetime.datetime(1970, 1, 1, 0, 0, 0)
         self.countdown = 0
+        self.captcha = None
 
     @rx.event
     def send_email(self):
@@ -83,7 +85,6 @@ class FindpwdState(rx.State):
             user.password = hashed_password
             session.add(user)
             session.commit()
-        self.reset_countdown()
-        self.email = ""
+        self.reset_vars()
         yield rx.toast.success("修改密码成功，返回登录页面", duration=2000)
         return rx.redirect("/login")

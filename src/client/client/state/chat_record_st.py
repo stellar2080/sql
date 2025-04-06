@@ -33,25 +33,13 @@ class ChatRecordState(BaseState):
         self.load_entries()
 
     @rx.event
-    def delete_item(self, item: Item):
-        self.items.remove(item)
-        with rx.session() as session:
-            chat_record = session.exec(
-                ChatRecord.select().where(
-                    ChatRecord.id == item.id
-                )
-            ).first()
-            session.delete(chat_record)
-            session.commit()
-        return rx.toast.success("删除成功", duration=2000)
-
-    @rx.event
     def set_sort_value(self, sort_value: str):
         self.sort_value = sort_value
 
     @rx.event
     def set_search_value(self, search_value: str):
         self.search_value = search_value
+        self.first_page()
 
     @rx.var(cache=True)
     def filtered_sorted_items(self) -> List[Item]:
@@ -86,9 +74,12 @@ class ChatRecordState(BaseState):
 
     @rx.var(cache=True)
     def total_pages(self) -> int:
-        return (self.total_items // self.limit) + (
-            1 if self.total_items % self.limit else 0
-        )
+        addition = 0
+        if self.total_items == 0:
+            addition = 1
+        elif self.total_items % self.limit:
+            addition = 1
+        return (self.total_items // self.limit) + addition
 
     @rx.var(cache=True, initial_value=[])
     def get_current_page(self) -> list[Item]:
@@ -135,18 +126,33 @@ class ChatRecordState(BaseState):
     @rx.event
     def refresh(self):
         self.load_entries()
+        self.first_page()
         self.setvar("search_value","")
         self.setvar("sort_value","")
         self.setvar("sort_reverse",False)
         return rx.toast.success("刷新成功", duration=2000)
 
     @rx.event
+    def delete_item(self, item: Item):
+        self.items.remove(item)
+        self.total_items -= 1
+        if self.total_items <= self.offset:
+            self.prev_page()
+        with rx.session() as session:
+            chat_record = session.exec(
+                ChatRecord.select().where(
+                    ChatRecord.id == item.id
+                )
+            ).first()
+            session.delete(chat_record)
+            session.commit()
+        return rx.toast.success("删除成功", duration=2000)
+
+    @rx.event
     def clear_record(self):
         self.items.clear()
-        self.total_items = len(self.items)
-        self.setvar("search_value","")
-        self.setvar("sort_value","")
-        self.setvar("sort_reverse",False)
+        self.total_items = 0
+        self.first_page()
         with rx.session() as session:
             session.exec(
                 delete(ChatRecord).where(ChatRecord.user_id == self.user_id)
