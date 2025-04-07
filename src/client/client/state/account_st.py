@@ -48,18 +48,18 @@ class AccountState(BaseState):
     @rx.event
     def send_email(self): 
         if self.email_sent == "":
-            return rx.toast.error("邮箱不能为空", duration=2000)
+            return rx.toast.error("邮箱不能为空", duration=2000, position='top-center')
         if not validate_email(email=self.email_sent):
-            return rx.toast.error("邮箱格式错误", duration=2000)
+            return rx.toast.error("邮箱格式错误", duration=2000, position='top-center')
         if self.email_sent == self.email:
-            return rx.toast.error("新邮箱不能和原邮箱相同", duration=2000)
+            return rx.toast.error("新邮箱不能和原邮箱相同", duration=2000, position='top-center')
         with rx.session() as session:
             if session.exec(select(User).where(User.email == self.email_sent)).first():
-                return rx.toast.error("邮箱已被使用", duration=2000)
+                return rx.toast.error("邮箱已被使用", duration=2000, position='top-center')
         self.send_time = datetime.datetime.now()
         self.captcha = send_email(msg_to=self.email_sent)
         print(self.captcha)
-        yield rx.toast.success("验证码发送成功", duration=2000)
+        yield rx.toast.success("验证码发送成功", duration=2000, position='top-center')
         return AccountState.count
 
     @rx.event(background=True)
@@ -77,24 +77,24 @@ class AccountState(BaseState):
     def change_username(self,form_data: dict):
         username = form_data.get('username','')
         if username == "":
-            return rx.toast.error("用户名不能为空", duration=2000)
+            return rx.toast.error("用户名不能为空", duration=2000, position='top-center')
         if " " in username:
-            return rx.toast.error("用户名不能含有空格", duration=2000)
+            return rx.toast.error("用户名不能含有空格", duration=2000, position='top-center')
         if username == self.username:
-            return rx.toast.error("新用户名不能和原用户名相同", duration=2000)
+            return rx.toast.error("新用户名不能和原用户名相同", duration=2000, position='top-center')
         if len(username) < 6 or len(username) > 10:
-            return rx.toast.error("用户名长度应在6位到10位间", duration=2000)
+            return rx.toast.error("用户名长度应在6位到10位间", duration=2000, position='top-center')
         with rx.session() as session:
             user = session.exec(
                 select(User).where(User.email == self.email)
             ).first()
             if session.exec(select(User).where(User.username == username)).first():
-                return rx.toast.error("用户名已存在", duration=2000)
+                return rx.toast.error("用户名已存在", duration=2000, position='top-center')
             self.username = username
             user.username = username     
             session.add(user)
             session.commit()
-            yield rx.toast.success("修改用户名成功", duration=2000)
+            yield rx.toast.success("修改用户名成功", duration=2000, position='top-center')
             return self.change_username_dialog_open_change()
         
     @rx.event
@@ -102,15 +102,15 @@ class AccountState(BaseState):
         email_form = form_data.get('email','')
         captcha = form_data.get('captcha','')
         if email_form == "":
-            return rx.toast.error("邮箱不能为空", duration=2000)
+            return rx.toast.error("邮箱不能为空", duration=2000, position='top-center')
         if not validate_email(email=email_form):
-            return rx.toast.error("邮箱格式错误", duration=2000)
+            return rx.toast.error("邮箱格式错误", duration=2000, position='top-center')
         if self.email == email_form:
-            return rx.toast.error("新邮箱不能和原邮箱相同", duration=2000)
+            return rx.toast.error("新邮箱不能和原邮箱相同", duration=2000, position='top-center')
         if self.email_sent != email_form or self.captcha != captcha:
-            return rx.toast.error("验证码错误", duration=2000)
+            return rx.toast.error("验证码错误", duration=2000, position='top-center')
         if (datetime.datetime.now() - self.send_time).total_seconds() > 300:
-            return rx.toast.error("验证码已过期", duration=2000)
+            return rx.toast.error("验证码已过期", duration=2000, position='top-center')
         
         with rx.session() as session:
             user = session.exec(
@@ -121,7 +121,7 @@ class AccountState(BaseState):
             session.add(user)
             session.commit()
         self.reset_vars()
-        yield rx.toast.success("修改邮箱成功", duration=2000)
+        yield rx.toast.success("修改邮箱成功", duration=2000, position='top-center')
         return self.change_email_dialog_open_change()
 
     @rx.event
@@ -129,15 +129,15 @@ class AccountState(BaseState):
         password = form_data.get('password','')
         confirm_password = form_data.get('confirm_password','')
         if password == "":
-            return rx.toast.error("密码不能为空", duration=2000)
+            return rx.toast.error("密码不能为空", duration=2000, position='top-center')
         if " " in password:
-            return rx.toast.error("密码不能含有空格", duration=2000)
+            return rx.toast.error("密码不能含有空格", duration=2000, position='top-center')
         if len(password) < 8 or len(password) > 15:
-            return rx.toast.error("密码长度应在8位到15位间", duration=2000)
+            return rx.toast.error("密码长度应在8位到15位间", duration=2000, position='top-center')
         if password != confirm_password:
-            return rx.toast.error("密码与确认密码需完全相同", duration=2000)
+            return rx.toast.error("密码与确认密码需完全相同", duration=2000, position='top-center')
         if bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8')):
-            return rx.toast.error("新密码不能和原密码相同", duration=2000)
+            return rx.toast.error("新密码不能和原密码相同", duration=2000, position='top-center')
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
         print(hashed_password)
@@ -149,5 +149,5 @@ class AccountState(BaseState):
             user.password = hashed_password
             session.add(user)
             session.commit()
-        yield rx.toast.success("修改密码成功", duration=2000)
+        yield rx.toast.success("修改密码成功", duration=2000, position='top-center')
         return self.change_password_dialog_open_change()

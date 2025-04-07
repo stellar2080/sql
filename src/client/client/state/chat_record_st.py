@@ -130,7 +130,7 @@ class ChatRecordState(BaseState):
         self.setvar("search_value","")
         self.setvar("sort_value","")
         self.setvar("sort_reverse",False)
-        return rx.toast.success("刷新成功", duration=2000)
+        return rx.toast.success("刷新成功", duration=2000, position='top-center')
 
     @rx.event
     def delete_item(self, item: Item):
@@ -146,7 +146,7 @@ class ChatRecordState(BaseState):
             ).first()
             session.delete(chat_record)
             session.commit()
-        return rx.toast.success("删除成功", duration=2000)
+        return rx.toast.success("删除成功", duration=2000, position='top-center')
 
     @rx.event
     def clear_record(self):
@@ -158,14 +158,14 @@ class ChatRecordState(BaseState):
                 delete(ChatRecord).where(ChatRecord.user_id == self.user_id)
             )
             session.commit()
-        return rx.toast.success("清空成功", duration=2000)
+        return rx.toast.success("清空成功", duration=2000, position='top-center')
 
     @rx.event
     def copy_sql(self, item: Item):
-        yield rx.toast.success('成功复制SQL到剪贴板', duration=2000)
+        yield rx.toast.success('成功复制SQL到剪贴板', duration=2000, position='top-center')
         return rx.set_clipboard(item.sql)
     
     @rx.event
     def copy_table(self, item: Item):
-        yield rx.toast.success('成功复制表到剪贴板', duration=2000)
+        yield rx.toast.success('成功复制表到剪贴板', duration=2000, position='top-center')
         return rx.set_clipboard(str(item.sql_result))

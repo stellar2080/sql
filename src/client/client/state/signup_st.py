@@ -33,16 +33,16 @@ class SignupState(rx.State):
     @rx.event
     def send_email(self): 
         if self.email == "":
-            return rx.toast.error("邮箱不能为空", duration=2000)
+            return rx.toast.error("邮箱不能为空", duration=2000, position='top-center')
         elif not validate_email(email=self.email):
-            return rx.toast.error("邮箱格式错误", duration=2000)
+            return rx.toast.error("邮箱格式错误", duration=2000, position='top-center')
         with rx.session() as session:
             if session.exec(select(User).where(User.email == self.email)).first():
                 return rx.toast.error("邮箱已被注册", duration=2000)
         self.send_time = datetime.datetime.now()
         self.captcha = send_email(msg_to=self.email)
         print(self.captcha)
-        yield rx.toast.success("验证码发送成功", duration=2000)
+        yield rx.toast.success("验证码发送成功", duration=2000, position='top-center')
         return SignupState.count
 
     @rx.event(background=True)
@@ -65,28 +65,28 @@ class SignupState(rx.State):
         confirm_password = form_data.get('confirm_password','')
         if username == "" or password == "" or email == "" or \
             captcha=="" or confirm_password=="":
-            return rx.toast.error("请填写所有信息", duration=2000)
+            return rx.toast.error("请填写所有信息", duration=2000, position='top-center')
         if " " in username:
-            return rx.toast.error("用户名不能含有空格", duration=2000)
+            return rx.toast.error("用户名不能含有空格", duration=2000, position='top-center')
         if len(username) < 6 or len(username) > 10:
-            return rx.toast.error("用户名长度应在6位到10位间", duration=2000)
+            return rx.toast.error("用户名长度应在6位到10位间", duration=2000, position='top-center')
         if " " in password:
-            return rx.toast.error("密码不能含有空格", duration=2000)
+            return rx.toast.error("密码不能含有空格", duration=2000, position='top-center')
         if len(password) < 8 or len(password) > 15:
-            return rx.toast.error("密码长度应在8位到15位间", duration=2000)
+            return rx.toast.error("密码长度应在8位到15位间", duration=2000, position='top-center')
         if not validate_email(email=email):
-            return rx.toast.error("邮箱格式错误", duration=2000)
+            return rx.toast.error("邮箱格式错误", duration=2000, position='top-center')
         if password != confirm_password:
-            return rx.toast.error("密码与确认密码需完全相同", duration=2000)
+            return rx.toast.error("密码与确认密码需完全相同", duration=2000, position='top-center')
         if self.email != email or self.captcha != captcha:
-            return rx.toast.error("验证码错误", duration=2000)
+            return rx.toast.error("验证码错误", duration=2000, position='top-center')
         if (datetime.datetime.now() - self.send_time).total_seconds() > 300:
-            return rx.toast.error("验证码已过期", duration=2000)
+            return rx.toast.error("验证码已过期", duration=2000, position='top-center')
         with rx.session() as session:
             if session.exec(select(User).where(User.username == username)).first():
-                return rx.toast.error("用户名已存在", duration=2000)
+                return rx.toast.error("用户名已存在", duration=2000, position='top-center')
             if session.exec(select(User).where(User.email == email)).first():
-                return rx.toast.error("邮箱已被注册", duration=2000)
+                return rx.toast.error("邮箱已被注册", duration=2000, position='top-center')
             salt = bcrypt.gensalt()
             hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
             print(hashed_password)
@@ -133,5 +133,5 @@ class SignupState(rx.State):
             session.add(ai_config)
             session.commit()
         self.reset_vars()
-        yield rx.toast.success("注册成功，已返回登录页面", duration=2000)
+        yield rx.toast.success("注册成功，已返回登录页面", duration=2000, position='top-center')
         return rx.redirect("/login")

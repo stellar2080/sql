@@ -20,11 +20,11 @@ class BaseState(rx.State):
         user = form_data.get('user','')
         password = form_data.get('password','')
         if user == "" or password == "":
-            return rx.toast.error("请填写所有信息", duration=2000)
+            return rx.toast.error("请填写所有信息", duration=2000, position='top-center')
         if " " in user:
-            return rx.toast.error("用户名不能含有空格", duration=2000)
+            return rx.toast.error("用户名不能含有空格", duration=2000, position='top-center')
         if " " in password:
-            return rx.toast.error("密码不能含有空格", duration=2000)
+            return rx.toast.error("密码不能含有空格", duration=2000, position='top-center')
         with rx.session() as session:
             user = session.exec(
                 select(User).where(
@@ -35,22 +35,22 @@ class BaseState(rx.State):
                 )
             ).first()   
             if not user:
-                return rx.toast.error("用户名/邮箱错误", duration=2000)
+                return rx.toast.error("用户名/邮箱错误", duration=2000, position='top-center')
             elif not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-                return rx.toast.error("密码错误", duration=2000)
+                return rx.toast.error("密码错误", duration=2000, position='top-center')
             else:
                 self.user_id = user.user_id
                 self.username = user.username
                 self.email = user.email
                 self.password = user.password
                 self.load_settings()
-                yield rx.toast.success("登录成功，欢迎回来，" + self.username, duration=2000)
+                yield rx.toast.success("登录成功，欢迎回来，" + self.username, duration=2000, position='top-center')
                 return rx.redirect("/chat")
 
     @rx.event
     def logout(self):
         self.reset()
-        yield rx.toast.success('已退出登录')
+        yield rx.toast.success('已退出登录', position='top-center')
         return rx.redirect("/login")
     
     @rx.var
@@ -97,7 +97,7 @@ class BaseState(rx.State):
         self.gray_color = "gray"
         self.radius = "large"
         self.scaling = "100%"
-        return rx.toast.success("恢复默认设置成功，不要忘了保存设置", duration=2000)
+        return rx.toast.success("恢复默认设置成功，不要忘了保存设置", duration=2000, position='top-center')
 
     @rx.event
     def save_settings(self):
@@ -113,4 +113,4 @@ class BaseState(rx.State):
             settings.scaling = self.scaling
             session.add(settings)
             session.commit()
-        return rx.toast.success("保存设置成功", duration=2000)
+        return rx.toast.success("保存设置成功", duration=2000, position='top-center')
