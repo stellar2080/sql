@@ -30,6 +30,7 @@ class RepositoryState(BaseState):
         if not self.logged_in:
             return rx.redirect("/login")
         await self.load_entries()
+        return rx.clear_selected_files('upload1')
 
     @rx.event
     def upload_dialog_open_change(self):

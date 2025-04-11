@@ -398,7 +398,7 @@ class ChatState(BaseState):
             ai_config.G_HINT_THRESHOLD = G_HINT_THRESHOLD
             session.add(ai_config)
             session.commit()
-        return rx.toast.success("保存设置成功", duration=2000)
+        return rx.toast.success("保存设置成功", duration=2000, position='top-center')
 
     def init_manager(self):
         return Manager(
@@ -435,8 +435,16 @@ class ChatState(BaseState):
 
     @rx.event(background=True)
     async def AI_process_question(self, form_data):
+        if self.platform != 'Custom':
+            if self.api_key == '':
+                yield rx.toast.error("未设置api_key", duration=2000, position='top-center')
+                return
+        if self.target_db_url == '':
+            yield rx.toast.error("未设置查询的目标数据库", duration=2000, position='top-center') 
+            return
         question = form_data["question"]
         if not question or question == "":
+            yield rx.toast.error("输入框为空", duration=2000, position='top-center') 
             return
         
         qa = QA(
